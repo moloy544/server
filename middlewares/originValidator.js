@@ -11,8 +11,7 @@ const validateOrigin = (req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', requestOrigin);
       next();
     } else {
-      console.log("Valid Origin" + " " + process.env.ALLOW_ORIGIN);
-      console.log("Request Origin"+ " " + requestOrigin)
+  
       // If the 'Origin' header doesn't match, return a CORS error 
       return res.status(403).json({ error: 'Request is not authorized' });
     }

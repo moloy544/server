@@ -1,5 +1,4 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config.js';
 import express, { json } from 'express';
 import cors from 'cors';
 import appAllRoutes from './routes/index.js';
