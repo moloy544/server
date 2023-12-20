@@ -53,4 +53,30 @@ router.post('/add_movie', async (req, res) => {
     }
 });
 
+//Update Movie Route
+router.post('/update', async (req, res) => {
+
+    try {
+ 
+        const { title, updatedData } = req.body;
+
+        const updateProduct = await Movies.findOneAndUpdate(
+            { title },
+            updatedData,
+            { new: true }
+        );
+
+        if (!updateProduct){
+            return res.status(400).send("Movie is not exists in movies records");
+        }
+
+        return res.status(200).json(updateProduct);
+
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).send("Internal server error");
+    }
+
+});
+
 export default router;

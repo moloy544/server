@@ -28,7 +28,7 @@ router.post('/clisting/:query', async (req, res) => {
                 { genre: { $in: [searchRegex] } }, // Searching array field using $in
                 { releaseYear: parseInt(query) || 0 }, // Exact match for releaseYear
             ],
-        }).sort({ releaseYear: -1, _id: 1 }).skip(skipCount).limit(pageSize);
+        }).sort({ releaseYear: -1, _id: 1 }).skip(skipCount).limit(pageSize).select('title  thambnail releaseYear');
 
         const endOfData = moviesData.length < pageSize ? true : false;
 
@@ -68,7 +68,7 @@ router.post('/search', async (req, res) => {
                 { releaseYear: parseInt(q) || 0 }, 
                 
             ],
-        }).sort({ releaseYear: -1, _id: 1 }).skip(skipCount).limit(pageSize);
+        }).sort({ releaseYear: -1, _id: 1 }).skip(skipCount).limit(pageSize).select('title  thambnail releaseYear castDetails');
 
         const endOfData = moviesData.length < pageSize ? true : false;
 
