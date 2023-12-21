@@ -1,7 +1,9 @@
 import { Schema, model } from "mongoose";
 
 const moviesModel = new Schema({
-
+    imbdId: {
+        type: String
+    },
     thambnail:{
         type: String,
         require: true,

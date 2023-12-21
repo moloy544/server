@@ -11,6 +11,7 @@ router.post('/add_movie', async (req, res) => {
     try {
 
         const {
+            imbdId,
             thambnail,
             title,
             releaseYear,
@@ -30,6 +31,7 @@ router.post('/add_movie', async (req, res) => {
         };
 
         const movieData = {
+            imbdId,
             thambnail,
             title,
             releaseYear,

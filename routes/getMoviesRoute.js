@@ -66,7 +66,6 @@ router.post('/search', async (req, res) => {
                 { castDetails: { $in: [searchRegex] } }, 
                 { searchKeywords: { $regex: searchRegex } },
                 { releaseYear: parseInt(q) || 0 }, 
-                
             ],
         }).sort({ releaseYear: -1, _id: 1 }).skip(skipCount).limit(pageSize).select('title  thambnail releaseYear castDetails');
 
