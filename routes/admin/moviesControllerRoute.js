@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Movies from '../../models/Movies.Model.js';
+import { isValidObjectId } from "mongoose";
 
 const router = Router();
 
@@ -54,19 +55,25 @@ router.post('/add_movie', async (req, res) => {
 });
 
 //Update Movie Route
-router.post('/update', async (req, res) => {
+router.put('/update/:movieId', async (req, res) => {
 
     try {
- 
-        const { title, updatedData } = req.body;
+
+        const movieId = req.params.movieId
+
+        if (!isValidObjectId(movieId)) {
+            return res.status(400).send("Invalid Movie Details");
+        }
+
+        const { updateData } = req.body;
 
         const updateProduct = await Movies.findOneAndUpdate(
-            { title },
-            updatedData,
+            { _id: movieId },
+            updateData,
             { new: true }
         );
 
-        if (!updateProduct){
+        if (!updateProduct) {
             return res.status(400).send("Movie is not exists in movies records");
         }
 
