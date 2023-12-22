@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Movies from '../../models/Movies.Model.js';
 import { isValidObjectId } from "mongoose";
+import Actress from "../../models/Actress.Model.js";
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.post('/add_movie', async (req, res) => {
             searchKeywords
         } = req.body;
 
-        const isMovieAvailable = await Movies.findOne({ title: title });
+        const isMovieAvailable = await Movies.findOne({ watchLink: watchLink });
 
         if (isMovieAvailable) {
             return res.status(300).json({ message: "Movie has already added in data" });
@@ -86,6 +87,39 @@ router.put('/update/:movieId', async (req, res) => {
         return res.status(500).send("Internal server error");
     }
 
+});
+
+router.post('/add_actor', async (req, res) => {
+
+    try {
+
+        const { avatar, name } = req.body;
+
+        const isActorAvailable = await Actress.findOne({ name: name });
+
+        if (isActorAvailable) {
+
+            const updateActor = await Actress.findOneAndUpdate(
+                { name: name },
+               { avatar: avatar},
+                { new: true }
+            );
+
+            return res.status(200).json({ message: "Actor has been update with new data", actor: updateActor });
+        };
+       
+        const actorData = { avatar, name };
+
+        const actor = new Actress(actorData);
+
+        const saveActor = await actor.save();
+
+        return res.status(200).json({ message: "Actor Added Successfull", actorData: saveActor });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 export default router;
