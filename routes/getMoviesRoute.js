@@ -4,12 +4,12 @@ import Movies from '../models/Movies.Model.js';
 
 const router = Router();
 
-//Get Movies By Category Listing
-router.post('/clisting/:query', async (req, res) => {
+//Route For Client Category Listing /listing/category/:query
+router.post('/category/:category', async (req, res) => {
 
     try {
 
-        const query = req.params?.query;
+        const query = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
 
         const { limit, page } = req.body;
 
@@ -28,7 +28,11 @@ router.post('/clisting/:query', async (req, res) => {
                 { genre: { $in: [searchRegex] } }, // Searching array field using $in
                 { releaseYear: parseInt(query) || 0 }, // Exact match for releaseYear
             ],
-        }).sort({ releaseYear: -1, _id: 1 }).skip(skipCount).limit(pageSize).select('title  thambnail releaseYear');
+        })
+            .sort({ releaseYear: -1, _id: 1 })
+            .skip(skipCount)
+            .limit(pageSize)
+            .select('title  thambnail releaseYear');
 
         const endOfData = moviesData.length < pageSize ? true : false;
 
@@ -40,7 +44,39 @@ router.post('/clisting/:query', async (req, res) => {
     };
 });
 
-//Search Movies By Any Filds
+//Route For Client Actress Listing /listing/actress/:query 
+router.post('/actor/:actor', async (req, res) => {
+
+    try {
+
+        const actorName = req.params?.actor.toLowerCase().replace(/[-]/g, ' ');
+
+        const { limit, page } = req.body;
+
+        const pageSize = parseInt(limit) || 15; // Number of items per page
+
+        // Calculate the number of items to skip
+        const skipCount = (page - 1) * pageSize;
+
+        const searchRegex = new RegExp(actorName, 'i');
+
+        const moviesData = await Movies.find({ castDetails: { $in: [searchRegex] } })
+            .sort({ releaseYear: -1, _id: 1 })
+            .skip(skipCount)
+            .limit(pageSize)
+            .select('title  thambnail releaseYear');
+
+        const endOfData = moviesData.length < pageSize ? true : false;
+
+        return res.status(200).json({ moviesData, endOfData: endOfData });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    };
+});
+
+//Route for client search page
 router.post('/search', async (req, res) => {
 
     try {
@@ -62,10 +98,10 @@ router.post('/search', async (req, res) => {
                 { category: { $regex: searchRegex } },
                 { type: { $regex: searchRegex } },
                 { language: { $regex: searchRegex } },
-                { genre: { $in: [searchRegex] } }, 
-                { castDetails: { $in: [searchRegex] } }, 
+                { genre: { $in: [searchRegex] } },
+                { castDetails: { $in: [searchRegex] } },
                 { searchKeywords: { $regex: searchRegex } },
-                { releaseYear: parseInt(q) || 0 }, 
+                { releaseYear: parseInt(q) || 0 },
             ],
         }).sort({ releaseYear: -1, _id: 1 }).skip(skipCount).limit(pageSize).select('title  thambnail releaseYear castDetails');
 
