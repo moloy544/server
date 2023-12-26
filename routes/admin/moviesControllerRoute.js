@@ -7,6 +7,7 @@ const router = Router();
 
 /****************** Movies Admin Panel Add Movies Route *****************/
 
+//Route for add new movie
 router.post('/add_movie', async (req, res) => {
 
     try {
@@ -57,7 +58,7 @@ router.post('/add_movie', async (req, res) => {
     }
 });
 
-//Update Movie Route
+//Route for update movie by id
 router.put('/update/:movieId', async (req, res) => {
 
     try {
@@ -89,6 +90,7 @@ router.put('/update/:movieId', async (req, res) => {
 
 });
 
+//Route for add new actor 
 router.post('/add_actor', async (req, res) => {
 
     try {
@@ -101,13 +103,13 @@ router.post('/add_actor', async (req, res) => {
 
             const updateActor = await Actress.findOneAndUpdate(
                 { name: name },
-               { avatar: avatar},
-                { new: true }
+                { avatar: avatar },
+                { new: true },
             );
 
             return res.status(200).json({ message: "Actor has been update with new data", actor: updateActor });
         };
-       
+
         const actorData = { avatar, name };
 
         const actor = new Actress(actorData);

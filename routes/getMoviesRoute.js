@@ -13,7 +13,7 @@ router.post('/category/:category', async (req, res) => {
 
         const { limit, page } = req.body;
 
-        const pageSize = parseInt(limit) || 15; // Number of items per page
+        const pageSize = parseInt(limit) || 25; // Number of items per page
 
         // Calculate the number of items to skip
         const skipCount = (page - 1) * pageSize;
@@ -53,7 +53,7 @@ router.post('/actor/:actor', async (req, res) => {
 
         const { limit, page } = req.body;
 
-        const pageSize = parseInt(limit) || 15; // Number of items per page
+        const pageSize = parseInt(limit) || 25; // Number of items per page
 
         // Calculate the number of items to skip
         const skipCount = (page - 1) * pageSize;
@@ -85,7 +85,7 @@ router.post('/search', async (req, res) => {
 
         const { limit, page } = req.body;
 
-        const pageSize = parseInt(limit) || 15; // Number of items per page
+        const pageSize = parseInt(limit) || 25; // Number of items per page
 
         // Calculate the number of items to skip
         const skipCount = (page - 1) * pageSize;
