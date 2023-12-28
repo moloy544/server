@@ -9,7 +9,7 @@ router.post('/category/:category', async (req, res) => {
 
     try {
 
-        const query = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
+        const query = req.params?.category;
 
         const { limit, page } = req.body;
 
@@ -44,37 +44,7 @@ router.post('/category/:category', async (req, res) => {
     };
 });
 
-//Route For Client Actress Listing /listing/actress/:query 
-router.post('/actor/:actor', async (req, res) => {
 
-    try {
-
-        const actorName = req.params?.actor.toLowerCase().replace(/[-]/g, ' ');
-
-        const { limit, page } = req.body;
-
-        const pageSize = parseInt(limit) || 25; // Number of items per page
-
-        // Calculate the number of items to skip
-        const skipCount = (page - 1) * pageSize;
-
-        const searchRegex = new RegExp(actorName, 'i');
-
-        const moviesData = await Movies.find({ castDetails: { $in: [searchRegex] } })
-            .sort({ releaseYear: -1, _id: 1 })
-            .skip(skipCount)
-            .limit(pageSize)
-            .select('title  thambnail releaseYear');
-
-        const endOfData = moviesData.length < pageSize ? true : false;
-
-        return res.status(200).json({ moviesData, endOfData: endOfData });
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    };
-});
 
 //Route for client search page
 router.post('/search', async (req, res) => {
