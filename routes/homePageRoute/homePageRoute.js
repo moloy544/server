@@ -4,12 +4,28 @@ import Actress from "../../models/Actress.Model.js";
 
 const router = Router();
 
+const selectValue = "title  thambnail releaseYear";
+
+const latestInCategoryListing = (category) => {
+
+  const data = Movies.find({
+    category,
+    releaseYear: 2023,
+    type: 'movie'
+  }).limit(20).select(selectValue).lean().exec()
+
+  return data;
+};
+
+const genreListing = (genre) => {
+  const data = Movies.find({ genre: { $in: [genre] } }).limit(20).select(selectValue).lean().exec()
+  return data;
+};
+
 //Get Movies By Category Listing
 router.post('/', async (req, res) => {
 
   try {
-
-    const selectValue = "title  thambnail releaseYear";
 
     const { offset } = req.body;
 
@@ -17,29 +33,16 @@ router.post('/', async (req, res) => {
 
     if (offsetNumber === 1) {
 
-      const latestYear = 2023;
-
       const [latestMovies, bollywoodMovies, southMovies, topActressData] = await Promise.all([
+
         // Hollywood release movies
-        Movies.find({
-          category: 'hollywood',
-          releaseYear: latestYear,
-          type: 'movie'
-        }).limit(20).select(selectValue).lean().exec(),
+        latestInCategoryListing('hollywood'),
 
         // Bollywood latest release movies
-        Movies.find({
-          category: 'bollywood',
-          releaseYear: latestYear,
-          type: 'movie'
-        }).limit(20).select(selectValue).lean().exec(),
+        latestInCategoryListing('bollywood'),
 
         // South latest release movies
-        Movies.find({
-          category: 'south',
-          releaseYear: latestYear,
-          type: 'movie'
-        }).limit(20).select(selectValue).lean().exec(),
+        latestInCategoryListing('south'),
 
         Actress.find({}),
 
@@ -71,13 +74,15 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 2) {
 
+
       const [romanceMovies, actionMovies, thrillerMovies] = await Promise.all([
         //Romance movies
-        Movies.find({ genre: { $in: ['Romance'] } }).limit(20).select(selectValue).lean().exec(),
+        genreListing('Romance'),
         //Action movies
-        Movies.find({ genre: { $in: ['Action'] } }).limit(20).select(selectValue).lean().exec(),
+        genreListing('Action'),
         //Thriller movies
-        Movies.find({ genre: { $in: ['Thriller'] } }).limit(20).select(selectValue).lean().exec(),
+        genreListing('Thriller')
+
       ]);
 
       const secondSectionData = {
@@ -105,12 +110,14 @@ router.post('/', async (req, res) => {
     } else if (offsetNumber === 3) {
 
       const [comedyMovies, horrorMovies, animationMovies] = await Promise.all([
+        
         //Comedy movies
-        Movies.find({ genre: { $in: ['Comedy'] } }).limit(20).select(selectValue).lean().exec(),
+        genreListing('Comedy'),
         //Horror movies
-        Movies.find({ genre: { $in: ['Horror'] } }).limit(20).select(selectValue).lean().exec(),
+        genreListing('Horror'),
         //Horror movies
-        Movies.find({ genre: { $in: ['Animation'] } }).limit(20).select(selectValue).lean().exec(),
+        genreListing('Animation'),
+
       ]);
 
       const thirdSectionData = {

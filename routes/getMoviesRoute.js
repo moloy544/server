@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { isValidObjectId } from "mongoose";
+import axios from "axios";
 import Movies from '../models/Movies.Model.js';
 
 const router = Router();
@@ -161,6 +162,37 @@ router.post('/details_movie', async (req, res) => {
 
         const movieData = await Movies.findById(movieId);
 
+        const watchLink = movieData?.watchLink?.split('/');
+
+        const linkimbdId = watchLink[watchLink.length - 1];
+
+        if (linkimbdId) {
+
+            const omdbApiResponse = await axios.get(`https://www.omdbapi.com/?&apikey=5422c8e9&plot=full&i=${linkimbdId}`);
+
+            if (omdbApiResponse.status === 200) {
+
+                const { Released, imdbID } = omdbApiResponse.data;
+
+                await Movies.findOneAndUpdate(
+                    { _id: movieId },
+                    { imdbId: imdbID },
+                    { fullReleaseDate: Released },
+                    { new: true }
+                );
+
+            } else {
+                console.log(linkimbdId)
+                await Movies.findOneAndUpdate(
+                    { _id: movieId },
+                    { imdbId: linkimbdId },
+                    { new: true }
+                );
+
+            }
+
+        }
+
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })
         }
@@ -173,5 +205,6 @@ router.post('/details_movie', async (req, res) => {
     };
 
 });
+
 
 export default router;

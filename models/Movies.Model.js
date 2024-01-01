@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 
 const moviesModel = new Schema({
-    imbdId: {
+    imdbId: {
         type: String
     },
     thambnail:{
@@ -15,6 +15,10 @@ const moviesModel = new Schema({
     releaseYear:{
         type: Number,
         require: true,
+    },
+    fullReleaseDate:{
+        type: String, 
+        require: false
     },
     category:{
         type: String,

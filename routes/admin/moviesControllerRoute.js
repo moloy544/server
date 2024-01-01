@@ -71,7 +71,7 @@ router.put('/update/:movieId', async (req, res) => {
 
         const { updateData } = req.body;
 
-        const updateProduct = await Movies.findOneAndUpdate(
+        const updateMovie = await Movies.findOneAndUpdate(
             { _id: movieId },
             updateData,
             { new: true }
@@ -81,7 +81,7 @@ router.put('/update/:movieId', async (req, res) => {
             return res.status(400).send("Movie is not exists in movies records");
         }
 
-        return res.status(200).json(updateProduct);
+        return res.status(200).json(updateMovie);
 
     } catch (error) {
         console.error(error.message);

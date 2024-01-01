@@ -1,12 +1,12 @@
 import { Schema, model } from "mongoose";
 
 const actressModel = new Schema({
-    
-    avatar:{
+
+    avatar: {
         type: String,
         require: true,
     },
-    name:{
+    name: {
         type: String,
         require: true,
     }
