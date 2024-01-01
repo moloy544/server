@@ -9,7 +9,21 @@ router.post('/category/:category', async (req, res) => {
 
     try {
 
-        const query = req.params?.category;
+        const query = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
+
+        function filterQuery() {
+
+            switch (query) {
+
+                case 'new release':
+                    return 2023;
+
+                default:
+                    return query;
+            };
+        };
+
+        const filteQuery = filterQuery();
 
         const { limit, page } = req.body;
 
@@ -20,10 +34,10 @@ router.post('/category/:category', async (req, res) => {
 
         const moviesData = await Movies.find({
             $or: [
-                { category: query },
-                { type: query },
-                { language: query },
-                { releaseYear: parseInt(query) || 0 }, // Exact match for releaseYear
+                { category: filteQuery },
+                { type: filteQuery },
+                { language: filteQuery },
+                { releaseYear: parseInt(filteQuery) || 0 }, // Exact match for releaseYear
             ],
         }).sort({ releaseYear: -1, _id: 1 })
             .skip(skipCount)
@@ -52,7 +66,21 @@ router.post('/genre/:genre', async (req, res) => {
 
     try {
 
-        const query = req.params?.genre;
+        const genre = req.params?.genre.toLowerCase().replace(/[-]/g, ' ');
+
+        function filterQuery() {
+
+            switch (genre) {
+
+                case 'sci fi':
+                    return 'Sci-Fi';
+
+                default:
+                    return genre;
+            };
+        };
+
+        const filteGenre = filterQuery();
 
         const { limit, page } = req.body;
 
@@ -61,7 +89,7 @@ router.post('/genre/:genre', async (req, res) => {
         // Calculate the number of items to skip
         const skipCount = (page - 1) * pageSize;
 
-        const searchRegex = new RegExp(query, 'i');
+        const searchRegex = new RegExp(filteGenre, 'i');
 
         const moviesData = await Movies.find({
             genre: { $in: [searchRegex] }
@@ -79,8 +107,6 @@ router.post('/genre/:genre', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     };
 });
-
-
 
 //Route for client search page
 router.post('/search', async (req, res) => {
