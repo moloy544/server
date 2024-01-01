@@ -18,18 +18,54 @@ router.post('/category/:category', async (req, res) => {
         // Calculate the number of items to skip
         const skipCount = (page - 1) * pageSize;
 
+        const moviesData = await Movies.find({
+            $or: [
+                { category: query },
+                { type: query },
+                { language: query },
+                { releaseYear: parseInt(query) || 0 }, // Exact match for releaseYear
+            ],
+        }).sort({ releaseYear: -1, _id: 1 })
+            .skip(skipCount)
+            .limit(pageSize)
+            .select('title  thambnail releaseYear');
+
+        if (!moviesData) {
+            return res.status(404).send({ message: "Movies not found" });
+        };
+
+        const endOfData = moviesData.length < pageSize ? true : false;
+
+        return res.status(200).json({ moviesData, endOfData: endOfData });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    };
+});
+
+
+//Get movies by genre
+
+//Route For Client Category Listing /listing/category/:query
+router.post('/genre/:genre', async (req, res) => {
+
+    try {
+
+        const query = req.params?.genre;
+
+        const { limit, page } = req.body;
+
+        const pageSize = parseInt(limit) || 25; // Number of items per page
+
+        // Calculate the number of items to skip
+        const skipCount = (page - 1) * pageSize;
+
         const searchRegex = new RegExp(query, 'i');
 
         const moviesData = await Movies.find({
-            $or: [
-                { category: { $regex: searchRegex } },
-                { type: { $regex: searchRegex } },
-                { language: { $regex: searchRegex } },
-                { genre: { $in: [searchRegex] } }, // Searching array field using $in
-                { releaseYear: parseInt(query) || 0 }, // Exact match for releaseYear
-            ],
-        })
-            .sort({ releaseYear: -1, _id: 1 })
+            genre: { $in: [searchRegex] }
+        }).sort({ releaseYear: -1, _id: 1 })
             .skip(skipCount)
             .limit(pageSize)
             .select('title  thambnail releaseYear');

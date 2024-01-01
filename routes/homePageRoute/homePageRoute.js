@@ -84,17 +84,17 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Romance movies',
-            linkUrl: 'listing/category/romance',
+            linkUrl: 'listing/genre/romance',
             movies: romanceMovies
           },
           {
             title: 'Action movies',
-            linkUrl: 'listing/category/action',
+            linkUrl: 'listing/genre/action',
             movies: actionMovies
           },
           {
             title: 'Thriller movies',
-            linkUrl: 'listing/category/thriller',
+            linkUrl: 'listing/genre/thriller',
             movies: thrillerMovies
           },
         ]
@@ -117,17 +117,17 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Comedy movies',
-            linkUrl: 'listing/category/comedy',
+            linkUrl: 'listing/genre/comedy',
             movies: comedyMovies
           },
           {
             title: 'Horror movies',
-            linkUrl: 'listing/category/horror',
+            linkUrl: 'listing/genre/horror',
             movies: horrorMovies
           },
           {
             title: 'Animation movies',
-            linkUrl: 'listing/category/animation',
+            linkUrl: 'listing/genre/animation',
             movies: animationMovies
           },
         ]
