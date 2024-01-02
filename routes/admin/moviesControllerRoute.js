@@ -13,10 +13,11 @@ router.post('/add_movie', async (req, res) => {
     try {
 
         const {
-            imbdId,
+            imdbId,
             thambnail,
             title,
             releaseYear,
+            fullReleaseDate,
             category,
             type,
             language,
@@ -26,17 +27,12 @@ router.post('/add_movie', async (req, res) => {
             searchKeywords
         } = req.body;
 
-        const isMovieAvailable = await Movies.findOne({ watchLink: watchLink });
-
-        if (isMovieAvailable) {
-            return res.status(300).json({ message: "Movie has already added in data" });
-        };
-
         const movieData = {
-            imbdId,
+            imdbId,
             thambnail,
             title,
             releaseYear,
+            fullReleaseDate,
             category,
             type,
             language,
@@ -44,7 +40,20 @@ router.post('/add_movie', async (req, res) => {
             watchLink,
             castDetails,
             searchKeywords
-        }
+        };
+        
+        const isMovieAvailable = await Movies.findOne({ imdbId: imdbId });
+
+        if (isMovieAvailable) {
+
+            const updateMovie = await Movies.findOneAndUpdate(
+                { imdbId: imdbId },
+                movieData,
+                { new: true }
+            );
+
+            return res.status(200).json({ message: "Movie has been update with new data", movieData: updateMovie });
+        };
 
         const movie = new Movies(movieData);
 
@@ -54,7 +63,7 @@ router.post('/add_movie', async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 

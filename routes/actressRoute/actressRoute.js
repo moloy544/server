@@ -16,6 +16,13 @@ router.post('/info/:actorName', async (req, res) => {
             return res.status(404).json({ message: 'Actor not found' });
         };
 
+        Actress.findOneAndUpdate(
+            { name: actorname },
+            { imdbId: imdbID },
+            { fullReleaseDate: Released },
+            { new: true }
+        );
+
         return res.status(200).json({ actor });
 
     } catch (error) {

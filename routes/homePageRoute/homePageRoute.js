@@ -12,13 +12,15 @@ const latestInCategoryListing = (category) => {
     category,
     releaseYear: 2023,
     type: 'movie'
-  }).limit(20).select(selectValue).lean().exec()
+  }).sort({ fullReleaseDate: -1, _id: 1 })
+  .limit(30).select(selectValue).lean().exec()
 
   return data;
 };
 
 const genreListing = (genre) => {
-  const data = Movies.find({ genre: { $in: [genre] } }).limit(20).select(selectValue).lean().exec()
+  const data = Movies.find({ genre: { $in: [genre] } })
+  .limit(30).select(selectValue).lean().exec()
   return data;
 };
 
