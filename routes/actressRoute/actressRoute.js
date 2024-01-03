@@ -63,7 +63,7 @@ router.post('/collaction/:actorName', async (req, res) => {
             .sort({ releaseYear: -1, _id: 1 })
             .skip(skipCount)
             .limit(pageSize)
-            .select('title thambnail releaseYear');
+            .select('title thambnail releaseYear type');
 
         const endOfData = moviesData.length < pageSize ? true : false;
 
