@@ -5,7 +5,7 @@ import Movies from '../models/Movies.Model.js';
 
 const router = Router();
 
-const selectValue = "title thambnail releaseYear";
+const selectValue = "title thambnail releaseYear type";
 
 //Route For Client Category Listing /listing/category/:query
 router.post('/category/:category', async (req, res) => {
@@ -18,7 +18,7 @@ router.post('/category/:category', async (req, res) => {
 
             switch (query) {
 
-                case 'new release':
+                case 'new release (2023)':
                     return 2023;
 
                 default:
@@ -111,6 +111,7 @@ router.post('/genre/:genre', async (req, res) => {
     };
 });
 
+
 //Route for client search page
 router.post('/search', async (req, res) => {
 
@@ -135,6 +136,7 @@ router.post('/search', async (req, res) => {
                 { language: { $regex: searchRegex } },
                 { genre: { $in: [searchRegex] } },
                 { castDetails: { $in: [searchRegex] } },
+                { imdbId: q },
                 { searchKeywords: { $regex: searchRegex } },
                 { watchLink: q },
                 { releaseYear: parseInt(q) || 0 },
@@ -142,7 +144,7 @@ router.post('/search', async (req, res) => {
         }).sort({ releaseYear: -1, _id: 1 })
             .skip(skipCount)
             .limit(pageSize)
-
+    
         const endOfData = moviesData.length < pageSize ? true : false;
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
@@ -165,7 +167,7 @@ router.post('/details_movie', async (req, res) => {
             return res.status(404).json({ message: "Invalid movie details" });
         };
 
-        const movieData = await Movies.findById(movieId).select('-_id title watchLink genre language');
+        const movieData = await Movies.findById(movieId).select('-_id title thambnail watchLink genre language type');
 
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })

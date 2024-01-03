@@ -9,6 +9,10 @@ const actressModel = new Schema({
     name: {
         type: String,
         require: true,
+    },
+    industry:{
+        type: String,
+        require: true
     }
 });
 

@@ -99,6 +99,21 @@ router.put('/update/:movieId', async (req, res) => {
 
 });
 
+//Delete movie route'
+router.delete('/delete/:id', async (req, res) => {
+    try {
+        const mId = req.params?.id
+        const deleteMovie = await Movies.findByIdAndDelete(mId);
+        if (deleteMovie) {
+           return res.status(200).send({ message: "Movie delete successfully" });
+        }else{
+            return res.status(400).send({ message: "Fail to delete movie" });
+        }
+    } catch (error) {
+        console.log(error)
+    }
+})
+
 //Route for add new actor 
 router.post('/add_actor', async (req, res) => {
 

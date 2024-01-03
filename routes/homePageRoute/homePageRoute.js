@@ -4,7 +4,7 @@ import Actress from "../../models/Actress.Model.js";
 
 const router = Router();
 
-const selectValue = "title  thambnail releaseYear";
+const selectValue = "title thambnail releaseYear type";
 
 const latestInCategoryListing = (category) => {
 
@@ -13,14 +13,16 @@ const latestInCategoryListing = (category) => {
     releaseYear: 2023,
     type: 'movie'
   }).sort({ fullReleaseDate: -1, _id: 1 })
-  .limit(30).select(selectValue).lean().exec()
+    .limit(30).select(selectValue).lean().exec()
 
   return data;
 };
 
-const genreListing = (genre) => {
-  const data = Movies.find({ genre: { $in: [genre] } })
-  .limit(30).select(selectValue).lean().exec()
+const genreListing = (genres) => {
+  const data = Movies.find({ genre: { $all: genres } })
+    .limit(30).select(selectValue)
+    .lean().exec();
+
   return data;
 };
 
@@ -79,11 +81,11 @@ router.post('/', async (req, res) => {
 
       const [romanceMovies, actionMovies, thrillerMovies] = await Promise.all([
         //Romance movies
-        genreListing('Romance'),
+        genreListing(['Romance']),
         //Action movies
-        genreListing('Action'),
+        genreListing(['Action']),
         //Thriller movies
-        genreListing('Thriller')
+        genreListing(['Thriller'])
 
       ]);
 
@@ -111,14 +113,14 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 3) {
 
-      const [comedyMovies, horrorMovies, animationMovies] = await Promise.all([
-        
+      const [comedyMovies, horrorMovies, familyMovies] = await Promise.all([
+
         //Comedy movies
-        genreListing('Comedy'),
+        genreListing(['Comedy']),
         //Horror movies
-        genreListing('Horror'),
-        //Horror movies
-        genreListing('Animation'),
+        genreListing(['Horror']),
+        //Family movies
+        genreListing(['Family']),
 
       ]);
 
@@ -135,6 +137,28 @@ router.post('/', async (req, res) => {
             movies: horrorMovies
           },
           {
+            title: 'Family movies',
+            linkUrl: 'listing/genre/family',
+            movies: familyMovies
+          },
+        ]
+      };
+
+      return res.status(200).json({ thirdSectionData })
+
+    } else if (offsetNumber === 4) {
+
+      const [animationMovies] = await Promise.all([
+
+        //Family movies
+        genreListing(['Animation']),
+
+      ]);
+
+      const forthSectionData = {
+        sliderMovies: [
+
+          {
             title: 'Animation movies',
             linkUrl: 'listing/genre/animation',
             movies: animationMovies
@@ -142,7 +166,7 @@ router.post('/', async (req, res) => {
         ]
       };
 
-      return res.status(200).json({ thirdSectionData })
+      return res.status(200).json({ forthSectionData })
 
     } else {
 
