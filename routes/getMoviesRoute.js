@@ -17,10 +17,8 @@ router.post('/category/:category', async (req, res) => {
         function filterQuery() {
 
             switch (query) {
-
                 case 'new release':
                     return 2023;
-
                 default:
                     return query;
             };
@@ -76,7 +74,6 @@ router.post('/genre/:genre', async (req, res) => {
 
                 case 'sci fi':
                     return 'Sci-Fi';
-
                 default:
                     return genre;
             };
