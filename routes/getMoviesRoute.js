@@ -18,7 +18,7 @@ router.post('/category/:category', async (req, res) => {
 
             switch (query) {
 
-                case 'new release (2023)':
+                case 'new release':
                     return 2023;
 
                 default:
