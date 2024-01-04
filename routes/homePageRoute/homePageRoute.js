@@ -11,15 +11,22 @@ const latestInCategoryListing = (category) => {
   const data = Movies.find({
     category,
     releaseYear: 2023,
-    type: 'movie'
+    type: 'movie',
+    genre: {$nin: ['Animation']}
   }).sort({ fullReleaseDate: -1, _id: 1 })
     .limit(30).select(selectValue).lean().exec()
 
   return data;
 };
 
-const genreListing = (genres) => {
-  const data = Movies.find({ genre: { $all: genres } })
+const genreListing = ({ inGenres, notInGenres = ['Animation'] }) => {
+
+  const queryCondition = { $all: inGenres };
+
+  if (notInGenres && notInGenres?.length > 0) {
+    queryCondition.$nin = notInGenres
+  }
+  const data = Movies.find({ genre: queryCondition })
     .limit(30).select(selectValue)
     .lean().exec();
 
@@ -37,7 +44,7 @@ router.post('/', async (req, res) => {
 
     if (offsetNumber === 1) {
 
-      const [latestMovies, bollywoodMovies, southMovies, topActressData] = await Promise.all([
+      const [latestHollywoodMovies, latestBollywoodMovies, latestSouthMovies, bollywoodActressData] = await Promise.all([
 
         // Hollywood release movies
         latestInCategoryListing('hollywood'),
@@ -48,7 +55,7 @@ router.post('/', async (req, res) => {
         // South latest release movies
         latestInCategoryListing('south'),
 
-        Actress.find({}),
+        Actress.find({ industry: 'bollywood' }).limit(15),
 
       ]);
 
@@ -58,20 +65,20 @@ router.post('/', async (req, res) => {
           {
             title: 'Hollywood latest movies',
             linkUrl: 'listing/category/hollywood',
-            moviesData: latestMovies
+            moviesData: latestHollywoodMovies
           },
           {
             title: 'Bollywood latest movies',
-            linkUrl: 'listing/category/bollywood ',
-            moviesData: bollywoodMovies
+            linkUrl: 'listing/category/bollywood',
+            moviesData: latestBollywoodMovies
           },
           {
             title: 'South latest movies',
             linkUrl: 'listing/category/south',
-            moviesData: southMovies
+            moviesData: latestSouthMovies
           }
         ],
-        topActressData
+        bollywoodActressData
       }
 
       return res.status(200).json({ firstSectionData });
@@ -80,12 +87,19 @@ router.post('/', async (req, res) => {
 
 
       const [romanceMovies, actionMovies, thrillerMovies] = await Promise.all([
+
         //Romance movies
-        genreListing(['Romance']),
+        genreListing({
+          inGenres: ['Romance']
+        }),
         //Action movies
-        genreListing(['Action']),
+        genreListing({
+          inGenres: ['Action']
+        }),
         //Thriller movies
-        genreListing(['Thriller'])
+        genreListing({
+          inGenres: ['Thriller']
+        })
 
       ]);
 
@@ -113,14 +127,20 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 3) {
 
-      const [comedyMovies, horrorMovies, familyMovies] = await Promise.all([
+      const [comedyMovies, horrorMovies, familyMovies, forKidsMovies] = await Promise.all([
 
         //Comedy movies
-        genreListing(['Comedy']),
+        genreListing({
+          inGenres: ['Comedy']
+        }),
         //Horror movies
-        genreListing(['Horror']),
+        genreListing({
+          inGenres: ['Horror']
+        }),
         //Family movies
-        genreListing(['Family']),
+        genreListing({
+          inGenres: ['Family']
+        })
 
       ]);
 
@@ -140,7 +160,7 @@ router.post('/', async (req, res) => {
             title: 'Family movies',
             linkUrl: 'listing/genre/family',
             movies: familyMovies
-          },
+          }
         ]
       };
 
@@ -148,21 +168,32 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 4) {
 
-      const [animationMovies] = await Promise.all([
+      const [forKidsMovies, scienceFictionMovies] = await Promise.all([
 
-        //Family movies
-        genreListing(['Animation']),
+        //For kids movies and 
+        genreListing({
+          inGenres: ['Animation'],
+          notInGenres: []
+        }),
+        genreListing({
+          inGenres: ['Sci-Fi'],
+          notInGenres: []
+        }),
 
       ]);
 
       const forthSectionData = {
         sliderMovies: [
-
           {
-            title: 'Animation movies',
+            title: 'Special for kids',
             linkUrl: 'listing/genre/animation',
-            movies: animationMovies
+            movies: forKidsMovies
           },
+          {
+            title: 'Science Fiction movies',
+            linkUrl: 'listing/genre/sci-fi',
+            movies: scienceFictionMovies
+          }
         ]
       };
 

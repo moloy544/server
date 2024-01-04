@@ -38,10 +38,9 @@ router.post('/category/:category', async (req, res) => {
         const moviesData = await Movies.find({
             $or: [
                 { category: filteQuery },
-                { type: filteQuery },
                 { language: filteQuery },
-                { releaseYear: parseInt(filteQuery) || 0 }, // Exact match for releaseYear
-            ],
+                { releaseYear: parseInt(filteQuery) || 0 }
+            ]
         }).sort({ releaseYear: -1, _id: 1 })
             .skip(skipCount)
             .limit(pageSize)
@@ -144,7 +143,7 @@ router.post('/search', async (req, res) => {
         }).sort({ releaseYear: -1, _id: 1 })
             .skip(skipCount)
             .limit(pageSize)
-    
+
         const endOfData = moviesData.length < pageSize ? true : false;
 
         return res.status(200).json({ moviesData, endOfData: endOfData });

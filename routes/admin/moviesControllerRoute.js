@@ -41,7 +41,7 @@ router.post('/add_movie', async (req, res) => {
             castDetails,
             searchKeywords
         };
-        
+
         const isMovieAvailable = await Movies.findOne({ imdbId: imdbId });
 
         if (isMovieAvailable) {
@@ -105,8 +105,8 @@ router.delete('/delete/:id', async (req, res) => {
         const mId = req.params?.id
         const deleteMovie = await Movies.findByIdAndDelete(mId);
         if (deleteMovie) {
-           return res.status(200).send({ message: "Movie delete successfully" });
-        }else{
+            return res.status(200).send({ message: "Movie delete successfully" });
+        } else {
             return res.status(400).send({ message: "Fail to delete movie" });
         }
     } catch (error) {
@@ -119,7 +119,7 @@ router.post('/add_actor', async (req, res) => {
 
     try {
 
-        const { avatar, name } = req.body;
+        const { avatar, name, industry } = req.body;
 
         const isActorAvailable = await Actress.findOne({ name: name });
 
@@ -128,13 +128,14 @@ router.post('/add_actor', async (req, res) => {
             const updateActor = await Actress.findOneAndUpdate(
                 { name: name },
                 { avatar: avatar },
+                { industry: industry },
                 { new: true },
             );
 
             return res.status(200).json({ message: "Actor has been update with new data", actor: updateActor });
         };
 
-        const actorData = { avatar, name };
+        const actorData = { avatar, name, industry };
 
         const actor = new Actress(actorData);
 
