@@ -26,12 +26,9 @@ router.post('/category/:category', async (req, res) => {
 
         const filteQuery = filterQuery();
 
-        const { limit, page } = req.body;
+        const { limit, skip } = req.body;
 
-        const pageSize = parseInt(limit) || 25; // Number of items per page
-
-        // Calculate the number of items to skip
-        const skipCount = (page - 1) * pageSize;
+        const pageSize = limit || 30;
 
         const moviesData = await Movies.find({
             $or: [
@@ -39,8 +36,8 @@ router.post('/category/:category', async (req, res) => {
                 { language: filteQuery },
                 { releaseYear: parseInt(filteQuery) || 0 }
             ]
-        }).sort({ releaseYear: -1, _id: 1 })
-            .skip(skipCount)
+        }).sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+            .skip(skip)
             .limit(pageSize)
             .select(selectValue);
 
@@ -60,8 +57,6 @@ router.post('/category/:category', async (req, res) => {
 
 
 //Get movies by genre
-
-//Route For Client Category Listing /listing/category/:query
 router.post('/genre/:genre', async (req, res) => {
 
     try {
@@ -81,19 +76,16 @@ router.post('/genre/:genre', async (req, res) => {
 
         const filteGenre = filterQuery();
 
-        const { limit, page } = req.body;
+        const { limit, skip } = req.body;
 
-        const pageSize = parseInt(limit) || 25; // Number of items per page
-
-        // Calculate the number of items to skip
-        const skipCount = (page - 1) * pageSize;
+        const pageSize = limit || 30;
 
         const searchRegex = new RegExp(filteGenre, 'i');
 
         const moviesData = await Movies.find({
             genre: { $in: [searchRegex] }
         }).sort({ releaseYear: -1, _id: 1 })
-            .skip(skipCount)
+            .skip(skip)
             .limit(pageSize)
             .select(selectValue);
 
@@ -115,12 +107,9 @@ router.post('/search', async (req, res) => {
 
         const { q } = req.query;
 
-        const { limit, page } = req.body;
+        const { limit, skip } = req.body;
 
-        const pageSize = parseInt(limit) || 25; // Number of items per page
-
-        // Calculate the number of items to skip
-        const skipCount = (page - 1) * pageSize;
+        const pageSize = limit || 25;
 
         const searchRegex = new RegExp(q, 'i');
 
@@ -132,14 +121,11 @@ router.post('/search', async (req, res) => {
                 { language: { $regex: searchRegex } },
                 { genre: { $in: [searchRegex] } },
                 { castDetails: { $in: [searchRegex] } },
-                { imdbId: q },
                 { searchKeywords: { $regex: searchRegex } },
                 { watchLink: q },
                 { releaseYear: parseInt(q) || 0 },
             ],
-        }).sort({ releaseYear: -1, _id: 1 })
-            .skip(skipCount)
-            .limit(pageSize)
+        }).skip(skip).limit(pageSize);
 
         const endOfData = moviesData.length < pageSize ? true : false;
 

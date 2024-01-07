@@ -12,8 +12,8 @@ const latestInCategoryListing = (category) => {
     category,
     releaseYear: 2023,
     type: 'movie',
-    genre: {$nin: ['Animation']}
-  }).sort({ fullReleaseDate: -1, _id: 1 })
+    genre: { $nin: ['Animation'] }
+  }).sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
     .limit(30).select(selectValue).lean().exec()
 
   return data;
@@ -64,17 +64,17 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Hollywood latest movies',
-            linkUrl: 'listing/category/hollywood',
+            linkUrl: 'movies/category/hollywood',
             moviesData: latestHollywoodMovies
           },
           {
             title: 'Bollywood latest movies',
-            linkUrl: 'listing/category/bollywood',
+            linkUrl: 'movies/category/bollywood',
             moviesData: latestBollywoodMovies
           },
           {
             title: 'South latest movies',
-            linkUrl: 'listing/category/south',
+            linkUrl: 'movies/category/south',
             moviesData: latestSouthMovies
           }
         ],
@@ -107,17 +107,17 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Romance movies',
-            linkUrl: 'listing/genre/romance',
+            linkUrl: 'movies/genre/romance',
             movies: romanceMovies
           },
           {
             title: 'Action movies',
-            linkUrl: 'listing/genre/action',
+            linkUrl: 'movies/genre/action',
             movies: actionMovies
           },
           {
             title: 'Thriller movies',
-            linkUrl: 'listing/genre/thriller',
+            linkUrl: 'movies/genre/thriller',
             movies: thrillerMovies
           },
         ]
@@ -148,17 +148,17 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Comedy movies',
-            linkUrl: 'listing/genre/comedy',
+            linkUrl: 'movies/genre/comedy',
             movies: comedyMovies
           },
           {
             title: 'Horror movies',
-            linkUrl: 'listing/genre/horror',
+            linkUrl: 'movies/genre/horror',
             movies: horrorMovies
           },
           {
-            title: 'Family movies',
-            linkUrl: 'listing/genre/family',
+            title: 'Watch with family',
+            linkUrl: 'movies/genre/family',
             movies: familyMovies
           }
         ]
@@ -186,12 +186,12 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Special for kids',
-            linkUrl: 'listing/genre/animation',
+            linkUrl: 'movies/genre/animation',
             movies: forKidsMovies
           },
           {
             title: 'Science Fiction movies',
-            linkUrl: 'listing/genre/sci-fi',
+            linkUrl: 'movies/genre/sci-fi',
             movies: scienceFictionMovies
           }
         ]
