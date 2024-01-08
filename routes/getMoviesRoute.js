@@ -113,23 +113,23 @@ router.post('/search', async (req, res) => {
 
         const searchRegex = new RegExp(q, 'i');
 
-        const moviesData = await Movies.find({
-            $or: [
-                { title: { $regex: searchRegex } },
-                { category: { $regex: searchRegex } },
-                { type: { $regex: searchRegex } },
-                { language: { $regex: searchRegex } },
-                { genre: { $in: [searchRegex] } },
-                { castDetails: { $in: [searchRegex] } },
-                { searchKeywords: { $regex: searchRegex } },
-                { watchLink: q },
-                { releaseYear: parseInt(q) || 0 },
-            ],
-        }).skip(skip).limit(pageSize);
+        const searchData = await Movies.find({
+                $or: [
+                    { title: { $regex: searchRegex } },
+                    { category: { $regex: searchRegex } },
+                    { type: { $regex: searchRegex } },
+                    { language: { $regex: searchRegex } },
+                    { genre: { $in: [searchRegex] } },
+                    { castDetails: { $in: [searchRegex] } },
+                    { searchKeywords: { $regex: searchRegex } },
+                    { watchLink: q },
+                    { releaseYear: parseInt(q) || 0 },
+                ],
+            }).skip(skip).limit(pageSize);
 
-        const endOfData = moviesData.length < pageSize ? true : false;
+        const endOfData = searchData.length < pageSize ? true : false;
 
-        return res.status(200).json({ moviesData, endOfData: endOfData });
+        return res.status(200).json({ searchData, endOfData: endOfData });
 
     } catch (error) {
         console.log(error)
