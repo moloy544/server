@@ -42,15 +42,25 @@ router.post('/add_movie', async (req, res) => {
             searchKeywords
         };
 
-        const isMovieAvailable = await Movies.findOne({ imdbId: imdbId });
+        const isMovieAvailable = await Movies.findOne({
+            $or: [
+              { imdbId: imdbId }, // Correct imdbId
+              { imbdid: imdbId }, // Misspelled imbdid
+            ]
+          });
 
         if (isMovieAvailable) {
 
             const updateMovie = await Movies.findOneAndUpdate(
-                { imdbId: imdbId },
+                {
+                  $or: [
+                    { imdbId: imdbId }, // Correct imdbId
+                    { imbdid: imdbId }, // Misspelled imbdid
+                  ]
+                },
                 movieData,
                 { new: true }
-            );
+              );
 
             return res.status(200).json({ message: "Movie has been update with new data", movieData: updateMovie });
         };
