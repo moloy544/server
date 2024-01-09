@@ -2,6 +2,7 @@ import { Router } from "express";
 import Movies from '../../models/Movies.Model.js';
 import { isValidObjectId } from "mongoose";
 import Actress from "../../models/Actress.Model.js";
+import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 
 const router = Router();
 
@@ -27,9 +28,15 @@ router.post('/add_movie', async (req, res) => {
             searchKeywords
         } = req.body;
 
+        const uploadCloudinary = await uploadOnCloudinary({ thambnail, imdbId, folderPath: "moviesbazaar/thambnails" });
+
+        if (!uploadCloudinary) {
+            return res.status(500).json({ message: "Error while upload on cloudinary" });
+        };
+
         const movieData = {
             imdbId,
-            thambnail,
+            thambnail: uploadCloudinary.secure_url,
             title,
             releaseYear,
             fullReleaseDate,
@@ -44,32 +51,31 @@ router.post('/add_movie', async (req, res) => {
 
         const isMovieAvailable = await Movies.findOne({
             $or: [
-              { imdbId: imdbId }, // Correct imdbId
-              { imbdid: imdbId }, // Misspelled imbdid
+                { imdbId: imdbId }, // Correct imdbId
+                { imbdid: imdbId }, // Misspelled imbdid
             ]
-          });
+        });
 
         if (isMovieAvailable) {
 
-            const updateMovie = await Movies.findOneAndUpdate(
-                {
-                  $or: [
+            const updateMovie = await Movies.findOneAndUpdate({
+                $or: [
                     { imdbId: imdbId }, // Correct imdbId
                     { imbdid: imdbId }, // Misspelled imbdid
-                  ]
-                },
+                ]
+            },
                 movieData,
                 { new: true }
-              );
+            );
 
-            return res.status(200).json({ message: "Movie has been update with new data", movieData: updateMovie });
+            return res.status(200).json({ message: "Movie has been update with new data", movieData: updateMovie, uploadCloudinary });
         };
 
         const movie = new Movies(movieData);
 
         const saveMovie = await movie.save();
 
-        return res.status(200).json({ message: "Movie Added Successfull", movieData: saveMovie });
+        return res.status(200).json({ message: "Movie Added Successfull", movieData: saveMovie, uploadCloudinary });
 
     } catch (error) {
         console.log(error);

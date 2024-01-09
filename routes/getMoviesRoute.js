@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { isValidObjectId } from "mongoose";
-import axios from "axios";
 import Movies from '../models/Movies.Model.js';
 
 const router = Router();

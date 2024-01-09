@@ -1,3 +1,4 @@
+
 export const transformToCapitalize = (text) => {
 
     // Split the text into an array of words
