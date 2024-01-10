@@ -148,7 +148,7 @@ router.post('/details_movie', async (req, res) => {
             return res.status(404).json({ message: "Invalid movie details" });
         };
 
-        const movieData = await Movies.findById(movieId).select('-_id title thambnail watchLink genre language type');
+        const movieData = await Movies.findById(movieId).select('-_id title thambnail watchLink genre language type releaseYear fullReleaseDate castDetails language');
 
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })
