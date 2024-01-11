@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 
 const moviesModel = new Schema({
+  
     imdbId: {
         type: String
     },
@@ -16,9 +17,9 @@ const moviesModel = new Schema({
         type: Number,
         require: true,
     },
-    fullReleaseDate:{
+    fullReleaseDate: {
         type: String, 
-        require: true
+        require: true,
     },
     category:{
         type: String,

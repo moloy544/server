@@ -3,6 +3,14 @@ import Movies from '../../models/Movies.Model.js';
 import { isValidObjectId } from "mongoose";
 import Actress from "../../models/Actress.Model.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
+import { promises as fs } from 'fs';
+import { fileURLToPath } from 'url';
+import moment from 'moment';
+import path from 'path';
+
+// Convert file URL to file path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 
@@ -164,5 +172,72 @@ router.post('/add_actor', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+router.post('/importNew', async (req, res) => {
+
+    try {
+       // Get the absolute path to the 'movies.json' file
+       const jsonFilePath = path.join(__dirname, 'movies.json');
+
+       // Read JSON data from the backup file
+       const jsonData = await fs.readFile(jsonFilePath, 'utf8');
+       const data = await JSON.parse(jsonData);
+
+        // Convert 'fullReleaseDate' strings to Date objects for all documents
+        const updatedData = data.map(item => ({
+            ...item,
+            fullReleaseDate: new Date(item.fullReleaseDate),
+        }));
+
+        // Bulk update all documents in the collection
+        const bulkWrite = await Movies.bulkWrite(
+            updatedData
+                .filter(item => item.fullReleaseDate) // Filter out documents without fullReleaseDate
+                .map(item => {
+                    const { _id, ...restOfItem } = item;
+        
+                    // Parse the date and check if it's a valid date
+                    const parsedDate = moment(item.fullReleaseDate, ['YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY'], true);
+        
+                    if (parsedDate.isValid()) {
+                        // If the parsed date is valid, update the document with a formatted date string
+                        const formattedDate = parsedDate.format('DD MMM YYYY');
+                        return {
+                            updateOne: {
+                                filter: {
+                                    $or: [
+                                        { imdbId: restOfItem.imdbId },
+                                        { imbdId: restOfItem.imbdId },
+                                    ],
+                                },
+                                update: {
+                                    $set: { ...restOfItem, fullReleaseDate: formattedDate },
+                                },
+                                upsert: true,
+                            },
+                        };
+                    } else {
+                        console.log(`Warning: Invalid date for document with imdbId ${restOfItem.imdbId}.`);
+                        return null; // Skip this document if the date is invalid
+                    }
+                })
+                .filter(Boolean) // Filter out null values (documents with invalid dates)
+        );        
+        
+        
+        // Check if any documents were updated
+        if (bulkWrite.modifiedCount > 0 || bulkWrite.upsertedCount > 0) {
+            console.log('Some documents updated successfully.');
+            return res.status(200).json({ message: 'Some documents updated successfully.' });
+        } else {
+            console.log('No documents updated.');
+            return res.status(400).json({ message: 'No documents updated.' });
+        }
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
 
 export default router;

@@ -33,9 +33,11 @@ router.post('/category/:category', async (req, res) => {
             $or: [
                 { category: filteQuery },
                 { language: filteQuery },
-                { releaseYear: parseInt(filteQuery) || 0 }
-            ]
-        }).sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+                { releaseYear: parseInt(filteQuery) || 0 },
+
+            ],
+            fullReleaseDate: { $exists: false }
+        }).sort({ releaseYear: -1, fullReleaseDate: -1 })
             .skip(skip)
             .limit(pageSize)
             .select(selectValue);
@@ -83,7 +85,7 @@ router.post('/genre/:genre', async (req, res) => {
 
         const moviesData = await Movies.find({
             genre: { $in: [searchRegex] }
-        }).sort({ releaseYear: -1, _id: 1 })
+        }).sort({ releaseYear: -1, fullReleaseDate: -1 })
             .skip(skip)
             .limit(pageSize)
             .select(selectValue);
@@ -113,18 +115,18 @@ router.post('/search', async (req, res) => {
         const searchRegex = new RegExp(q, 'i');
 
         const searchData = await Movies.find({
-                $or: [
-                    { title: { $regex: searchRegex } },
-                    { category: { $regex: searchRegex } },
-                    { type: { $regex: searchRegex } },
-                    { language: { $regex: searchRegex } },
-                    { genre: { $in: [searchRegex] } },
-                    { castDetails: { $in: [searchRegex] } },
-                    { searchKeywords: { $regex: searchRegex } },
-                    { watchLink: q },
-                    { releaseYear: parseInt(q) || 0 },
-                ],
-            }).skip(skip).limit(pageSize);
+            $or: [
+                { title: { $regex: searchRegex } },
+                { category: { $regex: searchRegex } },
+                { type: { $regex: searchRegex } },
+                { language: { $regex: searchRegex } },
+                { genre: { $in: [searchRegex] } },
+                { castDetails: { $in: [searchRegex] } },
+                { searchKeywords: { $regex: searchRegex } },
+                { watchLink: q },
+                { releaseYear: parseInt(q) || 0 },
+            ],
+        }).skip(skip).limit(pageSize);
 
         const endOfData = searchData.length < pageSize ? true : false;
 
@@ -152,7 +154,7 @@ router.post('/details_movie', async (req, res) => {
 
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })
-        }
+        };
 
         return res.status(200).json({ movieData });
 

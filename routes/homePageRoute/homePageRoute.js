@@ -10,10 +10,9 @@ const latestInCategoryListing = (category) => {
 
   const data = Movies.find({
     category,
-    releaseYear: [2023, 2024],
     type: 'movie',
-    genre: { $nin: ['Animation'] }
-  }).sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+    genre: { $nin: ['Animation'] },
+  }).sort({ releaseYear: -1, fullReleaseDate: -1 })
     .limit(30).select(selectValue).lean().exec()
 
   return data;
