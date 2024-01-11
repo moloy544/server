@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 
 const moviesModel = new Schema({
-  
+
     imdbId: {
         type: String
     },

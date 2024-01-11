@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { isValidObjectId } from "mongoose";
 import Movies from '../models/Movies.Model.js';
+import axios from "axios";
 
 const router = Router();
 
@@ -30,15 +31,9 @@ router.post('/category/:category', async (req, res) => {
         const pageSize = limit || 30;
 
         const moviesData = await Movies.find({
-            $or: [
-                { category: filteQuery },
-                { language: filteQuery },
-                { releaseYear: parseInt(filteQuery) || 0 },
-
-            ],
-            fullReleaseDate: { $exists: false }
+            category: filteQuery,
         }).sort({ releaseYear: -1, fullReleaseDate: -1 })
-            .skip(skip)
+        .skip(skip)
             .limit(pageSize)
             .select(selectValue);
 
@@ -155,7 +150,7 @@ router.post('/details_movie', async (req, res) => {
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })
         };
-
+       
         return res.status(200).json({ movieData });
 
     } catch (error) {
@@ -164,6 +159,40 @@ router.post('/details_movie', async (req, res) => {
     };
 
 });
+  
+
+async function updateMovie(movieData) {
+    try {
+
+        if (!movieData) {
+           return null; 
+        }
+       
+        const movieImdbId = movieData?.imdbId;
+
+        const omdbResponse = await axios.get(`https://www.omdbapi.com/?&apikey=5422c8e9&plot=full&i=${movieImdbId}`);
+
+        if (omdbResponse.status === 200) {
+
+            const { Released, Actors } = omdbResponse.data;
+
+            const actorsArray = Actors.split(',').map(actor => actor.trim());
+
+            const updateMovie = await Movies.findOneAndUpdate(
+                { imdbId: movieImdbId },
+                {
+                    $set: {
+                        fullReleaseDate: Released,
+                        castDetails: actorsArray,
+                    }
+                },
+                { new: true })
+            console.log(updateMovie)
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
 
 
 export default router;

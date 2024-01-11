@@ -6,26 +6,36 @@ const router = Router();
 
 const selectValue = "title thambnail releaseYear type";
 
-const latestInCategoryListing = (category) => {
+const latestInCategoryListing = async (category) => {
+  try {
+    const data = await Movies.find({
+      category,
+      type: 'movie',
+      releaseYear: [2024, 2023],
+      genre: { $nin: ['Animation'] },
+    })
+      .sort({ releaseYear: -1, fullReleaseDate: -1 })
+      .limit(30)
+      .select(selectValue)
+      .lean()
+      .exec();
 
-  const data = Movies.find({
-    category,
-    type: 'movie',
-    genre: { $nin: ['Animation'] },
-  }).sort({ releaseYear: -1, fullReleaseDate: -1 })
-    .limit(30).select(selectValue).lean().exec()
+    return data;
 
-  return data;
+  } catch (error) {
+    console.error(error);
+
+  }
 };
 
-const genreListing = ({ inGenres, notInGenres = ['Animation'] }) => {
+const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
 
   const queryCondition = { $all: inGenres };
 
   if (notInGenres && notInGenres?.length > 0) {
     queryCondition.$nin = notInGenres
   }
-  const data = Movies.find({ genre: queryCondition })
+  const data = await Movies.find({ genre: queryCondition })
     .limit(30).select(selectValue)
     .lean().exec();
 
@@ -126,7 +136,7 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 3) {
 
-      const [comedyMovies, horrorMovies, familyMovies, forKidsMovies] = await Promise.all([
+      const [comedyMovies, horrorMovies, familyMovies] = await Promise.all([
 
         //Comedy movies
         genreListing({
@@ -167,7 +177,7 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 4) {
 
-      const [forKidsMovies, scienceFictionMovies] = await Promise.all([
+      const [forKidsMovies, scienceFictionMovies, crimeMovies] = await Promise.all([
 
         //For kids movies and 
         genreListing({
@@ -176,6 +186,11 @@ router.post('/', async (req, res) => {
         }),
         genreListing({
           inGenres: ['Sci-Fi'],
+          notInGenres: []
+        }),
+        //Crime movies
+        genreListing({
+          inGenres: ['Crime'],
           notInGenres: []
         }),
 
@@ -192,6 +207,11 @@ router.post('/', async (req, res) => {
             title: 'Science Fiction movies',
             linkUrl: 'movies/genre/sci-fi',
             movies: scienceFictionMovies
+          },
+          {
+            title: 'Crime movies',
+            linkUrl: 'movies/genre/crime',
+            movies: crimeMovies
           }
         ]
       };
