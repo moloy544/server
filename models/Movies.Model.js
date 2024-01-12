@@ -3,7 +3,12 @@ import { Schema, model } from "mongoose";
 const moviesModel = new Schema({
 
     imdbId: {
-        type: String
+        type: String,
+        require: true
+    },
+    imdbRating:{
+        type: Number,
+        require: true
     },
     thambnail:{
         type: String,

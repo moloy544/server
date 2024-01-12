@@ -21,20 +21,10 @@ router.post('/add_movie', async (req, res) => {
 
     try {
 
-        const {
-            imdbId,
-            thambnail,
-            title,
-            releaseYear,
-            fullReleaseDate,
-            category,
-            type,
-            language,
-            genre,
-            watchLink,
-            castDetails,
-            searchKeywords
-        } = req.body;
+        const { data } = req.body;
+
+        const imdbId = data.imdbId;
+        const thambnail = data.thambnail
 
         const uploadCloudinary = await uploadOnCloudinary({ thambnail, imdbId, folderPath: "moviesbazaar/thambnails" });
 
@@ -43,36 +33,22 @@ router.post('/add_movie', async (req, res) => {
         };
 
         const movieData = {
-            imdbId,
+            ...data,
             thambnail: uploadCloudinary.secure_url,
-            title,
-            releaseYear,
-            fullReleaseDate,
-            category,
-            type,
-            language,
-            genre,
-            watchLink,
-            castDetails,
-            searchKeywords
         };
 
-        const isMovieAvailable = await Movies.findOne({
-            $or: [
-                { imdbId: imdbId }, // Correct imdbId
-                { imbdid: imdbId }, // Misspelled imbdid
-            ]
-        });
+        //Check movie is available or not 
+        const isMovieAvailable = await Movies.findOne({ imdbId: imdbId });
 
+        //if movie is available so update with new data only
         if (isMovieAvailable) {
 
-            const updateMovie = await Movies.findOneAndUpdate({
-                $or: [
-                    { imdbId: imdbId }, // Correct imdbId
-                    { imbdid: imdbId }, // Misspelled imbdid
-                ]
-            },
+            const updateMovie = await Movies.findOneAndUpdate(
+
+                { imdbId: imdbId },
+
                 movieData,
+
                 { new: true }
             );
 
@@ -89,38 +65,6 @@ router.post('/add_movie', async (req, res) => {
         console.log(error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
-});
-
-//Route for update movie by id
-router.put('/update/:movieId', async (req, res) => {
-
-    try {
-
-        const movieId = req.params.movieId
-
-        if (!isValidObjectId(movieId)) {
-            return res.status(400).send("Invalid Movie Details");
-        }
-
-        const { updateData } = req.body;
-
-        const updateMovie = await Movies.findOneAndUpdate(
-            { _id: movieId },
-            updateData,
-            { new: true }
-        );
-
-        if (!updateProduct) {
-            return res.status(400).send("Movie is not exists in movies records");
-        }
-
-        return res.status(200).json(updateMovie);
-
-    } catch (error) {
-        console.error(error.message);
-        return res.status(500).send("Internal server error");
-    }
-
 });
 
 //Delete movie route'
@@ -176,12 +120,12 @@ router.post('/add_actor', async (req, res) => {
 router.post('/importNew', async (req, res) => {
 
     try {
-       // Get the absolute path to the 'movies.json' file
-       const jsonFilePath = path.join(__dirname, 'movies.json');
+        // Get the absolute path to the 'movies.json' file
+        const jsonFilePath = path.join(__dirname, 'movies.json');
 
-       // Read JSON data from the backup file
-       const jsonData = await fs.readFile(jsonFilePath, 'utf8');
-       const data = await JSON.parse(jsonData);
+        // Read JSON data from the backup file
+        const jsonData = await fs.readFile(jsonFilePath, 'utf8');
+        const data = await JSON.parse(jsonData);
 
         // Convert 'fullReleaseDate' strings to Date objects for all documents
         const updatedData = data.map(item => ({
@@ -195,10 +139,10 @@ router.post('/importNew', async (req, res) => {
                 .filter(item => item.fullReleaseDate) // Filter out documents without fullReleaseDate
                 .map(item => {
                     const { _id, ...restOfItem } = item;
-        
+
                     // Parse the date and check if it's a valid date
                     const parsedDate = moment(item.fullReleaseDate, ['YYYY-MM-DD', 'DD MMM YYYY', 'DD MMMM YYYY'], true);
-        
+
                     if (parsedDate.isValid()) {
                         // If the parsed date is valid, update the document with a formatted date string
                         const formattedDate = parsedDate.format('DD MMM YYYY');
@@ -222,9 +166,9 @@ router.post('/importNew', async (req, res) => {
                     }
                 })
                 .filter(Boolean) // Filter out null values (documents with invalid dates)
-        );        
-        
-        
+        );
+
+
         // Check if any documents were updated
         if (bulkWrite.modifiedCount > 0 || bulkWrite.upsertedCount > 0) {
             console.log('Some documents updated successfully.');

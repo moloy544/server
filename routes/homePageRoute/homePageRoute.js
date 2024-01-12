@@ -4,7 +4,7 @@ import Actress from "../../models/Actress.Model.js";
 
 const router = Router();
 
-const selectValue = "title thambnail releaseYear type";
+const selectValue = "imdbId title thambnail releaseYear type";
 
 const latestInCategoryListing = async (category) => {
   try {

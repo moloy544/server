@@ -5,7 +5,7 @@ import axios from "axios";
 
 const router = Router();
 
-const selectValue = "title thambnail releaseYear type";
+const selectValue = "-_id imdbId title thambnail releaseYear type";
 
 //Route For Client Category Listing /listing/category/:query
 router.post('/category/:category', async (req, res) => {
@@ -18,7 +18,7 @@ router.post('/category/:category', async (req, res) => {
 
             switch (query) {
                 case 'new release':
-                    return 2023;
+                    return [2023, 2024];
                 default:
                     return query;
             };
@@ -31,13 +31,21 @@ router.post('/category/:category', async (req, res) => {
         const pageSize = limit || 30;
 
         const moviesData = await Movies.find({
-            category: filteQuery,
+            $or: [
+                { category: filteQuery },
+                { language: filteQuery },
+                {
+                    releaseYear: {
+                        $in: Array.isArray(filteQuery) ? filteQuery : [parseInt(filteQuery) || 0]
+                    }
+                }
+            ]
         }).sort({ releaseYear: -1, fullReleaseDate: -1 })
-        .skip(skip)
+            .skip(skip)
             .limit(pageSize)
             .select(selectValue);
 
-        if (!moviesData) {
+        if (moviesData.length===0) {
             return res.status(404).send({ message: "Movies not found" });
         };
 
@@ -121,7 +129,9 @@ router.post('/search', async (req, res) => {
                 { watchLink: q },
                 { releaseYear: parseInt(q) || 0 },
             ],
-        }).skip(skip).limit(pageSize);
+        }).skip(skip)
+        .limit(pageSize)
+        .select(selectValue);
 
         const endOfData = searchData.length < pageSize ? true : false;
 
@@ -139,18 +149,14 @@ router.post('/details_movie', async (req, res) => {
 
     try {
 
-        const movieId = req.body.movie;
+        const imdbId = req.body.movie;
 
-        if (!isValidObjectId(movieId)) {
-            return res.status(404).json({ message: "Invalid movie details" });
-        };
-
-        const movieData = await Movies.findById(movieId).select('-_id title thambnail watchLink genre language type releaseYear fullReleaseDate castDetails language');
+        const movieData = await Movies.findOne({ imdbId: 'tt'+imdbId }).select('title thambnail watchLink genre language type releaseYear fullReleaseDate castDetails language imdbRating');
 
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })
         };
-       
+
         return res.status(200).json({ movieData });
 
     } catch (error) {
@@ -159,15 +165,15 @@ router.post('/details_movie', async (req, res) => {
     };
 
 });
-  
+
 
 async function updateMovie(movieData) {
     try {
 
         if (!movieData) {
-           return null; 
+            return null;
         }
-       
+
         const movieImdbId = movieData?.imdbId;
 
         const omdbResponse = await axios.get(`https://www.omdbapi.com/?&apikey=5422c8e9&plot=full&i=${movieImdbId}`);
