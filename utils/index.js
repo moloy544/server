@@ -1,4 +1,3 @@
-
 export const transformToCapitalize = (text) => {
 
     // Split the text into an array of words
@@ -12,3 +11,4 @@ export const transformToCapitalize = (text) => {
     // Join the words with a space and return the result
     return capitalizedWords.join(' ');
   };
+  

@@ -50,20 +50,16 @@ router.post('/collaction/:actorName', async (req, res) => {
 
         const actorName = transformToCapitalize(req.params?.actorName);
 
-        const { limit, page } = req.body;
+        const { limit, skip } = req.body;
 
-        const pageSize = parseInt(limit) || 25; // Number of items per page
-
-        // Calculate the number of items to skip
-        const skipCount = (page - 1) * pageSize;
-
+        const pageSize = limit || 30;
+        
         const searchRegex = new RegExp(actorName, 'i');
 
         const moviesData = await Movies.find({ castDetails: { $all: [searchRegex] } })
-            .sort({ releaseYear: -1, _id: 1 })
-            .skip(skipCount)
-            .limit(pageSize)
-            .select('title thambnail releaseYear type');
+        .skip(skip).limit(pageSize)
+        .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+        .select('imdbId title thambnail releaseYear type');
 
         const endOfData = moviesData.length < pageSize ? true : false;
 

@@ -1,6 +1,5 @@
 import { Router } from "express";
 import Movies from '../../models/Movies.Model.js';
-import { isValidObjectId } from "mongoose";
 import Actress from "../../models/Actress.Model.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { promises as fs } from 'fs';
@@ -117,7 +116,7 @@ router.post('/add_actor', async (req, res) => {
     }
 });
 
-router.post('/importNew', async (req, res) => {
+router.post('/bulkUpdate', async (req, res) => {
 
     try {
         // Get the absolute path to the 'movies.json' file
@@ -149,10 +148,7 @@ router.post('/importNew', async (req, res) => {
                         return {
                             updateOne: {
                                 filter: {
-                                    $or: [
-                                        { imdbId: restOfItem.imdbId },
-                                        { imbdId: restOfItem.imbdId },
-                                    ],
+                                    imdbId: restOfItem.imdbId
                                 },
                                 update: {
                                     $set: { ...restOfItem, fullReleaseDate: formattedDate },

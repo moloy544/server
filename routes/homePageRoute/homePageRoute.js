@@ -6,14 +6,19 @@ const router = Router();
 
 const selectValue = "imdbId title thambnail releaseYear type";
 
-const latestInCategoryListing = async (category) => {
+const latestInCategoryListing = async (category, notInLanguage) => {
   try {
-    const data = await Movies.find({
+
+    const queryCondition = {
       category,
       type: 'movie',
       releaseYear: [2024, 2023],
       genre: { $nin: ['Animation'] },
-    })
+    }
+    if (notInLanguage) {
+      queryCondition.language = { $nin: notInLanguage };
+    }
+    const data = await Movies.find(queryCondition)
       .sort({ releaseYear: -1, fullReleaseDate: -1 })
       .limit(30)
       .select(selectValue)
@@ -24,22 +29,27 @@ const latestInCategoryListing = async (category) => {
 
   } catch (error) {
     console.error(error);
-
+    return null
   }
 };
 
 const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
 
-  const queryCondition = { $all: inGenres };
+  try {
+    const queryCondition = { $all: inGenres };
 
-  if (notInGenres && notInGenres?.length > 0) {
-    queryCondition.$nin = notInGenres
+    if (notInGenres && notInGenres?.length > 0) {
+      queryCondition.$nin = notInGenres
+    }
+    const data = await Movies.find({ genre: queryCondition })
+      .limit(30).select(selectValue)
+      .lean().exec();
+
+    return data;
+  } catch (error) {
+    console.log(error);
+    return null;
   }
-  const data = await Movies.find({ genre: queryCondition })
-    .limit(30).select(selectValue)
-    .lean().exec();
-
-  return data;
 };
 
 //Get Movies By Category Listing
@@ -59,7 +69,7 @@ router.post('/', async (req, res) => {
         latestInCategoryListing('hollywood'),
 
         // Bollywood latest release movies
-        latestInCategoryListing('bollywood'),
+        latestInCategoryListing('bollywood', 'bengali'),
 
         // South latest release movies
         latestInCategoryListing('south'),
@@ -177,7 +187,7 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 4) {
 
-      const [forKidsMovies, scienceFictionMovies, crimeMovies] = await Promise.all([
+      const [forKidsMovies, scienceFictionMovies, crimeMovies, topImbdRatingMovies] = await Promise.all([
 
         //For kids movies and 
         genreListing({
@@ -193,6 +203,7 @@ router.post('/', async (req, res) => {
           inGenres: ['Crime'],
           notInGenres: []
         }),
+        Movies.find({imdbRating: {$gt: 7}}).limit(25)
 
       ]);
 
@@ -212,6 +223,11 @@ router.post('/', async (req, res) => {
             title: 'Crime movies',
             linkUrl: 'movies/genre/crime',
             movies: crimeMovies
+          },
+          {
+            title: 'Top IMDb rated movies',
+            linkUrl: 'movies/top-rated',
+            movies: topImbdRatingMovies
           }
         ]
       };

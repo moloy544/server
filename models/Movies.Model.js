@@ -23,7 +23,7 @@ const moviesModel = new Schema({
         require: true,
     },
     fullReleaseDate: {
-        type: String, 
+        type: Date, 
         require: true,
     },
     category:{
