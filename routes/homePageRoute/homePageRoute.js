@@ -203,7 +203,7 @@ router.post('/', async (req, res) => {
           inGenres: ['Crime'],
           notInGenres: []
         }),
-        Movies.find({imdbRating: {$gt: 7}}).limit(25)
+        Movies.find({imdbRating: {$gt: 7}, type: 'movie'}).sort({ imdbRating: -1, _id: 1 }).limit(25)
 
       ]);
 
@@ -225,7 +225,7 @@ router.post('/', async (req, res) => {
             movies: crimeMovies
           },
           {
-            title: 'Top IMDb rated movies',
+            title: 'Top IMDB rated movies',
             linkUrl: 'movies/top-rated',
             movies: topImbdRatingMovies
           }

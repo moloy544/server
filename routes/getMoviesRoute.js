@@ -37,9 +37,9 @@ router.post('/category/:category', async (req, res) => {
                     releaseYear: {
                         $in: Array.isArray(filteQuery) ? filteQuery : [parseInt(filteQuery) || 0]
                     }
-                },
-                { imdbRating: { $exists: false } }
-            ]
+                }
+            ],
+            type: 'movie'
         }).skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
@@ -72,6 +72,8 @@ router.post('/genre/:genre', async (req, res) => {
 
                 case 'sci fi':
                     return 'Sci-Fi';
+                    case 'reality tv':
+                        return 'Reality-Tv'
                 default:
                     return genre;
             };
@@ -152,8 +154,10 @@ router.post('/top-rated', async (req, res) => {
 
         const pageSize = limit || 30;
 
-        const moviesData = await Movies.find({imdbRating: {$gt: 7}}).select(selectValue)
-        .skip(skip).limit(pageSize);
+        const moviesData = await Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
+            .sort({ imdbRating: -1, _id: 1 })
+            .select(selectValue)
+            .skip(skip).limit(pageSize);
 
         const endOfData = moviesData.length < pageSize ? true : false;
 
