@@ -178,7 +178,7 @@ router.post('/details_movie', async (req, res) => {
 
         const imdbId = req.body.movie;
 
-        const movieData = await Movies.findOne({ imdbId: 'tt' + imdbId }).select('imdbId title thambnail watchLink genre language type releaseYear fullReleaseDate castDetails language imdbRating');
+        const movieData = await Movies.findOne({ imdbId: 'tt' + imdbId });
 
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })
