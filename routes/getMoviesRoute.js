@@ -11,15 +11,15 @@ router.post('/category/:category', async (req, res) => {
 
     try {
 
-        const query = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
+        const queryData = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
 
         function filterQuery() {
 
-            switch (query) {
+            switch (queryData) {
                 case 'new release':
                     return [2023, 2024];
                 default:
-                    return query;
+                    return queryData;
             };
         };
 
@@ -29,7 +29,7 @@ router.post('/category/:category', async (req, res) => {
 
         const pageSize = limit || 30;
 
-        const moviesData = await Movies.find({
+        const queryCondition = {
             $or: [
                 { category: filteQuery },
                 { language: filteQuery },
@@ -40,7 +40,9 @@ router.post('/category/:category', async (req, res) => {
                 }
             ],
             type: 'movie'
-        }).skip(skip).limit(pageSize)
+        }
+
+        const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
 
@@ -66,6 +68,8 @@ router.post('/genre/:genre', async (req, res) => {
 
         const genre = req.params?.genre.toLowerCase().replace(/[-]/g, ' ');
 
+        const inCategory = req.query?.sort;
+    
         function filterQuery() {
 
             switch (genre) {
@@ -87,9 +91,15 @@ router.post('/genre/:genre', async (req, res) => {
 
         const searchRegex = new RegExp(filteGenre, 'i');
 
-        const moviesData = await Movies.find({
-            genre: { $in: [searchRegex] }
-        }).skip(skip).limit(pageSize)
+        const queryCondition = {
+            genre: { $in: [searchRegex] },
+        };
+
+        if (inCategory) {
+            queryCondition.category=inCategory
+        };
+
+        const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
 

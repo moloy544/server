@@ -105,7 +105,12 @@ router.post('/', async (req, res) => {
     } else if (offsetNumber === 2) {
 
 
-      const [romanceMovies, actionMovies, thrillerMovies] = await Promise.all([
+      const [topImbdRatingMovies, romanceMovies, actionMovies, thrillerMovies] = await Promise.all([
+
+        //Top IMDB Rated Movies Listing
+        Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
+          .sort({ imdbRating: -1, _id: 1 })
+          .select(selectValue).limit(25).lean().exec(),
 
         //Romance movies
         genreListing({
@@ -125,6 +130,11 @@ router.post('/', async (req, res) => {
       const secondSectionData = {
         sliderMovies: [
           {
+            title: 'Top IMDB rated movies',
+            linkUrl: 'movies/top-rated',
+            movies: topImbdRatingMovies
+          },
+          {
             title: 'Romance movies',
             linkUrl: 'movies/genre/romance',
             movies: romanceMovies
@@ -138,7 +148,7 @@ router.post('/', async (req, res) => {
             title: 'Thriller movies',
             linkUrl: 'movies/genre/thriller',
             movies: thrillerMovies
-          },
+          }
         ]
       };
 
@@ -187,7 +197,7 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 4) {
 
-      const [forKidsMovies, scienceFictionMovies, crimeMovies, topImbdRatingMovies] = await Promise.all([
+      const [forKidsMovies, scienceFictionMovies, crimeMovies] = await Promise.all([
 
         //For kids movies and 
         genreListing({
@@ -202,9 +212,7 @@ router.post('/', async (req, res) => {
         genreListing({
           inGenres: ['Crime'],
           notInGenres: []
-        }),
-        Movies.find({imdbRating: {$gt: 7}, type: 'movie'}).sort({ imdbRating: -1, _id: 1 }).limit(25)
-
+        })
       ]);
 
       const forthSectionData = {
@@ -223,11 +231,6 @@ router.post('/', async (req, res) => {
             title: 'Crime movies',
             linkUrl: 'movies/genre/crime',
             movies: crimeMovies
-          },
-          {
-            title: 'Top IMDB rated movies',
-            linkUrl: 'movies/top-rated',
-            movies: topImbdRatingMovies
           }
         ]
       };
