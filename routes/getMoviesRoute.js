@@ -44,7 +44,7 @@ router.post('/category/:category', async (req, res) => {
             type: 'movie'
         };
 
-        if (sortFilterQuery === 'latest' || queryData ==="new release") {
+        if (sortFilterQuery === 'latest' || queryData === "new release") {
 
             const currentDate = new Date();
             const sixMonthsAgo = new Date();
@@ -226,43 +226,30 @@ const updateMovieByOmdbApi = async (movieData) => {
 
         const movieImdbId = movieData?.imdbId;
 
-        const movoeImdbRating = movieData?.imdbRating;
+        const omdbResponse = await axios.get(`https://www.omdbapi.com/?&apikey=f5c514a9&plot=full&i=${movieImdbId}`);
 
-        if (!movoeImdbRating) {
+        if (omdbResponse.status === 200) {
 
-            const omdbResponse = await axios.get(`https://www.omdbapi.com/?&apikey=f5c514a9&plot=full&i=${movieImdbId}`);
+            const { Year, Released } = omdbResponse.data || {};
 
-            if (omdbResponse.status === 200) {
+            const originalDate = Released ? new Date(Released) : null;
 
-                const { imdbRating } = omdbResponse.data || {};
+            // Format the date without the time portion
+            const formattedDate = originalDate?.toISOString().split('T')[0];
 
-                if (imdbRating && imdbRating !== "N/A" && imdbRating !== "") {
+                const updateMovie = await Movies.findOneAndUpdate(
+                    { imdbId: movieImdbId },
 
-                    const updateMovie = await Movies.findOneAndUpdate(
-                        { imdbId: movieImdbId },
-                        {
-                            $set: {
-                                imdbRating
-                            }
-                        },
-                        { new: true })
-                    console.log("Movis is update with imbd rating: " + updateMovie.imdbRating);
-                } else {
-
-                    await Movies.findOneAndUpdate(
-                        { imdbId: movieImdbId },
-                        {
-                            $set: {
-                                imdbRating: 0
-                            }
-                        },
-                        { new: true })
-                    console.log("Movie update with imdbId: " + 0);
-                };
-            }
-        } else {
-            console.log("Movie Imdbrating is exist")
+                    {
+                        $set: {
+                            fullReleaseDate: formattedDate,
+                            releaseYear: Year,
+                        }
+                    },
+                    { new: true })
+                console.log("Movis is update with year and relese date: " + updateMovie.releaseYear+ " "+ updateMovie.fullReleaseDate);
         }
+
     } catch (error) {
         console.log(error);
     }
