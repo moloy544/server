@@ -13,6 +13,8 @@ router.post('/category/:category', async (req, res) => {
 
         const queryData = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
 
+        const sortFilterQuery = req.query?.sort;
+
         function filterQuery() {
 
             switch (queryData) {
@@ -40,7 +42,16 @@ router.post('/category/:category', async (req, res) => {
                 }
             ],
             type: 'movie'
-        }
+        };
+
+        if (sortFilterQuery === 'latest' || queryData ==="new release") {
+
+            const currentDate = new Date();
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(currentDate.getMonth() - 6);
+
+            queryCondition.fullReleaseDate = { $gte: sixMonthsAgo, $lte: currentDate }
+        };
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
@@ -69,15 +80,15 @@ router.post('/genre/:genre', async (req, res) => {
         const genre = req.params?.genre.toLowerCase().replace(/[-]/g, ' ');
 
         const inCategory = req.query?.sort;
-    
+
         function filterQuery() {
 
             switch (genre) {
 
                 case 'sci fi':
                     return 'Sci-Fi';
-                    case 'reality tv':
-                        return 'Reality-Tv'
+                case 'reality tv':
+                    return 'Reality-Tv'
                 default:
                     return genre;
             };
@@ -96,7 +107,7 @@ router.post('/genre/:genre', async (req, res) => {
         };
 
         if (inCategory) {
-            queryCondition.category=inCategory
+            queryCondition.category = inCategory
         };
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)

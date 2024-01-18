@@ -83,17 +83,17 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Hollywood latest movies',
-            linkUrl: 'movies/category/hollywood',
+            linkUrl: 'movies/category/hollywood?sort=latest',
             moviesData: latestHollywoodMovies
           },
           {
             title: 'Bollywood latest movies',
-            linkUrl: 'movies/category/bollywood',
+            linkUrl: 'movies/category/bollywood?sort=latest',
             moviesData: latestBollywoodMovies
           },
           {
             title: 'South latest movies',
-            linkUrl: 'movies/category/south',
+            linkUrl: 'movies/category/south?sort=latest',
             moviesData: latestSouthMovies
           }
         ],

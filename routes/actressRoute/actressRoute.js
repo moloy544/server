@@ -8,15 +8,16 @@ const router = Router();
 router.get('/industry/:industry', async (req, res) => {
     try {
 
-        const industry = req.params?.industry || " ";
+        const industry = req.params?.industry.toLowerCase() || " ";
 
         const actorsInIndustry = await Actress.find({ industry }).select('name avatar industry');
 
-        if (!actorsInIndustry) {
-            return res.status(404).json({ message: 'No actress found in this industry' });
+        if (actorsInIndustry.length==0) {
+        
+            return res.status(204).json({ message: 'No actress found in this industry' });
         };
 
-        return res.status(200).json({ actors: actorsInIndustry });
+        return res.status(200).json({ actors: actorsInIndustry, industry });
 
     } catch (error) {
         console.log(error);
