@@ -48,7 +48,7 @@ router.post('/category/:category', async (req, res) => {
 
             const currentDate = new Date();
             const sixMonthsAgo = new Date();
-            sixMonthsAgo.setMonth(currentDate.getMonth() - 6);
+            sixMonthsAgo.setMonth(currentDate.getMonth() - 8);
 
             queryCondition.fullReleaseDate = { $gte: sixMonthsAgo, $lte: currentDate }
         };
