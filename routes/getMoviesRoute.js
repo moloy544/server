@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import axios from "axios";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const router = Router();
 
@@ -53,9 +54,9 @@ router.post('/category/:category', async (req, res) => {
             queryCondition.fullReleaseDate = { $gte: sixMonthsAgo, $lte: currentDate }
         };
 
-        const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
-            .select(selectValue);
+            const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
+                .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+                .select(selectValue);
 
         if (moviesData.length === 0) {
             return res.status(404).send({ message: "Movies not found" });
@@ -205,7 +206,9 @@ router.post('/details_movie', async (req, res) => {
             return res.status(404).json({ message: "Movie not found" })
         };
 
-        //await updateMovieByOmdbApi(movieData)
+        //await updateMovieByOmdbApi(movieData);
+
+        //await updateMovieImage(movieData);
 
         return res.status(200).json({ movieData });
 
@@ -215,6 +218,44 @@ router.post('/details_movie', async (req, res) => {
     };
 
 });
+
+
+const updateMovieImage = async (movieData) => {
+
+    if (movieData.length < 1) {
+        console.log("Movie data is empty");
+        return
+    };
+
+    const { thambnail, _id } = movieData;
+
+    const uploadCloudinary = await uploadOnCloudinary({ 
+        image: thambnail, 
+        imageId: _id, 
+        folderPath: "moviesbazaar/thambnails"
+     });
+
+    if (!uploadCloudinary) {
+        console.log("Error while upload on cloudinary")
+    };
+
+    const newThambnail = uploadCloudinary.secure_url || thambnail;
+
+    const newMovieData = {
+        thambnail: newThambnail
+    };
+
+    const updateMovie = await Movies.findOneAndUpdate(
+
+        { _id },
+
+        newMovieData,
+
+        { new: true }
+    );
+    console.log("Movie has been update with new thambnail: ", updateMovie.thambnail)
+};
+
 
 
 const updateMovieByOmdbApi = async (movieData) => {

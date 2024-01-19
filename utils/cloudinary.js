@@ -6,26 +6,43 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const uploadOnCloudinary = async ({ thambnail, imdbId, folderPath }) => {
+const uploadOnCloudinary = async ({ image, imageId, folderPath }) => {
     try {
-        if (!thambnail && !imdbId && !folderPath) {
+        if (!image && !imageId && !folderPath) {
             return { status: 404, message: "Some fildes is missing" };
         }
         //upload the file on cloudinary
-        const cloudinaryResponse = await cloudinary.uploader.upload(thambnail,
+        const cloudinaryResponse = await cloudinary.uploader.upload(image,
             {
-                public_id: imdbId,
+                public_id: imageId,
                 folder: folderPath
             });
 
         return cloudinaryResponse;
 
     } catch (error) {
-
+        console.log(error)
         return { status: 500, message: "Error while uploading cloudinary" };
     }
+};
+
+const deleteImageFromCloudinary = async ({ publicId }) => {
+
+    try {
+        if (!publicId) {
+            return { status: 404, message: "publicId is missing" };
+        }
+        //upload the file on cloudinary
+        const cloudinaryResponse = await cloudinary.uploader.destroy(publicId);
+        return cloudinaryResponse;
+
+    } catch (error) {
+        console.log(error)
+        return { status: 500, message: "Error while uploading cloudinary" };
+    }
+
 }
 
 
 
-export { uploadOnCloudinary };
+export { uploadOnCloudinary, deleteImageFromCloudinary };

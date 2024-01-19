@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Movies from '../../models/Movies.Model.js';
 import Actress from "../../models/Actress.Model.js";
-import { uploadOnCloudinary } from "../../utils/cloudinary.js";
+import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 import moment from 'moment';
@@ -25,7 +25,11 @@ router.post('/add_movie', async (req, res) => {
         const imdbId = data.imdbId;
         const thambnail = data.thambnail
 
-        const uploadCloudinary = await uploadOnCloudinary({ thambnail, imdbId, folderPath: "moviesbazaar/thambnails" });
+        const uploadCloudinary = await uploadOnCloudinary({
+            image: thambnail,
+            imageId: imdbId,
+            folderPath: "moviesbazaar/thambnails"
+        });
 
         if (!uploadCloudinary) {
             return res.status(500).json({ message: "Error while upload on cloudinary" });
@@ -72,6 +76,9 @@ router.delete('/delete/:id', async (req, res) => {
         const mId = req.params?.id
         const deleteMovie = await Movies.findByIdAndDelete(mId);
         if (deleteMovie) {
+
+            await deleteImageFromCloudinary({ publicId: mId })
+
             return res.status(200).send({ message: "Movie delete successfully" });
         } else {
             return res.status(400).send({ message: "Fail to delete movie" });
@@ -86,29 +93,45 @@ router.post('/add_actor', async (req, res) => {
 
     try {
 
-        const { avatar, name, industry } = req.body;
+        const { actorData } = req.body;
 
-        const isActorAvailable = await Actress.findOne({ name: name });
+        const { avatar, name, industry } = actorData || {};
+
+        const isActorAvailable = await Actress.findOne({ name, industry });
 
         if (isActorAvailable) {
 
-            const updateActor = await Actress.findOneAndUpdate(
-                { name: name },
-                { avatar: avatar },
-                { industry: industry },
-                { new: true },
-            );
-
-            return res.status(200).json({ message: "Actor has been update with new data", actor: updateActor });
+            return res.status(300).json({ message: `Actor already exist in ${industry} with name ${name}`, });
         };
-
-        const actorData = { avatar, name, industry };
 
         const actor = new Actress(actorData);
 
+        let finalAddActorData;
+
         const saveActor = await actor.save();
 
-        return res.status(200).json({ message: "Actor Added Successfull", actorData: saveActor });
+        if (saveActor) {
+
+            const uploadCloudinary = await uploadOnCloudinary({
+                image: avatar,
+                imageId: saveActor._id,
+                folderPath: "moviesbazaar/actress_avatar"
+            });
+
+            if (!uploadCloudinary) {
+                return res.status(300).json({ message: "Error while upload on cloudinary" });
+            };
+
+            const newAvatar = uploadCloudinary.secure_url || avatar;
+
+            finalAddActorData = await Actress.findOneAndUpdate(
+                { _id: saveActor._id },
+                { avatar: newAvatar },
+                { new: true }
+            )
+        };
+
+        return res.status(200).json({ message: "Actor Added Successfull", actorData: finalAddActorData });
 
     } catch (error) {
         console.log(error);
