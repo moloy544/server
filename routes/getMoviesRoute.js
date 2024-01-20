@@ -54,13 +54,9 @@ router.post('/category/:category', async (req, res) => {
             queryCondition.fullReleaseDate = { $gte: sixMonthsAgo, $lte: currentDate }
         };
 
-            const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-                .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
-                .select(selectValue);
-
-        if (moviesData.length === 0) {
-            return res.status(404).send({ message: "Movies not found" });
-        };
+        const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
+            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+            .select(selectValue);
 
         const endOfData = moviesData.length < pageSize ? true : false;
 
@@ -150,8 +146,7 @@ router.post('/search', async (req, res) => {
                 { searchKeywords: { $regex: searchRegex } },
                 { releaseYear: parseInt(q) || 0 },
             ],
-        }).skip(skip)
-            .limit(pageSize)
+        }).skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
 
@@ -229,11 +224,11 @@ const updateMovieImage = async (movieData) => {
 
     const { thambnail, _id } = movieData;
 
-    const uploadCloudinary = await uploadOnCloudinary({ 
-        image: thambnail, 
-        imageId: _id, 
+    const uploadCloudinary = await uploadOnCloudinary({
+        image: thambnail,
+        imageId: _id,
         folderPath: "moviesbazaar/thambnails"
-     });
+    });
 
     if (!uploadCloudinary) {
         console.log("Error while upload on cloudinary")
@@ -278,17 +273,17 @@ const updateMovieByOmdbApi = async (movieData) => {
             // Format the date without the time portion
             const formattedDate = originalDate?.toISOString().split('T')[0];
 
-                const updateMovie = await Movies.findOneAndUpdate(
-                    { imdbId: movieImdbId },
+            const updateMovie = await Movies.findOneAndUpdate(
+                { imdbId: movieImdbId },
 
-                    {
-                        $set: {
-                            fullReleaseDate: formattedDate,
-                            releaseYear: Year,
-                        }
-                    },
-                    { new: true })
-                console.log("Movis is update with year and relese date: " + updateMovie.releaseYear+ " "+ updateMovie.fullReleaseDate);
+                {
+                    $set: {
+                        fullReleaseDate: formattedDate,
+                        releaseYear: Year,
+                    }
+                },
+                { new: true })
+            console.log("Movis is update with year and relese date: " + updateMovie.releaseYear + " " + updateMovie.fullReleaseDate);
         }
 
     } catch (error) {
