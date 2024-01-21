@@ -64,7 +64,7 @@ router.post('/collaction/:actorName', async (req, res) => {
 
         const searchRegex = new RegExp(actorName, 'i');
 
-        const moviesData = await Movies.find({ castDetails: { $in: [searchRegex] } })
+        const moviesData = await Movies.find({ castDetails: { $in: [searchRegex] }, status: 'released' })
             .skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select('imdbId title thambnail releaseYear type');

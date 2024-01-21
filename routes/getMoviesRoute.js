@@ -26,7 +26,7 @@ router.post('/category/:category', async (req, res) => {
             };
         };
 
-        const filteQuery = filterQuery();
+        const filterQueryValue = filterQuery();
 
         const { limit, skip } = req.body;
 
@@ -34,16 +34,22 @@ router.post('/category/:category', async (req, res) => {
 
         const queryCondition = {
             $or: [
-                { category: filteQuery },
-                { language: filteQuery },
+                { category: filterQueryValue },
+                { language: filterQueryValue },
                 {
                     releaseYear: {
-                        $in: Array.isArray(filteQuery) ? filteQuery : [parseInt(filteQuery) || 0]
+                        $in: Array.isArray(filterQueryValue) ? filterQueryValue : [parseInt(filterQueryValue) || 0]
                     }
-                }
+                },
+                { status: filterQueryValue }
             ],
-            type: 'movie'
+
+            type: 'movie',
         };
+
+        if (filterQueryValue !== 'coming soon') {
+            queryCondition.status = 'released';
+        }
 
         if (sortFilterQuery === 'latest' || queryData === "new release") {
 
@@ -101,6 +107,7 @@ router.post('/genre/:genre', async (req, res) => {
 
         const queryCondition = {
             genre: { $in: [searchRegex] },
+            status: 'released'
         };
 
         if (inCategory) {
@@ -171,7 +178,11 @@ router.post('/top-rated', async (req, res) => {
 
         const pageSize = limit || 30;
 
-        const moviesData = await Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
+        const moviesData = await Movies.find({
+            imdbRating: { $gt: 7 },
+            type: 'movie',
+            status: 'released'
+        })
             .sort({ imdbRating: -1, _id: 1 })
             .select(selectValue)
             .skip(skip).limit(pageSize);
@@ -205,6 +216,8 @@ router.post('/details_movie', async (req, res) => {
 
         //await updateMovieImage(movieData);
 
+        //await updateWatchLink('tt' + imdbId)
+
         return res.status(200).json({ movieData });
 
     } catch (error) {
@@ -213,6 +226,17 @@ router.post('/details_movie', async (req, res) => {
     };
 
 });
+
+const updateWatchLink = async (imdbId) => {
+    await Movies.findOneAndUpdate(
+        { imdbId },
+        {
+            $set: {
+                watchLink: `https://gregarpor-roundens-i-276.site//play/${imdbId}`
+            }
+        }
+    )
+}
 
 
 const updateMovieImage = async (movieData) => {

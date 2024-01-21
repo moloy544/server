@@ -14,13 +14,14 @@ const latestInCategoryListing = async (category, notInLanguage) => {
       type: 'movie',
       releaseYear: [2024, 2023],
       genre: { $nin: ['Animation'] },
+      status: 'released'
     }
     if (notInLanguage) {
       queryCondition.language = { $nin: notInLanguage };
     }
     const data = await Movies.find(queryCondition)
       .sort({ releaseYear: -1, fullReleaseDate: -1 })
-      .limit(30)
+      .limit(25)
       .select(selectValue)
       .lean()
       .exec();
@@ -63,7 +64,13 @@ router.post('/', async (req, res) => {
 
     if (offsetNumber === 1) {
 
-      const [latestHollywoodMovies, latestBollywoodMovies, latestSouthMovies, bollywoodActressData] = await Promise.all([
+      const [
+        latestHollywoodMovies,
+        latestBollywoodMovies,
+        latestSouthMovies,
+        bollywoodActressData,
+        comingSoonMovies
+      ] = await Promise.all([
 
         // Hollywood release movies
         latestInCategoryListing('hollywood'),
@@ -74,11 +81,13 @@ router.post('/', async (req, res) => {
         // South latest release movies
         latestInCategoryListing('south'),
 
-        Actress.find({ industry: 'bollywood' }).limit(15),
+        Actress.find({ industry: 'bollywood' }).limit(15).lean().exec(),
 
+        //Coming soon movies
+        Movies.find({ status: 'coming soon' }).limit(25).select(selectValue).lean().exec(),
       ]);
 
-      const firstSectionData = {
+      const sectionOneAllData = {
 
         sliderMovies: [
           {
@@ -95,17 +104,27 @@ router.post('/', async (req, res) => {
             title: 'South latest movies',
             linkUrl: 'movies/category/south?sort=latest',
             moviesData: latestSouthMovies
-          }
+          },
+          {
+            title: 'Coming soon movies',
+            linkUrl: 'movies/category/coming-soon',
+            moviesData: comingSoonMovies
+          },
         ],
         bollywoodActressData
       }
 
-      return res.status(200).json({ firstSectionData });
+      return res.status(200).json({ sectionOne: sectionOneAllData });
 
     } else if (offsetNumber === 2) {
 
 
-      const [topImbdRatingMovies, romanceMovies, actionMovies, thrillerMovies] = await Promise.all([
+      const [
+        topImbdRatingMovies,
+        romanceMovies,
+        actionMovies,
+        thrillerMovies
+      ] = await Promise.all([
 
         //Top IMDB Rated Movies Listing
         Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
@@ -127,7 +146,7 @@ router.post('/', async (req, res) => {
 
       ]);
 
-      const secondSectionData = {
+      const sectionTwoAllData = {
         sliderMovies: [
           {
             title: 'Top IMDB rated movies',
@@ -152,11 +171,16 @@ router.post('/', async (req, res) => {
         ]
       };
 
-      return res.status(200).json({ secondSectionData });
+      return res.status(200).json({ sectionTwo: sectionTwoAllData });
 
     } else if (offsetNumber === 3) {
 
-      const [comedyMovies, horrorMovies, familyMovies] = await Promise.all([
+      const [
+        comedyMovies,
+        horrorMovies,
+        familyMovies,
+        forKidsMovies,
+      ] = await Promise.all([
 
         //Comedy movies
         genreListing({
@@ -169,11 +193,17 @@ router.post('/', async (req, res) => {
         //Family movies
         genreListing({
           inGenres: ['Family']
+        }),
+
+         //For kids movies and 
+         genreListing({
+          inGenres: ['Animation'],
+          notInGenres: []
         })
 
       ]);
 
-      const thirdSectionData = {
+      const sectionThreeAllData = {
         sliderMovies: [
           {
             title: 'Comedy movies',
@@ -189,21 +219,24 @@ router.post('/', async (req, res) => {
             title: 'Watch with family',
             linkUrl: 'movies/genre/family',
             movies: familyMovies
-          }
+          },
+          {
+            title: 'Special for kids',
+            linkUrl: 'movies/genre/animation',
+            movies: forKidsMovies
+          },
         ]
       };
 
-      return res.status(200).json({ thirdSectionData })
+      return res.status(200).json({ sectionThree: sectionThreeAllData })
 
     } else if (offsetNumber === 4) {
 
-      const [forKidsMovies, scienceFictionMovies, crimeMovies] = await Promise.all([
+      const [
+        scienceFictionMovies,
+        crimeMovies
+      ] = await Promise.all([
 
-        //For kids movies and 
-        genreListing({
-          inGenres: ['Animation'],
-          notInGenres: []
-        }),
         genreListing({
           inGenres: ['Sci-Fi'],
           notInGenres: []
@@ -215,13 +248,8 @@ router.post('/', async (req, res) => {
         })
       ]);
 
-      const forthSectionData = {
+      const sectionFourAllData = {
         sliderMovies: [
-          {
-            title: 'Special for kids',
-            linkUrl: 'movies/genre/animation',
-            movies: forKidsMovies
-          },
           {
             title: 'Science Fiction movies',
             linkUrl: 'movies/genre/sci-fi',
@@ -235,7 +263,7 @@ router.post('/', async (req, res) => {
         ]
       };
 
-      return res.status(200).json({ forthSectionData })
+      return res.status(200).json({ sectionFour: sectionFourAllData })
 
     } else {
 

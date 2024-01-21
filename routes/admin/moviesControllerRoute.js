@@ -71,14 +71,17 @@ router.post('/add_movie', async (req, res) => {
 });
 
 //Delete movie route'
-router.delete('/delete/:id', async (req, res) => {
+router.delete('/delete/:imdbId', async (req, res) => {
     try {
-        const mId = req.params?.id
-        const deleteMovie = await Movies.findByIdAndDelete(mId);
+
+        const { imdbId } = req.params;
+
+        if (!imdbId) {
+            return res.status(400).send({ message: "Invalid request. Missing imdbId." });
+        };
+
+        const deleteMovie = await Movies.findOneAndDelete({ imdbId });
         if (deleteMovie) {
-
-            await deleteImageFromCloudinary({ publicId: mId })
-
             return res.status(200).send({ message: "Movie delete successfully" });
         } else {
             return res.status(400).send({ message: "Fail to delete movie" });
@@ -86,7 +89,42 @@ router.delete('/delete/:id', async (req, res) => {
     } catch (error) {
         console.log(error)
     }
-})
+});
+
+//update movie watchLink route'
+router.put('/update-watchlink/:imdbId', async (req, res) => {
+
+    try {
+        const { imdbId } = req.params;
+
+        const { watchLink } = req.body;
+
+        if (!imdbId || !watchLink) {
+            return res.status(400).send({ message: "Invalid request. Missing imdbId or watchLink." });
+        };
+
+        const findAndUpdate = await Movies.findOneAndUpdate(
+            { imdbId },
+            {
+                $set: {
+                    watchLink
+                }
+            },
+            { new: true }
+        );
+        if (findAndUpdate) {
+
+            return res.status(200).send({ message: "Movie watchlink update successfully", updateData: findAndUpdate });
+
+        } else {
+            return res.status(400).send({ message: "Fail to update movie watch link" });
+        }
+    } catch (error) {
+        console.error("Error updating watchlink:", error);
+        return res.status(500).send({ message: "Internal server error" });
+    }
+});
+
 
 //Route for add new actor 
 router.post('/add_actor', async (req, res) => {

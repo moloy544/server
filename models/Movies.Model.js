@@ -8,7 +8,6 @@ const moviesModel = new Schema({
     },
     imdbRating:{
         type: Number,
-        require: true
     },
     thambnail:{
         type: String,
@@ -44,11 +43,14 @@ const moviesModel = new Schema({
     },
     watchLink:{
         type: String,
-        require: true,
     },
     castDetails:{
         type: Array,
         require: true,
+    },
+    status: {
+        type: String,
+        require: true
     },
     searchKeywords: {
         type: String,
