@@ -32,8 +32,9 @@ const deleteImageFromCloudinary = async ({ publicId }) => {
         if (!publicId) {
             return { status: 404, message: "publicId is missing" };
         }
+
         //upload the file on cloudinary
-        const cloudinaryResponse = await cloudinary.api.delete_resources(`moviesbazaar/thambnails/${publicId}.jpg`);
+        const cloudinaryResponse = await cloudinary.api.delete_resources(publicId);
         return cloudinaryResponse;
 
     } catch (error) {
@@ -43,37 +44,4 @@ const deleteImageFromCloudinary = async ({ publicId }) => {
 
 };
 
-
-const renameImageFromCloudinary = async ({ publicId, newPublicId }) => {
-    try {
-
-        // Use cloudinary.uploader.rename to rename the image
-        const renameImage = await cloudinary.uploader.rename(
-            `${publicId}.jpg`,
-            `${newPublicId}.jpg`,
-            { resource_type: 'image', overwrite: true }
-        );
-
-        if (renameImage) {
-            return { 
-                status: 200, 
-                message: "Successfully renamed image from cloudinary",
-                imageUrl: renameImage
-            };
-        }else{
-console.log(renameImage)
-            return { 
-                status: 200, 
-                message: "can't rename image from cloudinary",
-            };
-        }
-        
-    } catch (error) {
-        console.error("Error while renaming image:", error);
-        throw error;
-    }
-};
-
-
-
-export { uploadOnCloudinary, deleteImageFromCloudinary, renameImageFromCloudinary };
+export { uploadOnCloudinary, deleteImageFromCloudinary };

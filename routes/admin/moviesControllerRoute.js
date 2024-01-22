@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Movies from '../../models/Movies.Model.js';
 import Actress from "../../models/Actress.Model.js";
-import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../utils/cloudinary.js";
+import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 import moment from 'moment';
@@ -22,23 +22,12 @@ router.post('/add_movie', async (req, res) => {
 
         const { data } = req.body;
 
-        const imdbId = data.imdbId;
-        const thambnail = data.thambnail
-
-        const uploadCloudinary = await uploadOnCloudinary({
-            image: thambnail,
-            imageId: imdbId,
-            folderPath: "moviesbazaar/thambnails"
-        });
-
-        if (!uploadCloudinary) {
-            return res.status(500).json({ message: "Error while upload on cloudinary" });
-        };
-
         const movieData = {
             ...data,
-            thambnail: uploadCloudinary.secure_url,
         };
+
+        const imdbId = data.imdbId;
+        const thambnail = data.thambnail
 
         //Check movie is available or not 
         const isMovieAvailable = await Movies.findOne({ imdbId: imdbId });
@@ -55,14 +44,34 @@ router.post('/add_movie', async (req, res) => {
                 { new: true }
             );
 
-            return res.status(200).json({ message: "Movie has been update with new data", movieData: updateMovie, uploadCloudinary });
+            return res.status(200).json({ message: "Movie has been update with new data", movieData: updateMovie });
         };
 
         const movie = new Movies(movieData);
 
         const saveMovie = await movie.save();
 
-        return res.status(200).json({ message: "Movie Added Successfull", movieData: saveMovie, uploadCloudinary });
+        if (saveMovie) {
+
+            const uploadCloudinary = await uploadOnCloudinary({
+                image: thambnail,
+                imageId: saveMovie._id,
+                folderPath: "moviesbazaar/thambnails"
+            });
+
+            if (!uploadCloudinary) {
+                return res.status(500).json({ message: "Error while upload on cloudinary" });
+            };
+
+            saveMovie.thambnail = uploadCloudinary.secure_url || saveMovie.thambnail;
+
+            return res.status(200).json({ message: "Movie Added Successfull", movieData: saveMovie, uploadCloudinary });
+
+        } else {
+
+            return res.status(500).json({ message: "Error while add movie in to database" });
+
+        };
 
     } catch (error) {
         console.log(error);
@@ -71,18 +80,24 @@ router.post('/add_movie', async (req, res) => {
 });
 
 //Delete movie route'
-router.delete('/delete/:imdbId', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
     try {
 
-        const { imdbId } = req.params;
+        const { id } = req.params;
 
-        if (!imdbId) {
-            return res.status(400).send({ message: "Invalid request. Missing imdbId." });
+        if (!id) {
+            return res.status(400).send({ message: "Invalid request. Missing id." });
         };
 
-        const deleteMovie = await Movies.findOneAndDelete({ imdbId });
+        const deleteMovie = await Movies.findByIdAndDelete(id);
+
         if (deleteMovie) {
+
+            //Delete movie image from cloudinary server
+            await deleteImageFromCloudinary({ publicId: id });
+
             return res.status(200).send({ message: "Movie delete successfully" });
+
         } else {
             return res.status(400).send({ message: "Fail to delete movie" });
         }
@@ -144,8 +159,6 @@ router.post('/add_actor', async (req, res) => {
 
         const actor = new Actress(actorData);
 
-        let finalAddActorData;
-
         const saveActor = await actor.save();
 
         if (saveActor) {
@@ -160,16 +173,14 @@ router.post('/add_actor', async (req, res) => {
                 return res.status(300).json({ message: "Error while upload on cloudinary" });
             };
 
-            const newAvatar = uploadCloudinary.secure_url || avatar;
+            saveActor.avatar = uploadCloudinary.secure_url || avatar;
 
-            finalAddActorData = await Actress.findOneAndUpdate(
-                { _id: saveActor._id },
-                { avatar: newAvatar },
-                { new: true }
-            )
+            return res.status(200).json({ message: "Actor Added Successfull", actorData: saveActor });
+
+        } else {
+            return res.status(500).json({ message: " Error while add  actor in to database" });
+
         };
-
-        return res.status(200).json({ message: "Actor Added Successfull", actorData: finalAddActorData });
 
     } catch (error) {
         console.log(error);

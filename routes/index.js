@@ -4,6 +4,7 @@ import homePageRoute from '../routes/homePageRoute/homePageRoute.js';
 import getMoviesRoute from '../routes/getMoviesRoute.js';
 import seriesRoute from '../routes/getSeriesRoute.js';
 import actressRoute from '../routes/actressRoute/actressRoute.js';
+import userRoute from '../routes/users/usersRoute.js'
 
 const app = express();
 
@@ -11,6 +12,9 @@ const mainPath = "/api/v1";
 
 /************ ( Admin Access Route ) ****************/
 app.use(`${mainPath}/admin`, moviesControllerRoute);
+
+/*********** ( User Route ) ****************/
+app.use(`${mainPath}/user`,  userRoute);
 
 /************ ( Home Page Layout Route ) ****************/
 app.use(`${mainPath}/landing_page`, homePageRoute);

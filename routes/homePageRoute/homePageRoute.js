@@ -92,17 +92,17 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Hollywood latest movies',
-            linkUrl: 'movies/category/hollywood?sort=latest',
+            linkUrl: 'browse/latest/hollywood',
             moviesData: latestHollywoodMovies
           },
           {
             title: 'Bollywood latest movies',
-            linkUrl: 'movies/category/bollywood?sort=latest',
+            linkUrl: 'browse/latest/bollywood',
             moviesData: latestBollywoodMovies
           },
           {
             title: 'South latest movies',
-            linkUrl: 'movies/category/south?sort=latest',
+            linkUrl: 'browse/latest/south',
             moviesData: latestSouthMovies
           },
           {
@@ -150,7 +150,7 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Top IMDB rated movies',
-            linkUrl: 'movies/top-rated',
+            linkUrl: 'browse/top-rated',
             movies: topImbdRatingMovies
           },
           {
