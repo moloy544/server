@@ -52,6 +52,9 @@ const moviesModel = new Schema({
         type: String,
         require: true
     },
+    tags:{
+        type: Array,
+    },
     searchKeywords: {
         type: String,
     }

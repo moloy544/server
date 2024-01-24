@@ -21,7 +21,7 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     }
     const data = await Movies.find(queryCondition)
       .sort({ releaseYear: -1, fullReleaseDate: -1 })
-      .limit(25)
+      .limit(15)
       .select(selectValue)
       .lean()
       .exec();
@@ -43,7 +43,7 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
       queryCondition.$nin = notInGenres
     }
     const data = await Movies.find({ genre: queryCondition })
-      .limit(30).select(selectValue)
+      .limit(15).select(selectValue)
       .lean().exec();
 
     return data;
@@ -84,7 +84,7 @@ router.post('/', async (req, res) => {
         Actress.find({ industry: 'bollywood' }).limit(15).lean().exec(),
 
         //Coming soon movies
-        Movies.find({ status: 'coming soon' }).limit(25).select(selectValue).lean().exec(),
+        Movies.find({ status: 'coming soon' }).limit(15).select(selectValue).lean().exec(),
       ]);
 
       const sectionOneAllData = {
@@ -118,7 +118,6 @@ router.post('/', async (req, res) => {
 
     } else if (offsetNumber === 2) {
 
-
       const [
         topImbdRatingMovies,
         romanceMovies,
@@ -129,7 +128,7 @@ router.post('/', async (req, res) => {
         //Top IMDB Rated Movies Listing
         Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
           .sort({ imdbRating: -1, _id: 1 })
-          .select(selectValue).limit(25).lean().exec(),
+          .select(selectValue).limit(15).lean().exec(),
 
         //Romance movies
         genreListing({

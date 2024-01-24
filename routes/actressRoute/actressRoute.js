@@ -13,9 +13,9 @@ router.get('/industry/:industry', async (req, res) => {
 
         const actorsInIndustry = await Actress.find({ industry }).select('name avatar industry');
 
-        if (actorsInIndustry.length == 0) {
+        if (actorsInIndustry.length===0) {
 
-            return res.status(204).json({ message: 'No actress found in this industry' });
+            return res.status(404).json({ message: 'No actress found in this industry' });
         };
 
         return res.status(200).json({ actors: actorsInIndustry, industry });
@@ -68,6 +68,10 @@ router.post('/collaction/:actorName', async (req, res) => {
             .skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select('imdbId title thambnail releaseYear type');
+
+            if (!moviesData) {
+                return res.status(404).json({ message: "Movies not found"});
+            };
 
         const endOfData = moviesData.length < pageSize ? true : false;
 

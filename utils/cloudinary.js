@@ -15,14 +15,14 @@ const uploadOnCloudinary = async ({ image, imageId, folderPath }) => {
         const cloudinaryResponse = await cloudinary.uploader.upload(image,
             {
                 public_id: imageId,
-                folder: folderPath
+                folder: folderPath,
             });
 
         return cloudinaryResponse;
 
     } catch (error) {
         console.log(error)
-        return { status: 500, message: "Error while uploading cloudinary" };
+        return { status: 500, message: "Error while uploading on cloudinary" };
     }
 };
 
@@ -33,13 +33,14 @@ const deleteImageFromCloudinary = async ({ publicId }) => {
             return { status: 404, message: "publicId is missing" };
         }
 
-        //upload the file on cloudinary
-        const cloudinaryResponse = await cloudinary.api.delete_resources(publicId);
+        //delete the image from cloudinary
+        const cloudinaryResponse = await cloudinary.uploader.destroy(publicId);
+       
         return cloudinaryResponse;
 
     } catch (error) {
         console.log(error)
-        return { status: 500, message: "Error while uploading cloudinary" };
+        return { status: 500, message: "Error while delete image from cloudinary" };
     }
 
 };
