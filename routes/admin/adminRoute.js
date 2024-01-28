@@ -7,84 +7,83 @@ const router = Router();
 
 /****************** Admin Panel Add Delete Update Movie Series and Actor Route *****************/
 
-//Route for both Add new or update 
 router.post('/add_movie', async (req, res) => {
 
     try {
 
         const { data } = req.body;
+        
+        const { imdbId, thambnail } = data;
 
-        const movieData = {
-            ...data,
-        };
+        const newData = { ...data };
 
-        const imdbId = data.imdbId;
-        const thambnail = data.thambnail
+        // Check if the movie is available
+        const findMovie = await Movies.findOne({ imdbId });
 
-        //Check movie is available or not 
-        const findMovie = await Movies.findOne({ imdbId: imdbId });
-
-        //if movie is available so update with new data only
         if (findMovie) {
 
+            // If movie exists, update with new data
             if (thambnail && findMovie.thambnail !== thambnail) {
 
+                // Upload new thumbnail to Cloudinary
                 const uploadCloudinary = await uploadOnCloudinary({
                     image: thambnail,
-                    imageId: findMovie._id,
+                    publicId: findMovie._id,
                     folderPath: "moviesbazaar/thambnails"
                 });
 
-                if (!uploadCloudinary) {
-                    return res.status(500).json({ message: "Error while upload on cloudinary" });
+                if (!uploadCloudinary.secure_url) {
+                    return res.status(500).json({ message: "Error while uploading to Cloudinary" });
                 };
 
-                movieData.thambnail = uploadCloudinary.secure_url || movieData.thambnail;
+                // Update movieData with new thumbnail URL
+                newData.thambnail =  uploadCloudinary.secure_url
             };
 
+            // Update the existing movie with the new data
             const updateMovie = await Movies.findOneAndUpdate(
-
-                { imdbId: imdbId },
-
-                movieData,
-
+                { imdbId },
+                { $set: newData },
                 { new: true }
             );
 
-            return res.status(200).json({ message: "Movie has been update with new data", movieData: updateMovie });
+            return res.status(200).json({ message: "Movie has been updated with new data", movieData: updateMovie });
         };
 
-        const movie = new Movies(movieData);
-
+        // If movie doesn't exist, add a new one
+        const movie = new Movies(newData);
         const saveMovie = await movie.save();
 
-        if (saveMovie) {
+        if (!saveMovie) {
+            return res.status(500).json({ message: "Error while adding movie to the database" });
+        };
 
+        // Upload thumbnail to Cloudinary for the new movie
+        if (thambnail) {
             const uploadCloudinary = await uploadOnCloudinary({
                 image: thambnail,
-                imageId: saveMovie._id,
+                publicId: saveMovie._id,
                 folderPath: "moviesbazaar/thambnails"
             });
 
-            if (!uploadCloudinary) {
-                return res.status(500).json({ message: "Error while upload on cloudinary" });
+            if (!uploadCloudinary.secure_url) {
+                return res.status(500).json({ message: "Error while uploading to Cloudinary" });
             };
 
-            saveMovie.thambnail = uploadCloudinary.secure_url || saveMovie.thambnail;
+            // Update the new movie's thambnail field with the Cloudinary URL
+            saveMovie.thambnail = uploadCloudinary.secure_url;
 
-            return res.status(200).json({ message: "Movie Added Successfull", movieData: saveMovie });
-
-        } else {
-
-            return res.status(500).json({ message: "Error while add movie in to database" });
-
+            await saveMovie.save();
         };
+
+        return res.status(200).json({ message: "Movie added successfully", movieData: saveMovie });
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
+        return res.status(500).json({ message: 'Internal Server Error' });
+    };
 });
+
 
 //Delete movie route'
 router.delete('/delete/:id', async (req, res) => {
@@ -101,7 +100,7 @@ router.delete('/delete/:id', async (req, res) => {
         if (deleteMovie) {
 
             //Delete movie image from cloudinary server
-            await deleteImageFromCloudinary({ publicId: 'moviesbazaar/thambnails/'+id });
+            await deleteImageFromCloudinary({ publicId: 'moviesbazaar/thambnails/' + id });
 
             return res.status(200).send({ message: "Movie delete successfully" });
 

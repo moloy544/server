@@ -6,15 +6,15 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const uploadOnCloudinary = async ({ image, imageId, folderPath }) => {
+const uploadOnCloudinary = async ({ image, publicId, folderPath }) => {
     try {
-        if (!image && !imageId && !folderPath) {
+        if (!image && !publicId && !folderPath) {
             return { status: 404, message: "Some fildes is missing" };
         }
         //upload the file on cloudinary
         const cloudinaryResponse = await cloudinary.uploader.upload(image,
             {
-                public_id: imageId,
+                public_id: publicId,
                 folder: folderPath,
             });
 
