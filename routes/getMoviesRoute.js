@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { getLatestReleaseMovie, searchHandler } from "../controllers/getMovies.controller.js";
+import { latest } from "../utils/index.js";
 
 const router = Router();
 
@@ -12,6 +13,8 @@ router.post('/category/:category', async (req, res) => {
     try {
 
         const queryData = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
+
+        const { datesort } = req.body.bodyData;
 
         function filterQuery() {
 
@@ -44,12 +47,16 @@ router.post('/category/:category', async (req, res) => {
             type: 'movie',
         };
 
-        if (filterQueryValue !== 'coming soon') {
+        if (queryData !== 'coming soon') {
             queryCondition.status = 'released';
-        }
+        };
+
+        if (queryData === "new release") {
+            queryCondition.fullReleaseDate = latest(6);
+        };
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+            .sort({ releaseYear: datesort, fullReleaseDate: datesort, _id: 1 })
             .select(selectValue);
 
         const endOfData = moviesData.length < pageSize ? true : false;
@@ -70,6 +77,7 @@ router.post('/genre/:genre', async (req, res) => {
 
         const genre = req.params?.genre.toLowerCase().replace(/[-]/g, ' ');
 
+        const { datesort } = req.body.bodyData;
 
         function filterQuery() {
 
@@ -98,7 +106,7 @@ router.post('/genre/:genre', async (req, res) => {
         };
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+            .sort({ releaseYear: datesort, fullReleaseDate: datesort, _id: 1 })
             .select(selectValue);
 
         const endOfData = moviesData.length < pageSize ? true : false;
@@ -175,5 +183,29 @@ router.post('/details_movie/:imdbId', async (req, res) => {
     };
 
 });
+
+const updateWatchLinkUrl = async () => {
+    try {
+        const update = await Movies.updateMany(
+            // Filter condition: sourceUrl starts with "https://gregarpor-roundens-i-276.site//play/"
+            { watchLink: { $regex: /^https:\/\/gregarpor-roundens-i-276\.site\/\/play\// } },
+            // Update operation using aggregation pipeline syntax
+            [
+                {
+                    $set: {
+                        watchLink: {
+                            $concat: ["https://weisatted-forminsting-i-277.site/play/", "$imdbId"]
+                        }
+                    }
+                }
+            ]
+        );
+
+        console.log(update.modifiedCount);
+    } catch (error) {
+        console.error("Error updating documents:", error);
+    }
+
+}
 
 export default router;

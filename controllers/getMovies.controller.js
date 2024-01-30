@@ -1,4 +1,5 @@
 import Movies from "../models/Movies.Model.js";
+import { latest } from "../utils/index.js";
 
 const selectValue = "imdbId title thambnail releaseYear type";
 
@@ -53,20 +54,9 @@ export async function getLatestReleaseMovie(req, res) {
 
         const pageSize = limit || 30;
 
-        const currentDate = new Date();
-        const fromDate = new Date();
-        fromDate.setMonth(currentDate.getMonth() - 8);
-
         const queryCondition = {
-            $or: [
-                { category: querySlug },
-                { language: querySlug },
-                { status: querySlug }
-            ],
-            fullReleaseDate : { 
-                $gte: fromDate, 
-                $lte: currentDate 
-            },
+            category: querySlug,
+            fullReleaseDate: latest(6),
             type: 'movie',
             status: 'released'
         };

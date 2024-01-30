@@ -7,7 +7,9 @@ const router = Router();
 const selectValue = "imdbId title thambnail releaseYear type";
 
 router.post('/', async (req, res) => {
+
     try {
+
         const pipeline = [
 
             // Match documents of type 'series' and the specified categories
@@ -84,6 +86,8 @@ router.post('/:category', async (req, res) => {
 
         const category = req.params.category;
 
+        const { datesort } = req.body.bodyData;
+
         const capitalizeQuery = transformToCapitalize(category);
 
         const { limit, skip } = req.body;
@@ -102,7 +106,7 @@ router.post('/:category', async (req, res) => {
         };
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+            .sort({ releaseYear: datesort, fullReleaseDate: datesort, _id: 1 })
             .select(selectValue);
 
         const endOfData = moviesData.length < pageSize ? true : false;
