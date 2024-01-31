@@ -15,7 +15,7 @@ router.get('/industry/:industry', async (req, res) => {
 
         const actorsInIndustry = await Actress.find({ industry }).select('name avatar industry');
 
-        if (actorsInIndustry.length===0) {
+        if (actorsInIndustry.length === 0) {
 
             return res.status(404).json({ message: 'No actress found in this industry' });
         };
@@ -54,19 +54,19 @@ router.post('/info', async (req, res) => {
 });
 
 //Route For Client Actress Listing /listing/actress/:query 
-router.post('/collaction/:actorName', async (req, res) => {
+router.post('/collaction', async (req, res) => {
 
     try {
 
-        const actorName = transformToCapitalize(req.params?.actorName);
-
         const { limit, skip, bodyData } = req.body;
+
+        const { actor } = bodyData;
 
         const { dateSort, ratingSort } = bodyData.filterData || {};
 
         const pageSize = limit || 30;
 
-        const searchRegex = new RegExp(actorName, 'i');
+        const searchRegex = new RegExp(actor, 'i');
 
         const sortFilterCondition = {};
 
@@ -82,11 +82,11 @@ router.post('/collaction/:actorName', async (req, res) => {
             .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
-            if (!moviesData) {
-                return res.status(404).json({ message: "Movies not found"});
-            };
+        if (!moviesData) {
+            return res.status(404).json({ message: "Movies not found" });
+        };
 
-        const endOfData = moviesData.length < pageSize ? true : false;
+        const endOfData = (moviesData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
 

@@ -65,10 +65,10 @@ router.post('/category/:category', async (req, res) => {
         };
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({...sortFilterCondition, _id: 1})
+            .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
-        const endOfData = moviesData.length < pageSize ? true : false;
+        const endOfData = (moviesData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
 
@@ -124,10 +124,10 @@ router.post('/genre/:genre', async (req, res) => {
         };
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({...sortFilterCondition, _id: 1})
+            .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
-        const endOfData = moviesData.length < pageSize ? true : false;
+        const endOfData = (moviesData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
 
@@ -164,7 +164,7 @@ router.post('/top-rated', async (req, res) => {
             .select(selectValue)
             .skip(skip).limit(pageSize);
 
-        const endOfData = moviesData.length < pageSize ? true : false;
+        const endOfData = (moviesData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
 

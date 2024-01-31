@@ -31,7 +31,7 @@ export async function searchHandler(req, res) {
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
 
-        const endOfData = searchData.length < pageSize ? true : false;
+            const endOfData = (moviesData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData: searchData, endOfData: endOfData });
 
@@ -65,7 +65,7 @@ export async function getLatestReleaseMovie(req, res) {
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
 
-        const endOfData = moviesData.length < pageSize ? true : false;
+            const endOfData = (moviesData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
 

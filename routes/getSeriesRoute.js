@@ -16,7 +16,7 @@ router.post('/', async (req, res) => {
             {
                 $match: {
                     type: 'series',
-                    category: { $in: ['bollywood', 'hollywood', 'south'] }
+                    category: { $in: ['hollywood', 'bollywood', 'south'] }
                 },
             },
 
@@ -118,7 +118,7 @@ router.post('/:category', async (req, res) => {
             .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
-        const endOfData = moviesData.length < pageSize ? true : false;
+            const endOfData = (moviesData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
 
