@@ -14,7 +14,9 @@ router.post('/category/:category', async (req, res) => {
 
         const queryData = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
 
-        const { datesort } = req.body.bodyData;
+        const { limit, skip, bodyData } = req.body;
+
+        const { dateSort, ratingSort } = bodyData.filterData || {};
 
         function filterQuery() {
 
@@ -27,8 +29,6 @@ router.post('/category/:category', async (req, res) => {
         };
 
         const filterQueryValue = filterQuery();
-
-        const { limit, skip } = req.body;
 
         const pageSize = limit || 30;
 
@@ -55,8 +55,17 @@ router.post('/category/:category', async (req, res) => {
             queryCondition.fullReleaseDate = latest(6);
         };
 
+        const sortFilterCondition = {};
+
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        } else if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ releaseYear: datesort, fullReleaseDate: datesort, _id: 1 })
+            .sort({...sortFilterCondition, _id: 1})
             .select(selectValue);
 
         const endOfData = moviesData.length < pageSize ? true : false;
@@ -77,7 +86,9 @@ router.post('/genre/:genre', async (req, res) => {
 
         const genre = req.params?.genre.toLowerCase().replace(/[-]/g, ' ');
 
-        const { datesort } = req.body.bodyData;
+        const { limit, skip, bodyData } = req.body;
+
+        const { dateSort, ratingSort } = bodyData.filterData || {};
 
         function filterQuery() {
 
@@ -94,8 +105,6 @@ router.post('/genre/:genre', async (req, res) => {
 
         const filteGenre = filterQuery();
 
-        const { limit, skip } = req.body;
-
         const pageSize = limit || 30;
 
         const searchRegex = new RegExp(filteGenre, 'i');
@@ -105,8 +114,17 @@ router.post('/genre/:genre', async (req, res) => {
             status: 'released'
         };
 
+        const sortFilterCondition = {};
+
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        } else if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ releaseYear: datesort, fullReleaseDate: datesort, _id: 1 })
+            .sort({...sortFilterCondition, _id: 1})
             .select(selectValue);
 
         const endOfData = moviesData.length < pageSize ? true : false;

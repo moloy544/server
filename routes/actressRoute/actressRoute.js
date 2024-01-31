@@ -6,6 +6,8 @@ import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 
 const router = Router();
 
+const selectValue = "imdbId title thambnail releaseYear type";
+
 router.get('/industry/:industry', async (req, res) => {
     try {
 
@@ -58,16 +60,27 @@ router.post('/collaction/:actorName', async (req, res) => {
 
         const actorName = transformToCapitalize(req.params?.actorName);
 
-        const { limit, skip } = req.body;
+        const { limit, skip, bodyData } = req.body;
+
+        const { dateSort, ratingSort } = bodyData.filterData || {};
 
         const pageSize = limit || 30;
 
         const searchRegex = new RegExp(actorName, 'i');
 
+        const sortFilterCondition = {};
+
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        } else if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
         const moviesData = await Movies.find({ castDetails: { $in: [searchRegex] }, status: 'released' })
             .skip(skip).limit(pageSize)
-            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
-            .select('imdbId title thambnail releaseYear type');
+            .sort({ ...sortFilterCondition, _id: 1 })
+            .select(selectValue);
 
             if (!moviesData) {
                 return res.status(404).json({ message: "Movies not found"});

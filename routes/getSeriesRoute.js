@@ -86,11 +86,11 @@ router.post('/:category', async (req, res) => {
 
         const category = req.params.category;
 
-        const { datesort } = req.body.bodyData;
-
         const capitalizeQuery = transformToCapitalize(category);
 
-        const { limit, skip } = req.body;
+        const { limit, skip, bodyData } = req.body;
+
+        const { dateSort, ratingSort } = bodyData.filterData || {};
 
         const pageSize = limit || 30;
 
@@ -105,8 +105,17 @@ router.post('/:category', async (req, res) => {
             ],
         };
 
+        const sortFilterCondition = {};
+
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        } else if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ releaseYear: datesort, fullReleaseDate: datesort, _id: 1 })
+            .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
         const endOfData = moviesData.length < pageSize ? true : false;
