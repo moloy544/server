@@ -62,11 +62,23 @@ router.post('/collaction', async (req, res) => {
 
         const { actor } = bodyData;
 
-        const { dateSort, ratingSort } = bodyData.filterData || {};
+        const { sortFilter, categoryFilter } = bodyData.filterData
+
+        const { dateSort, ratingSort } = sortFilter || {};
 
         const pageSize = limit || 30;
 
         const searchRegex = new RegExp(actor, 'i');
+
+        const queryCondition = {
+            castDetails: { $in: [searchRegex] },
+            status: 'released'
+        };
+
+        if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
+
+            queryCondition.genre = { $in: categoryFilter?.genre }
+        };
 
         const sortFilterCondition = {};
 
@@ -77,7 +89,7 @@ router.post('/collaction', async (req, res) => {
             sortFilterCondition.imdbRating = ratingSort;
         };
 
-        const moviesData = await Movies.find({ castDetails: { $in: [searchRegex] }, status: 'released' })
+        const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(pageSize)
             .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);

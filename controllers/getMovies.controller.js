@@ -31,7 +31,7 @@ export async function searchHandler(req, res) {
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
 
-            const endOfData = (moviesData.length < pageSize - 1);
+            const endOfData = (searchData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData: searchData, endOfData: endOfData });
 
@@ -50,7 +50,11 @@ export async function getLatestReleaseMovie(req, res) {
 
         const querySlug = req.params.query?.toLocaleLowerCase().replace('-', ' ')
 
-        const { limit, skip } = req.body;
+        const { limit, skip, bodyData } = req.body;
+
+        const { sortFilter, categoryFilter } = bodyData.filterData
+
+        const { dateSort, ratingSort } = sortFilter || {};
 
         const pageSize = limit || 30;
 
@@ -61,8 +65,22 @@ export async function getLatestReleaseMovie(req, res) {
             status: 'released'
         };
 
+        if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
+
+            queryCondition.genre = { $in: categoryFilter?.genre }
+        };
+
+        const sortFilterCondition = {};
+
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        } else if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+            .sort(sortFilterCondition)
             .select(selectValue);
 
             const endOfData = (moviesData.length < pageSize - 1);

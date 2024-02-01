@@ -90,7 +90,9 @@ router.post('/:category', async (req, res) => {
 
         const { limit, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort } = bodyData.filterData || {};
+        const { sortFilter, categoryFilter} = bodyData.filterData
+
+        const { dateSort, ratingSort } = sortFilter || {};
 
         const pageSize = limit || 30;
 
@@ -103,6 +105,11 @@ router.post('/:category', async (req, res) => {
                 { tags: { $in: capitalizeQuery } },
                 { searchKeywords: capitalizeQuery },
             ],
+        };
+
+        if (categoryFilter?.genre && categoryFilter?.genre !=="all") {
+
+            queryCondition.genre = {$in: categoryFilter?.genre}
         };
 
         const sortFilterCondition = {};

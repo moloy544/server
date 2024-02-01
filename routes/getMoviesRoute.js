@@ -16,7 +16,9 @@ router.post('/category/:category', async (req, res) => {
 
         const { limit, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort } = bodyData.filterData || {};
+        const { sortFilter, categoryFilter } = bodyData.filterData
+
+        const { dateSort, ratingSort } = sortFilter || {};
 
         function filterQuery() {
 
@@ -55,6 +57,11 @@ router.post('/category/:category', async (req, res) => {
             queryCondition.fullReleaseDate = latest(6);
         };
 
+        if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
+
+            queryCondition.genre = { $in: categoryFilter?.genre }
+        };
+
         const sortFilterCondition = {};
 
         if (dateSort) {
@@ -88,7 +95,9 @@ router.post('/genre/:genre', async (req, res) => {
 
         const { limit, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort } = bodyData.filterData || {};
+        const { sortFilter, categoryFilter } = bodyData.filterData
+
+        const { dateSort, ratingSort } = sortFilter || {};
 
         function filterQuery() {
 
@@ -114,11 +123,36 @@ router.post('/genre/:genre', async (req, res) => {
             status: 'released'
         };
 
+        if (categoryFilter?.category && categoryFilter?.category !== "all") {
+
+            const category = categoryFilter.category.toLowerCase().replace(/[-]/g, ' ');
+
+            if (category === "series") {
+
+                queryCondition.type = category;
+
+            } else if (category === "new release") {
+
+                queryCondition.fullReleaseDate = latest(6);
+
+            }else if (category === "hindi" || category === "hindi dubbed" || category === "bengali") {
+
+                queryCondition.language = category;
+
+            }else{
+
+                queryCondition.category = category;
+            };
+           
+        };
+
         const sortFilterCondition = {};
 
         if (dateSort) {
+
             sortFilterCondition.releaseYear = dateSort || -1;
             sortFilterCondition.fullReleaseDate = dateSort || -1;
+
         } else if (ratingSort) {
             sortFilterCondition.imdbRating = ratingSort;
         };
@@ -151,16 +185,38 @@ router.post('/top-rated', async (req, res) => {
 
     try {
 
-        const { limit, skip } = req.body;
+        const { limit, skip, bodyData } = req.body;
+
+        const { sortFilter, categoryFilter } = bodyData.filterData
+
+        const { dateSort, ratingSort } = sortFilter || {};
 
         const pageSize = limit || 30;
 
-        const moviesData = await Movies.find({
+        const queryCondition = {
             imdbRating: { $gt: 7 },
             type: 'movie',
             status: 'released'
-        })
-            .sort({ imdbRating: -1, _id: 1 })
+        };
+        
+        if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
+
+            queryCondition.genre = { $in: categoryFilter?.genre }
+        };
+
+        const sortFilterCondition = {};
+
+        if (dateSort) {
+
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+
+        } else if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
+        const moviesData = await Movies.find(queryCondition)
+            .sort(sortFilterCondition)
             .select(selectValue)
             .skip(skip).limit(pageSize);
 
@@ -202,17 +258,19 @@ router.post('/details_movie/:imdbId', async (req, res) => {
 
 });
 
+
 const updateWatchLinkUrl = async () => {
     try {
+
+        const regexValue = new RegExp("https://friness-cherlormur-i-275.site/play/", 'i');
         const update = await Movies.updateMany(
-            // Filter condition: sourceUrl starts with "https://gregarpor-roundens-i-276.site//play/"
-            { watchLink: { $regex: /^https:\/\/gregarpor-roundens-i-276\.site\/\/play\// } },
-            // Update operation using aggregation pipeline syntax
+            { watchLink: { $regex: regexValue } },
+
             [
                 {
                     $set: {
                         watchLink: {
-                            $concat: ["https://weisatted-forminsting-i-277.site/play/", "$imdbId"]
+                            $concat: ["https://thodian-creachines-i-278.site/play/", "$imdbId"]
                         }
                     }
                 }
