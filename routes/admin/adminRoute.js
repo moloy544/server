@@ -141,11 +141,13 @@ router.post('/add_actor', async (req, res) => {
                 folderPath: "moviesbazaar/actress_avatar"
             });
 
-            if (!uploadCloudinary) {
+            if (!uploadCloudinary.secure_url) {
                 return res.status(300).json({ message: "Error while upload on cloudinary" });
             };
 
-            saveActor.avatar = uploadCloudinary.secure_url || avatar;
+            saveActor.avatar = uploadCloudinary.secure_url;
+
+            await saveActor.save();
 
             return res.status(200).json({ message: "Actor Added Successfull", actorData: saveActor });
 

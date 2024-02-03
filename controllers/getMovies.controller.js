@@ -22,16 +22,17 @@ export async function searchHandler(req, res) {
                 { category: { $regex: searchRegex } },
                 { type: { $regex: searchRegex } },
                 { language: { $regex: searchRegex } },
-                { genre: { $in: [searchRegex] } },
-                { castDetails: { $in: [searchRegex] } },
+                { genre: { $in: searchRegex } },
+                { castDetails: { $in: searchRegex } },
                 { searchKeywords: { $regex: searchRegex } },
+                { tags: { $in: searchRegex } },
                 { releaseYear: parseInt(q) || 0 },
             ],
         }).skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
 
-            const endOfData = (searchData.length < pageSize - 1);
+        const endOfData = (searchData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData: searchData, endOfData: endOfData });
 
@@ -83,7 +84,7 @@ export async function getLatestReleaseMovie(req, res) {
             .sort(sortFilterCondition)
             .select(selectValue);
 
-            const endOfData = (moviesData.length < pageSize - 1);
+        const endOfData = (moviesData.length < pageSize - 1);
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
 

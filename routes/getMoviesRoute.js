@@ -244,7 +244,7 @@ router.post('/details_movie/:imdbId', async (req, res) => {
         }
 
         const movieData = await Movies.findOne({ imdbId });
-
+    
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })
         };
@@ -262,7 +262,7 @@ router.post('/details_movie/:imdbId', async (req, res) => {
 const updateWatchLinkUrl = async () => {
     try {
 
-        const regexValue = new RegExp("https://friness-cherlormur-i-275.site/play/", 'i');
+        const regexValue = new RegExp("https://weisatted-forminsting-i-277.site/play/", 'i');
         const update = await Movies.updateMany(
             { watchLink: { $regex: regexValue } },
 
@@ -270,7 +270,7 @@ const updateWatchLinkUrl = async () => {
                 {
                     $set: {
                         watchLink: {
-                            $concat: ["https://thodian-creachines-i-278.site/play/", "$imdbId"]
+                            $concat: ["https://plotilting-futhork-i-279.site/play/", "$imdbId"]
                         }
                     }
                 }
