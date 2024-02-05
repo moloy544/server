@@ -1,7 +1,8 @@
-import { Router } from "express";
+import { Router, query } from "express";
 import Movies from '../models/Movies.Model.js';
 import { getLatestReleaseMovie, searchHandler } from "../controllers/getMovies.controller.js";
-import { latest } from "../utils/index.js";
+import { getDataBetweenMonth } from "../utils/index.js";
+import { countGenres } from "../lib/index.js";
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.post('/category/:category', async (req, res) => {
 
         const queryData = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
 
-        const { limit, skip, bodyData } = req.body;
+        const { limit, page, skip, bodyData } = req.body;
 
         const { sortFilter, categoryFilter } = bodyData.filterData
 
@@ -54,7 +55,7 @@ router.post('/category/:category', async (req, res) => {
         };
 
         if (queryData === "new release") {
-            queryCondition.fullReleaseDate = latest(6);
+            queryCondition.fullReleaseDate = getDataBetweenMonth(6);
         };
 
         if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
@@ -75,9 +76,20 @@ router.post('/category/:category', async (req, res) => {
             .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
+        let dataToSend = {};
+
         const endOfData = (moviesData.length < pageSize - 1);
 
-        return res.status(200).json({ moviesData, endOfData: endOfData });
+        dataToSend = { moviesData, endOfData: endOfData };
+
+        if (page && page === 1) {
+
+            const genreCount = await countGenres({ query: queryCondition });
+
+            dataToSend.filterCount = { genre: genreCount };
+        };
+
+        return res.status(200).json(dataToSend);
 
     } catch (error) {
         console.log(error);
@@ -133,17 +145,17 @@ router.post('/genre/:genre', async (req, res) => {
 
             } else if (category === "new release") {
 
-                queryCondition.fullReleaseDate = latest(6);
+                queryCondition.fullReleaseDate = getDataBetweenMonth(6);
 
-            }else if (category === "hindi" || category === "hindi dubbed" || category === "bengali") {
+            } else if (category === "hindi" || category === "hindi dubbed" || category === "bengali") {
 
                 queryCondition.language = category;
 
-            }else{
+            } else {
 
                 queryCondition.category = category;
             };
-           
+
         };
 
         const sortFilterCondition = {};
@@ -185,7 +197,7 @@ router.post('/top-rated', async (req, res) => {
 
     try {
 
-        const { limit, skip, bodyData } = req.body;
+        const { limit, page, skip, bodyData } = req.body;
 
         const { sortFilter, categoryFilter } = bodyData.filterData
 
@@ -198,7 +210,7 @@ router.post('/top-rated', async (req, res) => {
             type: 'movie',
             status: 'released'
         };
-        
+
         if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
 
             queryCondition.genre = { $in: categoryFilter?.genre }
@@ -220,9 +232,20 @@ router.post('/top-rated', async (req, res) => {
             .select(selectValue)
             .skip(skip).limit(pageSize);
 
+        let dataToSend = {};
+
         const endOfData = (moviesData.length < pageSize - 1);
 
-        return res.status(200).json({ moviesData, endOfData: endOfData });
+        dataToSend = { moviesData, endOfData: endOfData };
+
+        if (page && page === 1) {
+
+            const genreCount = await countGenres({ query: queryCondition });
+
+            dataToSend.filterCount = { genre: genreCount };
+        };
+
+        return res.status(200).json(dataToSend);
 
     } catch (error) {
         console.log(error)
@@ -241,10 +264,10 @@ router.post('/details_movie/:imdbId', async (req, res) => {
 
         if (!imdbId) {
             return res.status(400).json({ message: "imdbId is required" });
-        }
+        };
 
         const movieData = await Movies.findOne({ imdbId });
-    
+
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" })
         };
@@ -262,7 +285,7 @@ router.post('/details_movie/:imdbId', async (req, res) => {
 const updateWatchLinkUrl = async () => {
     try {
 
-        const regexValue = new RegExp("https://weisatted-forminsting-i-277.site/play/", 'i');
+        const regexValue = new RegExp("https://esh-bostewsom-i-273.site/play/", 'i');
         const update = await Movies.updateMany(
             { watchLink: { $regex: regexValue } },
 

@@ -1,5 +1,6 @@
+import { countGenres } from "../lib/index.js";
 import Movies from "../models/Movies.Model.js";
-import { latest } from "../utils/index.js";
+import { getDataBetweenMonth } from "../utils/index.js";
 
 const selectValue = "imdbId title thambnail releaseYear type";
 
@@ -51,7 +52,7 @@ export async function getLatestReleaseMovie(req, res) {
 
         const querySlug = req.params.query?.toLocaleLowerCase().replace('-', ' ')
 
-        const { limit, skip, bodyData } = req.body;
+        const { limit, page, skip, bodyData } = req.body;
 
         const { sortFilter, categoryFilter } = bodyData.filterData
 
@@ -61,7 +62,7 @@ export async function getLatestReleaseMovie(req, res) {
 
         const queryCondition = {
             category: querySlug,
-            fullReleaseDate: latest(6),
+            fullReleaseDate: getDataBetweenMonth(6),
             type: 'movie',
             status: 'released'
         };
@@ -84,9 +85,20 @@ export async function getLatestReleaseMovie(req, res) {
             .sort(sortFilterCondition)
             .select(selectValue);
 
-        const endOfData = (moviesData.length < pageSize - 1);
+            let dataToSend = {};
 
-        return res.status(200).json({ moviesData, endOfData: endOfData });
+            const endOfData = (moviesData.length < pageSize - 1);
+    
+            dataToSend = { moviesData, endOfData: endOfData };
+    
+            if (page && page === 1) {
+    
+                const genreCount = await countGenres({ query: queryCondition });
+    
+                dataToSend.filterCount = { genre: genreCount };
+            };
+    
+            return res.status(200).json(dataToSend);
 
     } catch (error) {
         console.log(error)

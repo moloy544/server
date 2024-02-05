@@ -58,7 +58,7 @@ router.post('/collaction', async (req, res) => {
 
     try {
 
-        const { limit, skip, bodyData } = req.body;
+        const { limit, page, skip, bodyData } = req.body;
 
         const { actor } = bodyData;
 
@@ -98,9 +98,20 @@ router.post('/collaction', async (req, res) => {
             return res.status(404).json({ message: "Movies not found" });
         };
 
+        let dataToSend = {};
+
         const endOfData = (moviesData.length < pageSize - 1);
 
-        return res.status(200).json({ moviesData, endOfData: endOfData });
+        dataToSend = { moviesData, endOfData: endOfData };
+
+        if (page && page === 1) {
+
+            const genreCount = await countGenres({ query: queryCondition });
+
+            dataToSend.filterCount = { genre: genreCount };
+        };
+
+        return res.status(200).json(dataToSend);
 
     } catch (error) {
         console.log(error);

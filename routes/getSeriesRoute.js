@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { transformToCapitalize } from "../utils/index.js";
+import { countGenres } from "../lib/index.js";
 
 const router = Router();
 
@@ -88,7 +89,7 @@ router.post('/:category', async (req, res) => {
 
         const capitalizeQuery = transformToCapitalize(category);
 
-        const { limit, skip, bodyData } = req.body;
+        const { limit, page, skip, bodyData } = req.body;
 
         const { sortFilter, categoryFilter} = bodyData.filterData
 
@@ -125,9 +126,20 @@ router.post('/:category', async (req, res) => {
             .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
-            const endOfData = (moviesData.length < pageSize - 1);
+            let dataToSend = {};
 
-        return res.status(200).json({ moviesData, endOfData: endOfData });
+        const endOfData = (moviesData.length < pageSize - 1);
+
+        dataToSend = { moviesData, endOfData: endOfData };
+
+        if (page && page === 1) {
+
+            const genreCount = await countGenres({ query: queryCondition });
+
+            dataToSend.filterCount = { genre: genreCount };
+        };
+
+        return res.status(200).json(dataToSend);
 
     } catch (error) {
         console.log(error);

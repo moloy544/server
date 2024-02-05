@@ -12,7 +12,7 @@ export const transformToCapitalize = (text) => {
   return capitalizedWords?.join(' ');
 };
 
-export function latest(month) {
+export function getDataBetweenMonth(month) {
   const currentDate = new Date();
   const fromDate = new Date();
   fromDate.setMonth(currentDate.getMonth() - month);
