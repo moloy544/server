@@ -136,7 +136,7 @@ router.post('/:category', async (req, res) => {
 
             const genreCount = await countGenres({ query: queryCondition });
 
-            dataToSend.filterCount = { genre: genreCount };
+            dataToSend.filterCount = genreCount;
         };
 
         return res.status(200).json(dataToSend);
@@ -146,7 +146,6 @@ router.post('/:category', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     };
 });
-
 
 
 export default router;

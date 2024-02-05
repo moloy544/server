@@ -2,16 +2,16 @@ import { Router } from "express";
 import Movies from '../../models/Movies.Model.js';
 import { transformToCapitalize } from "../../utils/index.js";
 import Actress from "../../models/Actress.Model.js";
-import { uploadOnCloudinary } from "../../utils/cloudinary.js";
+import { countGenres } from "../../lib/index.js";
 
 const router = Router();
 
 const selectValue = "imdbId title thambnail releaseYear type";
 
-router.get('/industry/:industry', async (req, res) => {
+router.post('/industry', async (req, res) => {
     try {
 
-        const industry = req.params?.industry.toLowerCase() || " ";
+        const industry = req.body.industry?.toLowerCase();
 
         const actorsInIndustry = await Actress.find({ industry }).select('name avatar industry');
 
@@ -42,8 +42,6 @@ router.post('/info', async (req, res) => {
         if (!actor) {
             return res.status(404).json({ message: 'Actor not found' });
         };
-
-        //await updateActorData(actor);
 
         return res.status(200).json({ actor });
 
@@ -108,7 +106,7 @@ router.post('/collaction', async (req, res) => {
 
             const genreCount = await countGenres({ query: queryCondition });
 
-            dataToSend.filterCount = { genre: genreCount };
+            dataToSend.filterCount = genreCount;
         };
 
         return res.status(200).json(dataToSend);
@@ -118,44 +116,6 @@ router.post('/collaction', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     };
 });
-
-const updateActorData = async (actorData) => {
-
-    if (actorData.length < 1) {
-        console.log("Actor data is empty");
-        return
-    };
-
-    const { avatar, _id } = actorData;
-
-    const uploadCloudinary = await uploadOnCloudinary({
-        image: avatar,
-        imageId: _id,
-        folderPath: "moviesbazaar/actress_avatar"
-    });
-
-    if (!uploadCloudinary) {
-        console.log("Error while upload on cloudinary")
-    };
-    console.log(uploadCloudinary)
-
-    const newAvatar = uploadCloudinary.secure_url || avatar;
-
-    const newActorData = {
-        avatar: newAvatar
-    };
-
-    const updateActor = await Actress.findOneAndUpdate(
-
-        { _id },
-
-        newActorData,
-
-        { new: true }
-    );
-    console.log("Actor has been update with new data: ", updateActor)
-};
-
 
 
 export default router;
