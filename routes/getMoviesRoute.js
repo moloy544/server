@@ -139,7 +139,7 @@ router.post('/genre/:genre', async (req, res) => {
 
             const category = categoryFilter.category.toLowerCase().replace(/[-]/g, ' ');
 
-            if (category === "series") {
+            if (category === "series" || category === "movie") {
 
                 queryCondition.type = category;
 
