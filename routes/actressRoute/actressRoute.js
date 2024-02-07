@@ -58,13 +58,9 @@ router.post('/collaction', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { actor } = bodyData;
+        const actor = bodyData.actor;
 
-        const { sortFilter, categoryFilter } = bodyData.filterData
-
-        const { dateSort, ratingSort } = sortFilter || {};
-
-        const pageSize = limit || 30;
+        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
 
         const searchRegex = new RegExp(actor, 'i');
 
@@ -73,22 +69,24 @@ router.post('/collaction', async (req, res) => {
             status: 'released'
         };
 
-        if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
+        if (genreSort && genreSort !== "all") {
 
-            queryCondition.genre = { $in: categoryFilter?.genre }
+            queryCondition.genre = { $in: genreSort }
         };
 
         const sortFilterCondition = {};
 
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        } else if (ratingSort) {
+        if (ratingSort) {
             sortFilterCondition.imdbRating = ratingSort;
         };
 
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        };
+
         const moviesData = await Movies.find(queryCondition)
-            .skip(skip).limit(pageSize)
+            .skip(skip).limit(limit)
             .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
@@ -98,7 +96,7 @@ router.post('/collaction', async (req, res) => {
 
         let dataToSend = {};
 
-        const endOfData = (moviesData.length < pageSize - 1);
+        const endOfData = (moviesData.length < limit - 1);
 
         dataToSend = { moviesData, endOfData: endOfData };
 

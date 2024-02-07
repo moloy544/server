@@ -27,6 +27,7 @@ export async function searchHandler(req, res) {
                 { castDetails: { $in: searchRegex } },
                 { searchKeywords: { $regex: searchRegex } },
                 { tags: { $in: searchRegex } },
+                {imdbId: q},
                 { releaseYear: parseInt(q) || 0 },
             ],
         }).skip(skip).limit(pageSize)
@@ -54,11 +55,7 @@ export async function getLatestReleaseMovie(req, res) {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { sortFilter, categoryFilter } = bodyData.filterData
-
-        const { dateSort, ratingSort } = sortFilter || {};
-
-        const pageSize = limit || 30;
+        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
 
         const queryCondition = {
             category: querySlug,
@@ -67,27 +64,29 @@ export async function getLatestReleaseMovie(req, res) {
             status: 'released'
         };
 
-        if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
+        if (genreSort && genreSort !== "all") {
 
-            queryCondition.genre = { $in: categoryFilter?.genre }
+            queryCondition.genre = { $in: genreSort }
         };
 
         const sortFilterCondition = {};
 
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        } else if (ratingSort) {
+        if (ratingSort) {
             sortFilterCondition.imdbRating = ratingSort;
         };
 
-        const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort(sortFilterCondition)
-            .select(selectValue);
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        };
+
+        const moviesData = await Movies.find(queryCondition) .skip(skip).limit(limit)
+        .select(selectValue)
+        .sort({ ...sortFilterCondition, _id: 1 });
 
             let dataToSend = {};
 
-            const endOfData = (moviesData.length < pageSize - 1);
+            const endOfData = (moviesData.length < limit - 1);
     
             dataToSend = { moviesData, endOfData: endOfData };
     

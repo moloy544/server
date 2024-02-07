@@ -1,4 +1,4 @@
-import { Router, query } from "express";
+import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { getLatestReleaseMovie, searchHandler } from "../controllers/getMovies.controller.js";
 import { getDataBetweenMonth } from "../utils/index.js";
@@ -17,9 +17,7 @@ router.post('/category/:category', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { sortFilter, categoryFilter } = bodyData.filterData
-
-        const { dateSort, ratingSort } = sortFilter || {};
+        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
 
         function filterQuery() {
 
@@ -32,8 +30,6 @@ router.post('/category/:category', async (req, res) => {
         };
 
         const filterQueryValue = filterQuery();
-
-        const pageSize = limit || 30;
 
         const queryCondition = {
             $or: [
@@ -58,27 +54,30 @@ router.post('/category/:category', async (req, res) => {
             queryCondition.fullReleaseDate = getDataBetweenMonth(6);
         };
 
-        if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
+        if (genreSort && genreSort !== "all") {
 
-            queryCondition.genre = { $in: categoryFilter?.genre }
+            queryCondition.genre = { $in: genreSort }
         };
 
         const sortFilterCondition = {};
 
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        } else if (ratingSort) {
+        if (ratingSort) {
             sortFilterCondition.imdbRating = ratingSort;
         };
 
-        const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ ...sortFilterCondition, _id: 1 })
-            .select(selectValue);
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        };
+
+        const moviesData = await Movies.find(queryCondition)
+            .skip(skip).limit(limit)
+            .select(selectValue)
+            .sort({ ...sortFilterCondition, _id: 1 });
 
         let dataToSend = {};
 
-        const endOfData = (moviesData.length < pageSize - 1);
+        const endOfData = (moviesData.length < limit - 1);
 
         dataToSend = { moviesData, endOfData: endOfData };
 
@@ -107,9 +106,7 @@ router.post('/genre/:genre', async (req, res) => {
 
         const { limit, skip, bodyData } = req.body;
 
-        const { sortFilter, categoryFilter } = bodyData.filterData
-
-        const { dateSort, ratingSort } = sortFilter || {};
+        const { dateSort, ratingSort, categoryFilter, languageFilter, typeFilter } = bodyData.filterData || {};
 
         function filterQuery() {
 
@@ -126,8 +123,6 @@ router.post('/genre/:genre', async (req, res) => {
 
         const filteGenre = filterQuery();
 
-        const pageSize = limit || 30;
-
         const searchRegex = new RegExp(filteGenre, 'i');
 
         const queryCondition = {
@@ -135,45 +130,42 @@ router.post('/genre/:genre', async (req, res) => {
             status: 'released'
         };
 
-        if (categoryFilter?.category && categoryFilter?.category !== "all") {
+        if (categoryFilter && categoryFilter !== "all") {
 
-            const category = categoryFilter.category.toLowerCase().replace(/[-]/g, ' ');
-
-            if (category === "series" || category === "movie") {
-
-                queryCondition.type = category;
-
-            } else if (category === "new release") {
-
+            if (categoryFilter === "new release") {
                 queryCondition.fullReleaseDate = getDataBetweenMonth(6);
-
-            } else if (category === "hindi" || category === "hindi dubbed" || category === "bengali") {
-
-                queryCondition.language = category;
-
             } else {
+                queryCondition.category = categoryFilter;
+            };
 
-                queryCondition.category = category;
+            if (typeFilter) {
+                queryCondition.type = typeFilter;
+            };
+
+            if (languageFilter) {
+                queryCondition.language = languageFilter;
             };
 
         };
 
         const sortFilterCondition = {};
 
+        if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
         if (dateSort) {
 
             sortFilterCondition.releaseYear = dateSort || -1;
             sortFilterCondition.fullReleaseDate = dateSort || -1;
-
-        } else if (ratingSort) {
-            sortFilterCondition.imdbRating = ratingSort;
         };
 
-        const moviesData = await Movies.find(queryCondition).skip(skip).limit(pageSize)
-            .sort({ ...sortFilterCondition, _id: 1 })
-            .select(selectValue);
+        const moviesData = await Movies.find(queryCondition)
+        .skip(skip).limit(limit)
+        .select(selectValue)
+        .sort({ ...sortFilterCondition, _id: 1 });
 
-        const endOfData = (moviesData.length < pageSize - 1);
+        const endOfData = (moviesData.length < limit - 1);
 
         return res.status(200).json({ moviesData, endOfData: endOfData });
 
@@ -199,11 +191,7 @@ router.post('/top-rated', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { sortFilter, categoryFilter } = bodyData.filterData
-
-        const { dateSort, ratingSort } = sortFilter || {};
-
-        const pageSize = limit || 30;
+        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
 
         const queryCondition = {
             imdbRating: { $gt: 7 },
@@ -211,30 +199,29 @@ router.post('/top-rated', async (req, res) => {
             status: 'released'
         };
 
-        if (categoryFilter?.genre && categoryFilter?.genre !== "all") {
-
-            queryCondition.genre = { $in: categoryFilter?.genre }
+        if (genreSort && genreSort !== "all") {
+            queryCondition.genre = { $in: genreSort }
         };
 
         const sortFilterCondition = {};
 
         if (dateSort) {
-
             sortFilterCondition.releaseYear = dateSort || -1;
             sortFilterCondition.fullReleaseDate = dateSort || -1;
-
-        } else if (ratingSort) {
+        };
+        
+        if (ratingSort) {
             sortFilterCondition.imdbRating = ratingSort;
         };
 
         const moviesData = await Movies.find(queryCondition)
-            .sort(sortFilterCondition)
-            .select(selectValue)
-            .skip(skip).limit(pageSize);
+        .skip(skip).limit(limit)
+        .select(selectValue)
+        .sort({ ...sortFilterCondition, _id: 1 });
 
         let dataToSend = {};
 
-        const endOfData = (moviesData.length < pageSize - 1);
+        const endOfData = (moviesData.length < limit - 1);
 
         dataToSend = { moviesData, endOfData: endOfData };
 
