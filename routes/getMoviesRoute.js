@@ -268,30 +268,4 @@ router.post('/details_movie/:imdbId', async (req, res) => {
 
 });
 
-
-const updateWatchLinkUrl = async () => {
-    try {
-
-        const regexValue = new RegExp("https://esh-bostewsom-i-273.site/play/", 'i');
-        const update = await Movies.updateMany(
-            { watchLink: { $regex: regexValue } },
-
-            [
-                {
-                    $set: {
-                        watchLink: {
-                            $concat: ["https://plotilting-futhork-i-279.site/play/", "$imdbId"]
-                        }
-                    }
-                }
-            ]
-        );
-
-        console.log(update.modifiedCount);
-    } catch (error) {
-        console.error("Error updating documents:", error);
-    }
-
-}
-
 export default router;

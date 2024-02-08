@@ -2,11 +2,11 @@ import Movies from "../../../models/Movies.Model.js";
 import { uploadOnCloudinary } from "../../../utils/cloudinary.js";
 
 //add movie controller
-export async function addNewMovie(req, res){
+export async function addNewMovie(req, res) {
     try {
 
         const { data } = req.body;
-        
+
         const { imdbId, thambnail } = data;
 
         const newData = { ...data };
@@ -31,7 +31,7 @@ export async function addNewMovie(req, res){
                 };
 
                 // Update movieData with new thumbnail URL
-                newData.thambnail =  uploadCloudinary.secure_url
+                newData.thambnail = uploadCloudinary.secure_url
             };
 
             // Update the existing movie with the new data
@@ -74,13 +74,13 @@ export async function addNewMovie(req, res){
 
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(500).json({ message: 'Internal server error while add document' });
     };
 };
 
 //delete movie controller
-export async function deleteMovie(req, res){
-    
+export async function deleteMovie(req, res) {
+
     try {
 
         const { id } = req.params;
@@ -102,7 +102,44 @@ export async function deleteMovie(req, res){
             return res.status(400).send({ message: "Fail to delete movie" });
         }
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        return res.status(200).send({ message: "Internal server error whilte delete document" });
     };
 
+};
+
+
+//Update movie watchlink 
+export async function updateWatchLinkUrl(req, res) {
+
+    try {
+
+        const { newWatchLink, oldWatchLink } = req.body;
+
+        const regexValue = new RegExp(oldWatchLink, 'i');
+
+        const update = await Movies.updateMany(
+            { watchLink: { $regex: regexValue } },
+
+            [
+                {
+                    $set: {
+                        watchLink: {
+                            $concat: [newWatchLink, "$imdbId"]
+                        }
+                    }
+                }
+            ]
+        );
+
+        if (!update) {
+           return res.status(200).json({ message: "Watch link are not update" });
+        };
+
+        return res.status(200).json({ message: `Total ${update.modifiedCount} data update with ${newWatchLink} this watch link` });
+
+    } catch (error) {
+        console.error("Error updating documents:", error);
+        return res.status(500).json({ message: "Interal server error while updating watch link"});
+    };
 };
