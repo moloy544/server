@@ -106,7 +106,7 @@ router.post('/', async (req, res) => {
             moviesData: latestSouthMovies
           },
           {
-            title: 'Coming soon movies',
+            title: 'Upcoming movies',
             linkUrl: 'movies/category/coming-soon',
             moviesData: comingSoonMovies
           },
