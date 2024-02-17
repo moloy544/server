@@ -42,8 +42,9 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
     if (notInGenres && notInGenres?.length > 0) {
       queryCondition.$nin = notInGenres
     }
-    const data = await Movies.find({ genre: queryCondition })
-      .limit(15).select(selectValue)
+    const data = await Movies.find({ genre: queryCondition, type: 'movie' })
+      .sort({_id: -1 }).limit(15)
+      .select(selectValue)
       .lean().exec();
 
     return data;
@@ -194,8 +195,8 @@ router.post('/', async (req, res) => {
           inGenres: ['Family']
         }),
 
-         //For kids movies and 
-         genreListing({
+        //For kids movies and 
+        genreListing({
           inGenres: ['Animation'],
           notInGenres: []
         })

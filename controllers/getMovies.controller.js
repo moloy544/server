@@ -80,7 +80,8 @@ export async function getLatestReleaseMovie(req, res) {
             sortFilterCondition.fullReleaseDate = dateSort || -1;
         };
 
-        const moviesData = await Movies.find(queryCondition) .skip(skip).limit(limit)
+        const moviesData = await Movies.find(queryCondition)
+        .skip(skip).limit(limit)
         .select(selectValue)
         .sort({ ...sortFilterCondition, _id: 1 });
 
@@ -94,7 +95,7 @@ export async function getLatestReleaseMovie(req, res) {
     
                 const genreCount = await countGenres({ query: queryCondition });
     
-                dataToSend.filterCount = { genre: genreCount };
+                dataToSend.filterCount = genreCount;
             };
     
             return res.status(200).json(dataToSend);
