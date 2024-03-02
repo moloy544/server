@@ -1,5 +1,5 @@
 import Movies from "../../../models/Movies.Model.js";
-import { uploadOnCloudinary } from "../../../utils/cloudinary.js";
+import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
 
 //add movie controller
 export async function addNewMovie(req, res) {
@@ -80,33 +80,30 @@ export async function addNewMovie(req, res) {
 
 //delete movie controller
 export async function deleteMovie(req, res) {
-
     try {
-
         const { id } = req.params;
 
         if (!id) {
             return res.status(400).send({ message: "Invalid request. Missing id." });
-        };
+        }
 
-        const deleteMovie = await Movies.findByIdAndDelete(id);
+        const deleteMovie = await Movies.deleteOne({ _id: id });
 
-        if (deleteMovie) {
+        console.log("deleteMovie:", deleteMovie);
 
+        if (deleteMovie.deletedCount > 0) {
             //Delete movie image from cloudinary server
-            await deleteImageFromCloudinary({ publicId: 'moviesbazaar/thambnails/' + id });
+            await deleteImageFromCloudinary({ publicId: 'moviesbazaar/thumbnails/' + id });
 
-            return res.status(200).send({ message: "Movie delete successfully" });
-
+            return res.status(200).send({ message: "Movie deleted successfully" });
         } else {
-            return res.status(400).send({ message: "Fail to delete movie" });
+            return res.status(400).send({ message: "Failed to delete movie or movie not found" });
         }
     } catch (error) {
-        console.log(error);
-        return res.status(200).send({ message: "Internal server error whilte delete document" });
-    };
-
-};
+        console.error("Error:", error);
+        return res.status(500).send({ message: "Internal server error while deleting movie" });
+    }
+}
 
 
 //Update movie watchlink 
@@ -133,13 +130,13 @@ export async function updateWatchLinkUrl(req, res) {
         );
 
         if (!update) {
-           return res.status(200).json({ message: "Watch link are not update" });
+            return res.status(200).json({ message: "Watch link are not update" });
         };
 
         return res.status(200).json({ message: `Total ${update.modifiedCount} data update with ${newWatchLink} this watch link` });
 
     } catch (error) {
         console.error("Error updating documents:", error);
-        return res.status(500).json({ message: "Interal server error while updating watch link"});
+        return res.status(500).json({ message: "Interal server error while updating watch link" });
     };
 };
