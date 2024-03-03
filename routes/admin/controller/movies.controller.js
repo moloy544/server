@@ -93,7 +93,7 @@ export async function deleteMovie(req, res) {
 
         if (deleteMovie.deletedCount > 0) {
             //Delete movie image from cloudinary server
-            await deleteImageFromCloudinary({ publicId: 'moviesbazaar/thumbnails/' + id });
+            await deleteImageFromCloudinary({ publicId: `moviesbazaar/thambnails/${id}` });
 
             return res.status(200).send({ message: "Movie deleted successfully" });
         } else {
