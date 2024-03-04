@@ -55,7 +55,7 @@ export async function getLatestReleaseMovie(req, res) {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
+        const { dateSort, ratingSort, genreSort, industry } = bodyData.filterData || {};
 
         const queryCondition = {
             category: querySlug,
@@ -68,6 +68,10 @@ export async function getLatestReleaseMovie(req, res) {
 
             queryCondition.genre = { $in: genreSort }
         };
+
+        if (industry) {
+            queryCondition.category = industry;
+        }
 
         const sortFilterCondition = {};
 
