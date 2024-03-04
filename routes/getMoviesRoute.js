@@ -185,12 +185,16 @@ router.post('/top-rated', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
+        const { dateSort, ratingSort, genreSort, industry } = bodyData.filterData || {};
 
         const queryCondition = {
             imdbRating: { $gt: 7 },
             type: 'movie',
             status: 'released'
+        };
+        
+        if (industry) {
+            queryCondition.category = industry;
         };
 
         if (genreSort && genreSort !== "all") {

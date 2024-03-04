@@ -12,7 +12,10 @@ app.use(cors());
 const PORT = process.env.SERVER_PORT || 4000;
 
 //Allow Cors Origin
-app.use(cors());
+app.use(cors({
+  origin: process.env.ALLOW_ORIGIN,
+  credentials: true
+}));
 
 //User Request Json Limit
 app.use(json({limit: "20kb"}));

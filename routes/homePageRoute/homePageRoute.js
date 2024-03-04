@@ -22,9 +22,7 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     const data = await Movies.find(queryCondition)
       .sort({ releaseYear: -1, fullReleaseDate: -1 })
       .limit(15)
-      .select(selectValue)
-      .lean()
-      .exec();
+      .select(selectValue);
 
     return data;
 
@@ -42,10 +40,10 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
     if (notInGenres && notInGenres?.length > 0) {
       queryCondition.$nin = notInGenres
     }
-    const data = await Movies.find({ genre: queryCondition, type: 'movie' })
-      .sort({_id: -1 }).limit(15)
-      .select(selectValue)
-      .lean().exec();
+    const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: { $gt: 5 } })
+      .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
+      .limit(15)
+      .select(selectValue);
 
     return data;
   } catch (error) {
@@ -82,10 +80,10 @@ router.post('/', async (req, res) => {
         // South latest release movies
         latestInCategoryListing('south'),
 
-        Actress.find({ industry: 'bollywood' }).limit(15).lean().exec(),
+        Actress.find({ industry: 'bollywood' }).limit(15),
 
         //Coming soon movies
-        Movies.find({ status: 'coming soon' }).limit(15).select(selectValue).lean().exec(),
+        Movies.find({ status: 'coming soon' }).limit(15).select(selectValue)
       ]);
 
       const sectionOneAllData = {
@@ -129,7 +127,7 @@ router.post('/', async (req, res) => {
         //Top IMDB Rated Movies Listing
         Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
           .sort({ imdbRating: -1, _id: 1 })
-          .select(selectValue).limit(15).lean().exec(),
+          .select(selectValue).limit(15),
 
         //Romance movies
         genreListing({
@@ -155,17 +153,17 @@ router.post('/', async (req, res) => {
           },
           {
             title: 'Romance movies',
-            linkUrl: 'movies/genre/romance',
+            linkUrl: 'browse//genre/romance',
             movies: romanceMovies
           },
           {
             title: 'Action movies',
-            linkUrl: 'movies/genre/action',
+            linkUrl: 'browse/genre/action',
             movies: actionMovies
           },
           {
             title: 'Thriller movies',
-            linkUrl: 'movies/genre/thriller',
+            linkUrl: 'browse/genre/thriller',
             movies: thrillerMovies
           }
         ]
@@ -207,22 +205,22 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Comedy movies',
-            linkUrl: 'movies/genre/comedy',
+            linkUrl: 'browse/genre/comedy',
             movies: comedyMovies
           },
           {
             title: 'Horror movies',
-            linkUrl: 'movies/genre/horror',
+            linkUrl: 'browse/genre/horror',
             movies: horrorMovies
           },
           {
             title: 'Watch with family',
-            linkUrl: 'movies/genre/family',
+            linkUrl: 'browse/genre/family',
             movies: familyMovies
           },
           {
             title: 'Special for kids',
-            linkUrl: 'movies/genre/animation',
+            linkUrl: 'browse/genre/animation',
             movies: forKidsMovies
           },
         ]
@@ -252,12 +250,12 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Science Fiction movies',
-            linkUrl: 'movies/genre/sci-fi',
+            linkUrl: 'browse/genre/sci-fi',
             movies: scienceFictionMovies
           },
           {
             title: 'Crime movies',
-            linkUrl: 'movies/genre/crime',
+            linkUrl: 'browse/genre/crime',
             movies: crimeMovies
           }
         ]

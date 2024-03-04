@@ -64,14 +64,14 @@ export async function getLatestReleaseMovie(req, res) {
             status: 'released'
         };
 
+        if (industry) {
+            queryCondition.category = industry;
+        };
+
         if (genreSort && genreSort !== "all") {
 
             queryCondition.genre = { $in: genreSort }
         };
-
-        if (industry) {
-            queryCondition.category = industry;
-        }
 
         const sortFilterCondition = {};
 
