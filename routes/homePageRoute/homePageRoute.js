@@ -41,7 +41,7 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
       queryCondition.$nin = notInGenres
     }
     const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: { $gt: 5 } })
-      .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
+      .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
       .limit(15)
       .select(selectValue);
 
