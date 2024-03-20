@@ -1,50 +1,64 @@
-# Dependency directories
+# Node.js
 node_modules/
-npm-debug.log
-yarn-error.log
-
-# OS or editor-specific files
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# Logs and runtime data
-logs/
-*.log
-*.pid
-*.seed
-*.pid.lock
 npm-debug.log*
-yarn-debug.log*
 yarn-error.log*
-pids/
-*.pid
 
 # Build output
-dist/
 build/
-out/
-*.out/
+dist/
 
 # Environment variables
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env
 
-# Cache and package files
-*.cache/
-*.log*
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnp.js
-.pnp.js
-*.pnp.js
+# Logs
+logs/
+*.log
 
-# Misc
-*.bak
-*.swp
+# macOS
+.DS_Store
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Dependency directories
+.npm/
+cache/
+
+# Coverage reports
+coverage/
+
+# Temporary files
+*.tmp
+
+# Render cache
+.cache/
+
+# Heroku-specific
+.heroku/
+
+# Cloudinary-specific
+cloudinary-config.js
+
+# Docker
+docker-compose.override.yml
+docker-compose.yml
+
+# API documentation
+api-docs/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Cache files from various tools
+.eslintcache
+.prettier-cache
+.babel-cache
+
+# Ignore package-lock.json
+package-lock.json
