@@ -7,13 +7,13 @@ export async function addNewActor(req, res) {
 
         const { actorData } = req.body;
 
-        const { avatar, name, industry } = actorData || {};
+        const { imdbId, name, avatar } = actorData || {};
 
-        const isActorAvailable = await Actress.findOne({ name, industry });
+        const isActorAvailable = await Actress.findOne({ imdbId });
 
         if (isActorAvailable) {
 
-            return res.status(300).json({ message: `Actor already exist in ${industry} with name ${name}`, });
+            return res.status(300).json({ message: `Actor already ${name} exist with Imdb id ${imdbId}` });
         };
 
         const actor = new Actress(actorData);

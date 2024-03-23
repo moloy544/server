@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
         // South latest release movies
         latestInCategoryListing('south'),
 
-        Actress.find({ industry: 'bollywood' }).limit(15),
+        Actress.find({ industry: 'bollywood' }).limit(15).select('-_id imdbId name avatar industry'),
 
         //Coming soon movies
         Movies.find({ status: 'coming soon' }).limit(15).select(selectValue)

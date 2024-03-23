@@ -13,7 +13,7 @@ router.post('/industry', async (req, res) => {
 
         const industry = req.body.industry?.toLowerCase();
 
-        const actorsInIndustry = await Actress.find({ industry }).select('name avatar industry');
+        const actorsInIndustry = await Actress.find({ industry }).select('-_id imdbId name avatar industry');
 
         if (actorsInIndustry.length === 0) {
 
@@ -28,19 +28,17 @@ router.post('/industry', async (req, res) => {
     }
 })
 
-router.post('/info', async (req, res) => {
+router.post('/info/:imdbId', async (req, res) => {
     try {
 
-        const { actorDetails } = req.body;
 
-        const { industry, actorName } = actorDetails || {}
+        const imdbId = req.params.imdbId
 
-        const editedActorName = transformToCapitalize(actorName);
-
-        const actor = await Actress.findOne({ name: editedActorName, industry }).select('name avatar industry');
-
+        const actor = await Actress.findOne({ imdbId }).select('-_id imdbId name avatar industry');
+        
         if (!actor) {
-            return res.status(404).json({ message: 'Actor not found' });
+
+            return res.status(201).json({ message: 'Actor not found in our collaction' });
         };
 
         return res.status(200).json({ actor });
@@ -58,11 +56,17 @@ router.post('/collaction', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const actor = bodyData.actor;
+        const { actor } = bodyData;
 
         const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
 
-        const searchRegex = new RegExp(actor, 'i');
+        const findActor = await Actress.findOne({ imdbId: actor }).select('name');
+
+        if (!findActor) {
+            return res.status(201).json({ message: 'Actor not found in our collaction' });
+        };
+
+        const searchRegex = new RegExp(findActor.name, 'i');
 
         const queryCondition = {
             castDetails: { $in: [searchRegex] },

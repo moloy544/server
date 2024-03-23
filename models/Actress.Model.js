@@ -1,7 +1,10 @@
 import { Schema, model } from "mongoose";
 
 const actressModel = new Schema({
-
+    imdbId: {
+        type: String,
+        require: true,
+    },
     avatar: {
         type: String,
         require: true,
@@ -10,7 +13,7 @@ const actressModel = new Schema({
         type: String,
         require: true,
     },
-    industry:{
+    industry: {
         type: String,
         require: true
     }

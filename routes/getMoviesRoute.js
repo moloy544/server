@@ -106,7 +106,7 @@ router.post('/genre/:genre', async (req, res) => {
 
         const { limit, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, type, language, industry } = bodyData.filterData || {};
+        const { dateSort, ratingSort, type, language, industry, provider } = bodyData.filterData || {};
 
         function filterQuery() {
 
@@ -141,32 +141,35 @@ router.post('/genre/:genre', async (req, res) => {
         if (language) {
             queryCondition.language = language;
         };
+        if (provider) {
+            queryCondition.tags = { $in: provider };
+        };
 
-    const sortFilterCondition = {};
+        const sortFilterCondition = {};
 
-    if (ratingSort) {
-        sortFilterCondition.imdbRating = ratingSort;
+        if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
+        if (dateSort) {
+
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        };
+
+        const moviesData = await Movies.find(queryCondition)
+            .skip(skip).limit(limit)
+            .select(selectValue)
+            .sort({ ...sortFilterCondition, _id: 1 });
+
+        const endOfData = (moviesData.length < limit - 1);
+
+        return res.status(200).json({ moviesData, endOfData: endOfData });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error" });
     };
-
-    if (dateSort) {
-
-        sortFilterCondition.releaseYear = dateSort || -1;
-        sortFilterCondition.fullReleaseDate = dateSort || -1;
-    };
-
-    const moviesData = await Movies.find(queryCondition)
-        .skip(skip).limit(limit)
-        .select(selectValue)
-        .sort({ ...sortFilterCondition, _id: 1 });
-
-    const endOfData = (moviesData.length < limit - 1);
-
-    return res.status(200).json({ moviesData, endOfData: endOfData });
-
-} catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Internal Server Error" });
-};
 });
 
 
@@ -192,7 +195,7 @@ router.post('/top-rated', async (req, res) => {
             type: 'movie',
             status: 'released'
         };
-        
+
         if (industry) {
             queryCondition.category = industry;
         };
@@ -240,7 +243,7 @@ router.post('/top-rated', async (req, res) => {
 });
 
 
-//Get Singke Movie Datails
+//Get Single Movie Datails
 router.post('/details_movie/:imdbId', async (req, res) => {
 
     try {
@@ -254,7 +257,7 @@ router.post('/details_movie/:imdbId', async (req, res) => {
         const movieData = await Movies.findOne({ imdbId });
 
         if (!movieData) {
-            return res.status(404).json({ message: "Movie not found" })
+            return res.status(201).json({ message: "Movie not found" })
         };
 
         return res.status(200).json({ movieData });
