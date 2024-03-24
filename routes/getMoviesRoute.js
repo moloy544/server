@@ -75,6 +75,10 @@ router.post('/category/:category', async (req, res) => {
             .select(selectValue)
             .sort({ ...sortFilterCondition, _id: 1 });
 
+            if (!moviesData.length) {
+             return res.status(404).json({ message: "No movies found in this category" });
+            }
+
         let dataToSend = {};
 
         const endOfData = (moviesData.length < limit - 1);
@@ -257,7 +261,7 @@ router.post('/details_movie/:imdbId', async (req, res) => {
         const movieData = await Movies.findOne({ imdbId });
 
         if (!movieData) {
-            return res.status(201).json({ message: "Movie not found" })
+            return res.status(404).json({ message: "Movie not found" })
         };
 
         return res.status(200).json({ movieData });

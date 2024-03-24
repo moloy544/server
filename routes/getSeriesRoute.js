@@ -72,7 +72,7 @@ router.post('/', async (req, res) => {
             ],
         };
 
-        return res.status(200).json({ series: sectionOneData });
+        return res.status(200).json({ seriesPageLayout: sectionOneData });
         
     } catch (error) {
         console.log(error);

@@ -16,7 +16,6 @@ router.post('/industry', async (req, res) => {
         const actorsInIndustry = await Actress.find({ industry }).select('-_id imdbId name avatar industry');
 
         if (actorsInIndustry.length === 0) {
-
             return res.status(404).json({ message: 'No actress found in this industry' });
         };
 
@@ -38,7 +37,7 @@ router.post('/info/:imdbId', async (req, res) => {
         
         if (!actor) {
 
-            return res.status(201).json({ message: 'Actor not found in our collaction' });
+            return res.status(404).json({ message: 'Actor not found in our collaction' });
         };
 
         return res.status(200).json({ actor });
