@@ -6,6 +6,21 @@ const router = Router();
 
 /*************** Routes For Movies Controller *******************/
 
+router.post('/login', async (req, res)=>{
+
+    const {user, password} = req.body;
+
+    const LoginUser = "Sanjoy504";
+    const loginPassword = "SANJOY504";
+
+    if(user === LoginUser && password === loginPassword){
+        return res.status(200).send("Login success");
+    }
+    else{
+        return res.status(400).json({message: "Invalid credentials"});
+    };
+});
+
 //Add new movie route
 router.post('/movie/add', addNewMovie);
 
