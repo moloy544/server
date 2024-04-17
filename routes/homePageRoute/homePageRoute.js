@@ -4,7 +4,7 @@ import Actress from "../../models/Actress.Model.js";
 
 const router = Router();
 
-const selectValue = "imdbId title thambnail releaseYear type";
+const selectValue = "-_id imdbId title thambnail releaseYear type";
 
 const latestInCategoryListing = async (category, notInLanguage) => {
   try {
@@ -105,7 +105,7 @@ router.post('/', async (req, res) => {
           },
           {
             title: 'Upcoming movies',
-            linkUrl: 'browse/category/coming-soon',
+            linkUrl: null ,//'browse/category/coming-soon'
             moviesData: comingSoonMovies
           },
         ],

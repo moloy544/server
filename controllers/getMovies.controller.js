@@ -2,7 +2,7 @@ import { countGenres } from "../lib/index.js";
 import Movies from "../models/Movies.Model.js";
 import { getDataBetweenMonth } from "../utils/index.js";
 
-const selectValue = "imdbId title thambnail releaseYear type";
+const selectValue = "-_id imdbId title thambnail releaseYear type";
 
 //search handler function
 export async function searchHandler(req, res) {
@@ -15,7 +15,16 @@ export async function searchHandler(req, res) {
 
         const pageSize = limit || 25;
 
-        const searchRegex = new RegExp(q, 'i');
+        // Remove extra spaces and convert to lowercase
+        const cleanedQuery = q.trim().toLowerCase().trimEnd();
+
+        // Split the query into individual terms
+        const terms = cleanedQuery.split(' ');
+
+        // Construct a regex pattern for fuzzy search
+        const fuzzyRegex = terms?.map(term => `(?=.*${term})`).join('');
+
+        const searchRegex = new RegExp(fuzzyRegex, 'i');
 
         const searchData = await Movies.find({
             $or: [
@@ -27,9 +36,10 @@ export async function searchHandler(req, res) {
                 { castDetails: { $in: searchRegex } },
                 { searchKeywords: { $regex: searchRegex } },
                 { tags: { $in: searchRegex } },
-                {imdbId: q},
+                { imdbId: q },
                 { releaseYear: parseInt(q) || 0 },
             ],
+            status: 'released'
         }).skip(skip).limit(pageSize)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
             .select(selectValue);
@@ -85,24 +95,24 @@ export async function getLatestReleaseMovie(req, res) {
         };
 
         const moviesData = await Movies.find(queryCondition)
-        .skip(skip).limit(limit)
-        .select(selectValue)
-        .sort({ ...sortFilterCondition, _id: 1 });
+            .skip(skip).limit(limit)
+            .select(selectValue)
+            .sort({ ...sortFilterCondition, _id: 1 });
 
-            let dataToSend = {};
+        let dataToSend = {};
 
-            const endOfData = (moviesData.length < limit - 1);
-    
-            dataToSend = { moviesData, endOfData: endOfData };
-    
-            if (page && page === 1) {
-    
-                const genreCount = await countGenres({ query: queryCondition });
-    
-                dataToSend.filterCount = genreCount;
-            };
-    
-            return res.status(200).json(dataToSend);
+        const endOfData = (moviesData.length < limit - 1);
+
+        dataToSend = { moviesData, endOfData: endOfData };
+
+        if (page && page === 1) {
+
+            const genreCount = await countGenres({ query: queryCondition });
+
+            dataToSend.filterCount = genreCount;
+        };
+
+        return res.status(200).json(dataToSend);
 
     } catch (error) {
         console.log(error)

@@ -1,12 +1,12 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { getLatestReleaseMovie, searchHandler } from "../controllers/getMovies.controller.js";
-import { getDataBetweenMonth } from "../utils/index.js";
+import { getDataBetweenMonth, transformToCapitalize } from "../utils/index.js";
 import { countGenres } from "../lib/index.js";
 
 const router = Router();
 
-const selectValue = "imdbId title thambnail releaseYear type";
+const selectValue = "-_id imdbId title thambnail releaseYear type";
 
 //Route For Client Category Listing /listing/category/:query
 router.post('/category/:category', async (req, res) => {
@@ -106,7 +106,7 @@ router.post('/genre/:genre', async (req, res) => {
 
     try {
 
-        const genre = req.params?.genre.toLowerCase().replace(/[-]/g, ' ');
+        const genre = transformToCapitalize(req.params?.genre).replace(/[-]/g, ' ');
 
         const { limit, skip, bodyData } = req.body;
 
@@ -116,9 +116,9 @@ router.post('/genre/:genre', async (req, res) => {
 
             switch (genre) {
 
-                case 'sci fi':
+                case 'Sci Fi':
                     return 'Sci-Fi';
-                case 'reality tv':
+                case 'Reality Tv':
                     return 'Reality-Tv'
                 default:
                     return genre;
@@ -127,10 +127,8 @@ router.post('/genre/:genre', async (req, res) => {
 
         const filteGenre = filterQuery();
 
-        const searchRegex = new RegExp(filteGenre, 'i');
-
         const queryCondition = {
-            genre: { $in: [searchRegex] },
+            genre: { $in: filteGenre },
             status: 'released'
         };
 
