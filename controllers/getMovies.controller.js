@@ -1,6 +1,6 @@
 import { countGenres } from "../lib/index.js";
 import Movies from "../models/Movies.Model.js";
-import { getDataBetweenMonth } from "../utils/index.js";
+import { getDataBetweenDate } from "../utils/index.js";
 
 const selectValue = "-_id imdbId title thambnail releaseYear type";
 
@@ -69,7 +69,7 @@ export async function getLatestReleaseMovie(req, res) {
 
         const queryCondition = {
             category: querySlug,
-            fullReleaseDate: getDataBetweenMonth(6),
+            fullReleaseDate: getDataBetweenDate({ type: 'months', value: 6 }),
             type: 'movie',
             status: 'released'
         };
@@ -120,3 +120,70 @@ export async function getLatestReleaseMovie(req, res) {
     };
 
 };
+
+//Get Recently Added Movies or Series Controller 
+export async function getRecentlyAddedMovie(req, res) {
+
+    try {
+
+        const { limit, page, skip, bodyData } = req.body;
+
+        const { dateSort, ratingSort, genreSort, industry } = bodyData.filterData || {};
+
+        // Get the date range condition
+        const dateRange = getDataBetweenDate({ type: 'days', value: 14 });
+
+        //initial query condition
+        const queryCondition = {
+            type: 'movie',
+            status: 'released',
+            tags: { $nin: ['Cartoons'] },
+            createdAt: { $exists: true, ...dateRange }
+        };
+
+        if (industry) {
+            queryCondition.category = industry;
+        };
+
+        if (genreSort && genreSort !== "all") {
+            queryCondition.genre = { $in: genreSort }
+        };
+
+        const sortFilterCondition = {};
+
+        if (dateSort) {
+            sortFilterCondition.releaseYear = dateSort || -1;
+            sortFilterCondition.fullReleaseDate = dateSort || -1;
+        };
+
+        if (ratingSort) {
+            sortFilterCondition.imdbRating = ratingSort;
+        };
+
+        const moviesData = await Movies.find(queryCondition)
+            .skip(skip).limit(limit)
+            .select(selectValue)
+            .sort({ ...sortFilterCondition, createdAt: -1, _id: 1 });
+
+        let dataToSend = {};
+
+        const endOfData = (moviesData.length < limit - 1);
+
+        dataToSend = { moviesData, endOfData: endOfData };
+
+        if (page && page === 1) {
+
+            const genreCount = await countGenres({ query: queryCondition });
+
+            dataToSend.filterCount = genreCount;
+        };
+
+        return res.status(200).json(dataToSend);
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: "Internal Server Error" });
+    };
+};
+
+

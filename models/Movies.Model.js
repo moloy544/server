@@ -54,10 +54,12 @@ const moviesModel = new Schema({
     },
     tags:{
         type: Array,
+        require: false,
     },
-    searchKeywords: {
-        type: String,
-    }
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
 });
 
 const Movies = model('Movies', moviesModel);

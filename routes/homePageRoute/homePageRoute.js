@@ -4,7 +4,9 @@ import Actress from "../../models/Actress.Model.js";
 
 const router = Router();
 
-const selectValue = "-_id imdbId title thambnail releaseYear type";
+const initialSelectValue = "-_id imdbId title thambnail releaseYear type";
+
+const initialLimit = 20;
 
 const latestInCategoryListing = async (category, notInLanguage) => {
   try {
@@ -21,8 +23,8 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     }
     const data = await Movies.find(queryCondition)
       .sort({ releaseYear: -1, fullReleaseDate: -1 })
-      .limit(15)
-      .select(selectValue);
+      .limit(initialLimit)
+      .select(initialSelectValue);
 
     return data;
 
@@ -41,8 +43,8 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
       queryCondition.$nin = notInGenres
     }
     const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: { $gt: 5 } })
-      .limit(15)
-      .select(selectValue);
+      .limit(initialLimit)
+      .select(initialSelectValue);
 
     return data;
   } catch (error) {
@@ -63,12 +65,20 @@ router.post('/', async (req, res) => {
     if (offsetNumber === 1) {
 
       const [
+        recentlyAddedMovies,
         latestHollywoodMovies,
         latestBollywoodMovies,
         latestSouthMovies,
         bollywoodActressData,
         comingSoonMovies
       ] = await Promise.all([
+
+        //Recently added movies 
+        Movies.find({
+          status: 'released',
+          createdAt: { $exists: true },
+          tags: { $nin: ['Cartoons'] },
+        }).sort({ createdAt: -1 }).limit(initialLimit).select(initialSelectValue),
 
         // Hollywood release movies
         latestInCategoryListing('hollywood'),
@@ -79,15 +89,20 @@ router.post('/', async (req, res) => {
         // South latest release movies
         latestInCategoryListing('south'),
 
-        Actress.find({ industry: 'bollywood' }).limit(15).select('-_id imdbId name avatar industry'),
+        Actress.find({ industry: 'bollywood' }).limit(initialLimit).select('-_id imdbId name avatar industry'),
 
         //Coming soon movies
-        Movies.find({ status: 'coming soon' }).limit(15).select(selectValue)
+        Movies.find({ status: 'coming soon' }).limit(initialLimit).select(initialSelectValue)
       ]);
 
       const sectionOneAllData = {
 
         sliderMovies: [
+          {
+            title: 'Recently Added',
+            linkUrl: recentlyAddedMovies?.length >= initialLimit ? '/browse/recently-added' : null,
+            moviesData: recentlyAddedMovies
+          },
           {
             title: 'Hollywood latest movies',
             linkUrl: 'browse/latest/hollywood',
@@ -105,7 +120,7 @@ router.post('/', async (req, res) => {
           },
           {
             title: 'Upcoming movies',
-            linkUrl: null ,//'browse/category/coming-soon'
+            linkUrl: recentlyAddedMovies?.length >= initialLimit ? 'browse/category/coming-soon' : null,
             moviesData: comingSoonMovies
           },
         ],
@@ -126,7 +141,7 @@ router.post('/', async (req, res) => {
         //Top IMDB Rated Movies Listing
         Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
           .sort({ imdbRating: -1, _id: 1 })
-          .select(selectValue).limit(15),
+          .select(initialSelectValue).limit(initialLimit),
 
         //Romance movies
         genreListing({
@@ -152,7 +167,7 @@ router.post('/', async (req, res) => {
           },
           {
             title: 'Romance movies',
-            linkUrl: 'browse//genre/romance',
+            linkUrl: 'browse/genre/romance',
             movies: romanceMovies
           },
           {

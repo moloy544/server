@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { getLatestReleaseMovie, searchHandler } from "../controllers/getMovies.controller.js";
-import { getDataBetweenMonth, transformToCapitalize } from "../utils/index.js";
+import { getLatestReleaseMovie, getRecentlyAddedMovie, searchHandler } from "../controllers/getMovies.controller.js";
+import { getDataBetweenDate, transformToCapitalize } from "../utils/index.js";
 import { countGenres } from "../lib/index.js";
 
 const router = Router();
@@ -51,7 +51,7 @@ router.post('/category/:category', async (req, res) => {
         };
 
         if (queryData === "new release") {
-            queryCondition.fullReleaseDate = getDataBetweenMonth(6);
+            queryCondition.fullReleaseDate = getDataBetweenDate({ type: 'months', value: 6 });
         };
 
         if (genreSort && genreSort !== "all") {
@@ -75,9 +75,9 @@ router.post('/category/:category', async (req, res) => {
             .select(selectValue)
             .sort({ ...sortFilterCondition, _id: 1 });
 
-            if (!moviesData.length) {
-             return res.status(404).json({ message: "No movies found in this category" });
-            }
+        if (!moviesData.length) {
+            return res.status(404).json({ message: "No movies found in this category" });
+        }
 
         let dataToSend = {};
 
@@ -178,10 +178,12 @@ router.post('/genre/:genre', async (req, res) => {
 //Route for client search page
 router.post('/search', searchHandler);
 
+//get recently added movies or series
+//Top Rated IMDb ratings movies 
+router.post('/recently-added', getRecentlyAddedMovie);
 
 //Latest release movies 
 router.post('/latest/:query', getLatestReleaseMovie);
-
 
 //Top Rated IMDb ratings movies 
 router.post('/top-rated', async (req, res) => {

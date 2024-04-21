@@ -38,7 +38,7 @@ export async function addNewMovie(req, res) {
             const updateMovie = await Movies.findOneAndUpdate(
                 { imdbId },
                 { $set: newData },
-                { new: true }
+                { new: true, fields: { createdAt: 0 } }
             );
 
             return res.status(200).json({ message: "Movie has been updated with new data", movieData: updateMovie });
@@ -89,8 +89,6 @@ export async function deleteMovie(req, res) {
 
         const deleteMovie = await Movies.deleteOne({ _id: id });
 
-        console.log("deleteMovie:", deleteMovie);
-
         if (deleteMovie.deletedCount > 0) {
             //Delete movie image from cloudinary server
             await deleteImageFromCloudinary({ publicId: `moviesbazaar/thambnails/${id}` });
@@ -103,8 +101,7 @@ export async function deleteMovie(req, res) {
         console.error("Error:", error);
         return res.status(500).send({ message: "Internal server error while deleting movie" });
     }
-}
-
+};
 
 //Update movie watchlink 
 export async function updateWatchLinkUrl(req, res) {
