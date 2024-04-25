@@ -21,6 +21,8 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     if (notInLanguage) {
       queryCondition.language = { $nin: notInLanguage };
     }
+
+    category
     const data = await Movies.find(queryCondition)
       .sort({ releaseYear: -1, fullReleaseDate: -1 })
       .limit(initialLimit)
@@ -39,7 +41,7 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
   try {
     const queryCondition = { $all: inGenres };
 
-    if (notInGenres && notInGenres?.length > 0) {
+    if (inGenres?.[0] !== 'Animation') {
       queryCondition.$nin = notInGenres
     }
     const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: { $gt: 5 } })
@@ -133,14 +135,20 @@ router.post('/', async (req, res) => {
 
       const [
         topImbdRatingMovies,
+        seriesList,
         romanceMovies,
         actionMovies,
-        thrillerMovies
+
       ] = await Promise.all([
 
         //Top IMDB Rated Movies Listing
         Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
           .sort({ imdbRating: -1, _id: 1 })
+          .select(initialSelectValue).limit(initialLimit),
+
+        //Series Listing
+        Movies.find({ type: 'series' })
+          .sort({ _id: 1 })
           .select(initialSelectValue).limit(initialLimit),
 
         //Romance movies
@@ -151,15 +159,15 @@ router.post('/', async (req, res) => {
         genreListing({
           inGenres: ['Action']
         }),
-        //Thriller movies
-        genreListing({
-          inGenres: ['Thriller']
-        })
-
       ]);
 
       const sectionTwoAllData = {
         sliderMovies: [
+          {
+            title: 'Watch series',
+            linkUrl: '/series',
+            movies: seriesList
+          },
           {
             title: 'Top IMDB rated movies',
             linkUrl: 'browse/top-rated',
@@ -174,11 +182,6 @@ router.post('/', async (req, res) => {
             title: 'Action movies',
             linkUrl: 'browse/genre/action',
             movies: actionMovies
-          },
-          {
-            title: 'Thriller movies',
-            linkUrl: 'browse/genre/thriller',
-            movies: thrillerMovies
           }
         ]
       };
@@ -188,11 +191,17 @@ router.post('/', async (req, res) => {
     } else if (offsetNumber === 3) {
 
       const [
+        thrillerMovies,
         comedyMovies,
         horrorMovies,
         familyMovies,
         forKidsMovies,
       ] = await Promise.all([
+
+        //Thriller movies
+        genreListing({
+          inGenres: ['Thriller']
+        }),
 
         //Comedy movies
         genreListing({
@@ -206,17 +215,17 @@ router.post('/', async (req, res) => {
         genreListing({
           inGenres: ['Family']
         }),
-
-        //For kids movies and 
-        genreListing({
-          inGenres: ['Animation'],
-          notInGenres: []
-        })
-
       ]);
 
       const sectionThreeAllData = {
         sliderMovies: [
+
+          {
+            title: 'Thriller movies',
+            linkUrl: 'browse/genre/thriller',
+            movies: thrillerMovies
+          },
+
           {
             title: 'Comedy movies',
             linkUrl: 'browse/genre/comedy',
@@ -231,12 +240,7 @@ router.post('/', async (req, res) => {
             title: 'Watch with family',
             linkUrl: 'browse/genre/family',
             movies: familyMovies
-          },
-          {
-            title: 'Special for kids',
-            linkUrl: 'browse/genre/animation',
-            movies: forKidsMovies
-          },
+          }
         ]
       };
 
@@ -245,23 +249,32 @@ router.post('/', async (req, res) => {
     } else if (offsetNumber === 4) {
 
       const [
+        forKidsMovies,
         scienceFictionMovies,
         crimeMovies
       ] = await Promise.all([
 
+        //For kids movies in animation
+        genreListing({
+          inGenres: ['Animation'],
+        }),
+
         genreListing({
           inGenres: ['Sci-Fi'],
-          notInGenres: []
         }),
         //Crime movies
         genreListing({
           inGenres: ['Crime'],
-          notInGenres: []
         })
       ]);
 
       const sectionFourAllData = {
         sliderMovies: [
+          {
+            title: 'Special for kids',
+            linkUrl: 'browse/genre/animation',
+            movies: forKidsMovies
+          },
           {
             title: 'Science Fiction movies',
             linkUrl: 'browse/genre/sci-fi',

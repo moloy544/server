@@ -247,30 +247,49 @@ router.post('/top-rated', async (req, res) => {
 });
 
 
-//Get Single Movie Datails
-router.post('/details_movie/:imdbId', async (req, res) => {
-
+//get single movie or series details with suggestions data
+router.get('/details_movie/:imdbId', async (req, res) => {
     try {
-
         const { imdbId } = req.params;
 
         if (!imdbId) {
             return res.status(400).json({ message: "imdbId is required" });
-        };
+        }
 
         const movieData = await Movies.findOne({ imdbId });
 
         if (!movieData) {
-            return res.status(404).json({ message: "Movie not found" })
-        };
+            return res.status(404).json({ message: "Movie not found" });
+        }
 
-        return res.status(200).json({ movieData });
+        const { genre, castDetails, category } = movieData || {};
+
+        //genre condition for getting only 2 genre
+        const genreCondition = genre?.length > 1 ? genre.slice(0, 2) : genre;
+
+        const [genreList, castList] = await Promise.all([
+
+            Movies.find({ 
+                genre: { $in: genreCondition },
+                category,
+                imdbId: { $ne: imdbId },
+                status: 'released'
+            }).limit(30).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
+
+            Movies.find({ 
+                castDetails: { $in: castDetails },
+                imdbId: { $ne: imdbId },
+                status: 'released'
+            }).limit(30).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
+        ]);
+
+        return res.status(200).json({ movieData, suggetions: { genreList, castList } });
 
     } catch (error) {
-        console.log(error)
+        console.log(error);
         return res.status(500).json({ message: "Internal Server Error" });
-    };
-
+    }
 });
+
 
 export default router;

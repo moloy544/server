@@ -18,7 +18,7 @@ app.use(cors({
 }));
 
 //User Request Json Limit
-app.use(json({limit: "20kb"}));
+app.use(json({limit: "100kb"}));
 
 connectToDatabase()
 .then(() => {
