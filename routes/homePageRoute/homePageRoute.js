@@ -44,7 +44,7 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
     if (inGenres?.[0] !== 'Animation') {
       queryCondition.$nin = notInGenres
     }
-    const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: { $gt: 5 } })
+    const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: {$gt: 6} })
       .limit(initialLimit)
       .select(initialSelectValue);
 

@@ -17,7 +17,7 @@ router.post('/category/:category', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
+        const { dateSort, ratingSort, genreSort, industry } = bodyData.filterData || {};
 
         function filterQuery() {
 
@@ -57,6 +57,10 @@ router.post('/category/:category', async (req, res) => {
         if (genreSort && genreSort !== "all") {
 
             queryCondition.genre = { $in: genreSort }
+        };
+
+        if (industry) {
+            queryCondition.category = industry;
         };
 
         const sortFilterCondition = {};
