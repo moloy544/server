@@ -264,17 +264,16 @@ router.get('/details_movie/:imdbId', async (req, res) => {
 
         const { genre, castDetails, category } = movieData || {};
 
-        //genre condition for getting only 2 genre
-        const genreCondition = genre?.length > 1 ? genre.slice(0, 2) : genre;
-
+        const randomSkip = Math.floor(Math.random() * (100 - 0 + 1)) + 0;
+        
         const [genreList, castList] = await Promise.all([
 
             Movies.find({ 
-                genre: { $in: genreCondition },
+                genre: { $in: genre },
                 category,
                 imdbId: { $ne: imdbId },
                 status: 'released'
-            }).limit(30).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
+            }).limit(30).skip(randomSkip).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
 
             Movies.find({ 
                 castDetails: { $in: castDetails },
