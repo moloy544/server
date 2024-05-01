@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { getLatestReleaseMovie, getRecentlyAddedMovie, searchHandler } from "../controllers/getMovies.controller.js";
-import { getDataBetweenDate, transformToCapitalize } from "../utils/index.js";
+import { createQueryConditionFilter, getDataBetweenDate, transformToCapitalize } from "../utils/index.js";
 import { countGenres } from "../lib/index.js";
 
 const router = Router();
@@ -17,7 +17,7 @@ router.post('/category/:category', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, genreSort, industry } = bodyData.filterData || {};
+        const { dateSort, ratingSort } = bodyData?.filterData || {};
 
         function filterQuery() {
 
@@ -31,20 +31,23 @@ router.post('/category/:category', async (req, res) => {
 
         const filterQueryValue = filterQuery();
 
-        const queryCondition = {
-            $or: [
-                { category: filterQueryValue },
-                { language: filterQueryValue },
-                {
-                    releaseYear: {
-                        $in: Array.isArray(filterQueryValue) ? filterQueryValue : [parseInt(filterQueryValue) || 0]
-                    }
-                },
-                { status: filterQueryValue }
-            ],
-
-            type: 'movie',
-        };
+        // creat query condition with filter
+        const queryCondition = createQueryConditionFilter({
+            query: {
+                $or: [
+                    { category: filterQueryValue },
+                    { language: filterQueryValue },
+                    {
+                        releaseYear: {
+                            $in: Array.isArray(filterQueryValue) ? filterQueryValue : [parseInt(filterQueryValue) || 0]
+                        }
+                    },
+                    { status: filterQueryValue }
+                ]
+            },
+            filter: bodyData?.filterData
+        },
+        );
 
         if (queryData !== 'coming soon') {
             queryCondition.status = 'released';
@@ -52,15 +55,6 @@ router.post('/category/:category', async (req, res) => {
 
         if (queryData === "new release") {
             queryCondition.fullReleaseDate = getDataBetweenDate({ type: 'months', value: 6 });
-        };
-
-        if (genreSort && genreSort !== "all") {
-
-            queryCondition.genre = { $in: genreSort }
-        };
-
-        if (industry) {
-            queryCondition.category = industry;
         };
 
         const sortFilterCondition = {};
@@ -114,7 +108,7 @@ router.post('/genre/:genre', async (req, res) => {
 
         const { limit, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, type, language, industry, provider } = bodyData.filterData || {};
+        const { dateSort, ratingSort } = bodyData.filterData || {};
 
         function filterQuery() {
 
@@ -131,25 +125,14 @@ router.post('/genre/:genre', async (req, res) => {
 
         const filteGenre = filterQuery();
 
-        const queryCondition = {
-            genre: { $in: filteGenre },
-            status: 'released'
-        };
-
-        if (industry) {
-            queryCondition.category = industry;
-        };
-
-        if (type) {
-            queryCondition.type = type;
-        };
-
-        if (language) {
-            queryCondition.language = language;
-        };
-        if (provider) {
-            queryCondition.tags = { $in: provider };
-        };
+        // creat query condition with filter
+        const queryCondition = createQueryConditionFilter({
+            query: {
+                genre: { $in: filteGenre },
+                status: 'released'
+            },
+            filter: bodyData?.filterData
+        });
 
         const sortFilterCondition = {};
 
@@ -196,21 +179,17 @@ router.post('/top-rated', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, genreSort, industry } = bodyData.filterData || {};
+        const { dateSort, ratingSort } = bodyData?.filterData || {};
 
-        const queryCondition = {
-            imdbRating: { $gt: 7 },
-            type: 'movie',
-            status: 'released'
-        };
-
-        if (industry) {
-            queryCondition.category = industry;
-        };
-
-        if (genreSort && genreSort !== "all") {
-            queryCondition.genre = { $in: genreSort }
-        };
+         // creat query condition with filter
+         const queryCondition = createQueryConditionFilter({
+            query: {
+                imdbRating: { $gt: 7 },
+                type: 'movie',
+                status: 'released'
+            },
+            filter: bodyData?.filterData
+         });
 
         const sortFilterCondition = {};
 
@@ -269,17 +248,17 @@ router.get('/details_movie/:imdbId', async (req, res) => {
         const { genre, castDetails, category } = movieData || {};
 
         const randomSkip = Math.floor(Math.random() * (100 - 0 + 1)) + 0;
-        
+
         const [genreList, castList] = await Promise.all([
 
-            Movies.find({ 
+            Movies.find({
                 genre: { $in: genre },
                 category,
                 imdbId: { $ne: imdbId },
                 status: 'released'
             }).limit(30).skip(randomSkip).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
 
-            Movies.find({ 
+            Movies.find({
                 castDetails: { $in: castDetails },
                 imdbId: { $ne: imdbId },
                 status: 'released'

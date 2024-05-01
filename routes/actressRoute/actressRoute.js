@@ -57,7 +57,7 @@ router.post('/collaction', async (req, res) => {
 
         const { actor } = bodyData;
 
-        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
+        const { dateSort, ratingSort } = bodyData.filterData || {};
 
         const findActor = await Actress.findOne({ imdbId: actor }).select('name');
 
@@ -67,15 +67,14 @@ router.post('/collaction', async (req, res) => {
 
         const searchRegex = new RegExp(findActor.name, 'i');
 
-        const queryCondition = {
-            castDetails: { $in: [searchRegex] },
-            status: 'released'
-        };
-
-        if (genreSort && genreSort !== "all") {
-
-            queryCondition.genre = { $in: genreSort }
-        };
+        // creat query condition with filter
+        const queryCondition = createQueryConditionFilter({
+            query: {
+                castDetails: { $in: [searchRegex] },
+                status: 'released'
+            },
+            filter: bodyData?.filterData
+         });
 
         const sortFilterCondition = {};
 

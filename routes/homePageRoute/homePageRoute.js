@@ -106,23 +106,23 @@ router.post('/', async (req, res) => {
             moviesData: recentlyAddedMovies
           },
           {
-            title: 'Hollywood latest movies',
+            title: 'Hollywood latest release',
             linkUrl: 'browse/latest/hollywood',
             moviesData: latestHollywoodMovies
           },
           {
-            title: 'Bollywood latest movies',
+            title: 'Bollywood latest release',
             linkUrl: 'browse/latest/bollywood',
             moviesData: latestBollywoodMovies
           },
           {
-            title: 'South latest movies',
+            title: 'South latest release',
             linkUrl: 'browse/latest/south',
             moviesData: latestSouthMovies
           },
           {
             title: 'Upcoming movies',
-            linkUrl: recentlyAddedMovies?.length >= initialLimit ? 'browse/category/coming-soon' : null,
+            linkUrl: comingSoonMovies?.length >= initialLimit ? 'browse/category/coming-soon' : null,
             moviesData: comingSoonMovies
           },
         ],
@@ -148,7 +148,7 @@ router.post('/', async (req, res) => {
 
         //Series Listing
         Movies.find({ type: 'series' })
-          .sort({ _id: 1 })
+          .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
           .select(initialSelectValue).limit(initialLimit),
 
         //Romance movies
@@ -164,7 +164,7 @@ router.post('/', async (req, res) => {
       const sectionTwoAllData = {
         sliderMovies: [
           {
-            title: 'Watch series',
+            title: 'Watch latest series',
             linkUrl: '/series',
             movies: seriesList
           },
@@ -174,12 +174,12 @@ router.post('/', async (req, res) => {
             movies: topImbdRatingMovies
           },
           {
-            title: 'Romance movies',
+            title: 'Romance collections',
             linkUrl: 'browse/genre/romance',
             movies: romanceMovies
           },
           {
-            title: 'Action movies',
+            title: 'Action collections',
             linkUrl: 'browse/genre/action',
             movies: actionMovies
           }
@@ -221,18 +221,18 @@ router.post('/', async (req, res) => {
         sliderMovies: [
 
           {
-            title: 'Thriller movies',
+            title: 'Thriller collections',
             linkUrl: 'browse/genre/thriller',
             movies: thrillerMovies
           },
 
           {
-            title: 'Comedy movies',
+            title: 'Comedy collections',
             linkUrl: 'browse/genre/comedy',
             movies: comedyMovies
           },
           {
-            title: 'Horror movies',
+            title: 'Horror collections',
             linkUrl: 'browse/genre/horror',
             movies: horrorMovies
           },
@@ -276,12 +276,12 @@ router.post('/', async (req, res) => {
             movies: forKidsMovies
           },
           {
-            title: 'Science Fiction movies',
+            title: 'Science Fiction collections',
             linkUrl: 'browse/genre/sci-fi',
             movies: scienceFictionMovies
           },
           {
-            title: 'Crime movies',
+            title: 'Crime collections',
             linkUrl: 'browse/genre/crime',
             movies: crimeMovies
           }

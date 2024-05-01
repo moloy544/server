@@ -1,8 +1,8 @@
 import express from 'express';
 import adminRoute from './admin/adminRoute.js';
 import homePageRoute from '../routes/homePageRoute/homePageRoute.js';
-import getMoviesRoute from '../routes/getMoviesRoute.js';
-import getSeriesRoute from '../routes/getSeriesRoute.js';
+import moviesRoutes from './moviesRoutes.js';
+import seriesRoutes from './seriesRoutes.js';
 import actressRoute from '../routes/actressRoute/actressRoute.js';
 import userRoute from '../routes/users/usersRoute.js'
 
@@ -20,10 +20,10 @@ app.use(`${mainPath}/user`,  userRoute);
 app.use(`${mainPath}/landing_page`, homePageRoute);
 
 /*********** ( Get Movies Info Route ) ****************/
-app.use(`${mainPath}/movies`, getMoviesRoute);
+app.use(`${mainPath}/movies`, moviesRoutes);
 
 /*********** ( Get Actress Info Movies Ifo route ) ****************/
-app.use(`${mainPath}/series`, getSeriesRoute);
+app.use(`${mainPath}/series`, seriesRoutes);
 
 /*********** ( Get Actress Info Movies Ifo route ) ****************/
 app.use(`${mainPath}/actress`, actressRoute);

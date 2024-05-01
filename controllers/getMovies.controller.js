@@ -1,6 +1,6 @@
 import { countGenres } from "../lib/index.js";
 import Movies from "../models/Movies.Model.js";
-import { getDataBetweenDate } from "../utils/index.js";
+import { createQueryConditionFilter, getDataBetweenDate } from "../utils/index.js";
 
 const selectValue = "-_id imdbId title thambnail releaseYear type";
 
@@ -65,23 +65,18 @@ export async function getLatestReleaseMovie(req, res) {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, genreSort, industry } = bodyData.filterData || {};
+        const { dateSort, ratingSort } = bodyData?.filterData || {};
 
-        const queryCondition = {
-            category: querySlug,
-            fullReleaseDate: getDataBetweenDate({ type: 'months', value: 6 }),
-            type: 'movie',
-            status: 'released'
-        };
-
-        if (industry) {
-            queryCondition.category = industry;
-        };
-
-        if (genreSort && genreSort !== "all") {
-
-            queryCondition.genre = { $in: genreSort }
-        };
+        // creat query condition with filter
+        const queryCondition = createQueryConditionFilter({
+            query: {
+                category: querySlug,
+                fullReleaseDate: getDataBetweenDate({ type: 'months', value: 6 }),
+                type: 'movie',
+                status: 'released'
+            },
+            filter: bodyData?.filterData
+        });
 
         const sortFilterCondition = {};
 
@@ -128,26 +123,21 @@ export async function getRecentlyAddedMovie(req, res) {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, genreSort, industry } = bodyData.filterData || {};
+        const { dateSort, ratingSort } = bodyData.filterData || {};
 
         // Get the date range condition
         const dateRange = getDataBetweenDate({ type: 'days', value: 14 });
 
-        //initial query condition
-        const queryCondition = {
-            type: 'movie',
-            status: 'released',
-            tags: { $nin: ['Cartoons'] },
-            createdAt: { $exists: true, ...dateRange }
-        };
-
-        if (industry) {
-            queryCondition.category = industry;
-        };
-
-        if (genreSort && genreSort !== "all") {
-            queryCondition.genre = { $in: genreSort }
-        };
+         // creat query condition with filter
+         const queryCondition = createQueryConditionFilter({
+            query: {
+                type: 'movie',
+                status: 'released',
+                tags: { $nin: ['Cartoons'] },
+                createdAt: { $exists: true, ...dateRange }
+            },
+            filter: bodyData?.filterData
+        });
 
         const sortFilterCondition = {};
 

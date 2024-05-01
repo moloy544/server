@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { transformToCapitalize } from "../utils/index.js";
+import { createQueryConditionFilter, transformToCapitalize } from "../utils/index.js";
 import { countGenres } from "../lib/index.js";
 
 const router = Router();
@@ -36,30 +36,41 @@ router.post('/', async (req, res) => {
             {
                 $project: {
                     _id: 1,
-                    seriesData: { $slice: ['$seriesData', 15] },
+                    seriesData: { $slice: ['$seriesData', 20] },
                 },
             },
         ];
 
-        // Get Netflix series separately
-        const netflixSeries = await Movies.find({
+        // Get Netflix, hotstar series separately
+        const [netflixSeries, hotStarSeries] = await Promise.all([
+            //netflix
+            Movies.find({
             type: 'series',
             $or: [
                 { tags: { $in: ['Netflix'] } },
                 { searchKeywords: 'Netflix' },
             ],
         }).sort({ releaseYear: -1, fullReleaseDate: -1 })
-            .limit(15)
-            .select(selectValue)
-            .lean()
-            .exec();
+            .limit(20).select(selectValue).lean().exec(),
+        
+            //hotstar
+            Movies.find({
+                type: 'series',
+                $or: [
+                    { tags: { $in: ['HotStar'] } },
+                    { searchKeywords: 'HotStar' },
+                ],
+            }).sort({ releaseYear: -1, fullReleaseDate: -1 })
+                .limit(20).select(selectValue).lean().exec(),
+            
+    ])
 
-        const result = await Movies.aggregate(pipeline).exec();
+        const categoryResult = await Movies.aggregate(pipeline).exec();
 
         // Include Netflix series in the result
         const sectionOneData = {
             sliderSeries: [
-                ...result.map(({ _id, seriesData }) => ({
+                ...categoryResult.map(({ _id, seriesData }) => ({
                     title: `Watch ${_id} series`,
                     linkUrl: `series/${_id}`,
                     seriesData,
@@ -68,6 +79,11 @@ router.post('/', async (req, res) => {
                     title: 'Watch Netflix series',
                     linkUrl: 'series/netflix',
                     seriesData: netflixSeries,
+                },
+                {
+                    title: 'Watch Hotstar series',
+                    linkUrl: 'series/hotstar',
+                    seriesData: hotStarSeries,
                 },
             ],
         };
@@ -87,27 +103,24 @@ router.post('/:category', async (req, res) => {
 
         const category = req.params.category;
 
-        const capitalizeQuery = transformToCapitalize(category);
-
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort, genreSort } = bodyData.filterData || {};
+        const { dateSort, ratingSort } = bodyData?.filterData || {};
 
-        const queryCondition = {
+        const regex = new RegExp(category, 'i')
 
-            type: 'series',
-
-            $or: [
-                { category: category },
-                { tags: { $in: capitalizeQuery } },
-                { searchKeywords: capitalizeQuery },
-            ],
-        };
-
-        if (genreSort && genreSort !== "all") {
-
-            queryCondition.genre = { $in: genreSort }
-        };
+         // creat query condition with filter
+         const queryCondition = createQueryConditionFilter({
+            query: {
+                type: 'series',
+                $or: [
+                    { category: category },
+                    { tags: { $in: regex } },
+                    { searchKeywords: regex },
+                ],
+            },
+            filter: bodyData?.filterData
+         });
 
         const sortFilterCondition = {};
 
