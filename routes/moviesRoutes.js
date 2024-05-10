@@ -87,7 +87,7 @@ router.post('/category/:category', async (req, res) => {
 
             const genreCount = await countGenres({ query: queryCondition });
 
-            dataToSend.filterCount = genreCount;
+            dataToSend.genreFilter = genreCount;
         };
 
         return res.status(200).json(dataToSend);
@@ -181,15 +181,15 @@ router.post('/top-rated', async (req, res) => {
 
         const { dateSort, ratingSort } = bodyData?.filterData || {};
 
-         // creat query condition with filter
-         const queryCondition = createQueryConditionFilter({
+        // creat query condition with filter
+        const queryCondition = createQueryConditionFilter({
             query: {
                 imdbRating: { $gt: 7 },
                 type: 'movie',
                 status: 'released'
             },
             filter: bodyData?.filterData
-         });
+        });
 
         const sortFilterCondition = {};
 
@@ -217,7 +217,7 @@ router.post('/top-rated', async (req, res) => {
 
             const genreCount = await countGenres({ query: queryCondition });
 
-            dataToSend.filterCount = genreCount;
+            dataToSend.genreFilter = genreCount;
         };
 
         return res.status(200).json(dataToSend);

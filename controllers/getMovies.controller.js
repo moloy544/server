@@ -104,7 +104,7 @@ export async function getLatestReleaseMovie(req, res) {
 
             const genreCount = await countGenres({ query: queryCondition });
 
-            dataToSend.filterCount = genreCount;
+            dataToSend.genreFilter = genreCount;
         };
 
         return res.status(200).json(dataToSend);
@@ -165,7 +165,7 @@ export async function getRecentlyAddedMovie(req, res) {
 
             const genreCount = await countGenres({ query: queryCondition });
 
-            dataToSend.filterCount = genreCount;
+            dataToSend.genreFilter = genreCount;
         };
 
         return res.status(200).json(dataToSend);

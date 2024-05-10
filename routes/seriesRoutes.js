@@ -147,7 +147,7 @@ router.post('/:category', async (req, res) => {
 
             const genreCount = await countGenres({ query: queryCondition });
 
-            dataToSend.filterCount = genreCount;
+            dataToSend.genreFilter = genreCount;
         };
 
         return res.status(200).json(dataToSend);
