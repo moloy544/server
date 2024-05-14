@@ -1,4 +1,4 @@
-import { countGenres } from "../lib/index.js";
+import { countGenres, countIndustry } from "../lib/index.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, getDataBetweenDate } from "../utils/index.js";
 
@@ -163,9 +163,12 @@ export async function getRecentlyAddedMovie(req, res) {
 
         if (page && page === 1) {
 
-            const genreCount = await countGenres({ query: queryCondition });
-
+            const [genreCount, industryCount] = await Promise.all([
+                countGenres({ query: queryCondition }),
+                countIndustry({ query: queryCondition })
+            ])
             dataToSend.genreFilter = genreCount;
+            dataToSend.industryFilter = industryCount;
         };
 
         return res.status(200).json(dataToSend);

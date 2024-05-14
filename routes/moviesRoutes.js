@@ -2,7 +2,7 @@ import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { getLatestReleaseMovie, getRecentlyAddedMovie, searchHandler } from "../controllers/getMovies.controller.js";
 import { createQueryConditionFilter, getDataBetweenDate, transformToCapitalize } from "../utils/index.js";
-import { countGenres } from "../lib/index.js";
+import { countGenres, countIndustry } from "../lib/index.js";
 
 const router = Router();
 
@@ -83,12 +83,23 @@ router.post('/category/:category', async (req, res) => {
 
         dataToSend = { moviesData, endOfData: endOfData };
 
-        if (page && page === 1) {
+
+        if (queryData === "new release" && page && page === 1) {
+
+            const [genreCount, industryCount] = await Promise.all([
+                countGenres({ query: queryCondition }),
+                countIndustry({ query: queryCondition })
+            ]);
+
+            dataToSend.genreFilter = genreCount;
+            dataToSend.industryFilter = industryCount;
+
+        } else if (page && page === 1) {
 
             const genreCount = await countGenres({ query: queryCondition });
 
             dataToSend.genreFilter = genreCount;
-        };
+        }
 
         return res.status(200).json(dataToSend);
 
@@ -106,7 +117,7 @@ router.post('/genre/:genre', async (req, res) => {
 
         const genre = transformToCapitalize(req.params?.genre).replace(/[-]/g, ' ');
 
-        const { limit, skip, bodyData } = req.body;
+        const { limit, page, skip, bodyData } = req.body;
 
         const { dateSort, ratingSort } = bodyData.filterData || {};
 
@@ -153,7 +164,20 @@ router.post('/genre/:genre', async (req, res) => {
 
         const endOfData = (moviesData.length < limit - 1);
 
-        return res.status(200).json({ moviesData, endOfData: endOfData });
+
+        let dataToSend = {
+            moviesData,
+            endOfData: endOfData
+        };
+
+        if (page && page === 1) {
+
+            const industryCount = await countIndustry({ query: queryCondition });
+
+            dataToSend.industryFilter = industryCount;
+        };
+
+        return res.status(200).json(dataToSend);
 
     } catch (error) {
         console.log(error);
@@ -215,9 +239,12 @@ router.post('/top-rated', async (req, res) => {
 
         if (page && page === 1) {
 
-            const genreCount = await countGenres({ query: queryCondition });
-
+            const [genreCount, industryCount] = await Promise.all([
+                countGenres({ query: queryCondition }),
+                countIndustry({ query: queryCondition })
+            ])
             dataToSend.genreFilter = genreCount;
+            dataToSend.industryFilter = industryCount;
         };
 
         return res.status(200).json(dataToSend);
