@@ -10,19 +10,17 @@ const selectValue = "-_id imdbId title thambnail releaseYear type";
 router.post('/watch_later', async (req, res) => {
     try {
 
-        const { limit, skip, bodyData } = req.body;
+        const { limit, watchLater } = req.body;
 
-        const { saveData } = bodyData;
-
-        const moviesIds = saveData?.map(data => data.imdbId);
+        const moviesIds = watchLater?.map(data => data.imdbId);
 
         const movies = await Movies.find({
             imdbId: { $in: moviesIds }
-        }).sort({ createdAt: -1 }).limit(limit).skip(skip).select(selectValue);
+        }).sort({ createdAt: -1 }).select(selectValue);
 
         // Map over the movies and add the 'addAt' field if IMDb ID matches
         const watchLaterData = movies?.map(movie => {
-            const savedMovie = saveData.find(data => data.imdbId === movie.imdbId);
+            const savedMovie = watchLater?.find(data => data.imdbId === movie.imdbId);
             // If a match is found, add the 'addAt' field
             if (savedMovie) {
                 return { ...movie._doc, addAt: savedMovie.addAt };
@@ -32,7 +30,7 @@ router.post('/watch_later', async (req, res) => {
 
         const endOfData = (watchLaterData.length < limit - 1);
 
-        res.json({ moviesData: watchLaterData, endOfData: endOfData });
+        res.json({ watchLaterData, endOfData });
 
     } catch (error) {
         console.log(error);

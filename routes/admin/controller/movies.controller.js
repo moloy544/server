@@ -104,11 +104,12 @@ export async function deleteMovie(req, res) {
 };
 
 //Update movie watchlink 
-export async function updateWatchLinkUrl(req, res) {
+export async function updateWatchLinkUrl() {
 
     try {
 
-        const { newWatchLink, oldWatchLink } = req.body;
+        const newWatchLink = "https://plasti298tomoda.com/play/";
+        const oldWatchLink = "https://elklesort-feudgebrokier-i-281.site/play/"
 
         const regexValue = new RegExp(oldWatchLink, 'i');
 
@@ -126,14 +127,8 @@ export async function updateWatchLinkUrl(req, res) {
             ]
         );
 
-        if (!update) {
-            return res.status(200).json({ message: "Watch link are not update" });
-        };
-
-        return res.status(200).json({ message: `Total ${update.modifiedCount} data update with ${newWatchLink} this watch link` });
-
+        
     } catch (error) {
         console.error("Error updating documents:", error);
-        return res.status(500).json({ message: "Interal server error while updating watch link" });
     };
 };
