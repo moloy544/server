@@ -7,18 +7,18 @@ const router = Router();
 
 /*************** Routes For Movies Controller *******************/
 
-router.post('/login', async (req, res)=>{
+router.post('/login', async (req, res) => {
 
-    const {user, password} = req.body;
+    const { user, password } = req.body;
 
     const LoginUser = "Sanjoy504";
     const loginPassword = "SANJOY504";
 
-    if(user === LoginUser && password === loginPassword){
+    if (user === LoginUser && password === loginPassword) {
         return res.status(200).send("Login success");
     }
-    else{
-        return res.status(400).json({message: "Invalid credentials"});
+    else {
+        return res.status(400).json({ message: "Invalid credentials" });
     };
 });
 
@@ -60,6 +60,35 @@ router.post('/actor/add', addNewActor);
 
 //Route for update actor 
 router.put('/actor/update:id', updateActor);
+
+//update server status
+router.put('/server/status', async (req, res) => {
+    try {
+        const { serverStatus, watchLink } = req.body;
+
+
+        if (!serverStatus || !watchLink) {
+            return res.status(400).json({ message: "Status and watchLink are required" });
+        }
+
+        // Create a case-insensitive regex for the watchLink
+        const regexValue = new RegExp(watchLink, 'i');
+
+        // Perform the bulk update
+        const updateData = await Movies.updateMany(
+            { watchLink: { $regex: regexValue } },
+            { $set: { server: serverStatus } }
+        );
+
+       
+        return res.status(200).json({
+            message: `Movies updated successfully. modifiedCount: ${updateData.modifiedCount} and matchedCount: ${updateData.matchedCount}`,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+});
 
 
 export default router;

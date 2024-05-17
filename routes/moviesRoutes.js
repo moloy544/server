@@ -289,7 +289,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
                 castDetails: { $in: castDetails },
                 imdbId: { $ne: imdbId },
                 status: 'released'
-            }).limit(30).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
+            }).limit(30).select(`${selectValue} server`).sort({ imdbId: -1 }).lean().exec(),
         ]);
 
         return res.status(200).json({ movieData, suggetions: { genreList, castList } });

@@ -109,7 +109,7 @@ export async function updateWatchLinkUrl() {
     try {
 
         const newWatchLink = "https://plasti298tomoda.com/play/";
-        const oldWatchLink = "https://elklesort-feudgebrokier-i-281.site/play/"
+        const oldWatchLink = "https://harriblex-wefly-i-271.site/play/"
 
         const regexValue = new RegExp(oldWatchLink, 'i');
 

@@ -60,6 +60,10 @@ const moviesModel = new Schema({
         type: Date,
         default: Date.now
     },
+    server: {
+        type: String,
+        default: 'work'
+    },
 });
 
 const Movies = model('Movies', moviesModel);
