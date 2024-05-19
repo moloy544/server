@@ -1,12 +1,11 @@
 import { Router } from "express";
 import { addNewActor, updateActor } from "./controller/actress.controller.js";
-import { addNewMovie, deleteMovie, updateWatchLinkUrl } from "./controller/movies.controller.js";
+import { addNewMovie, deleteMovie, updateVideoSource } from "./controller/movies.controller.js";
 import Movies from "../../models/Movies.Model.js";
 
 const router = Router();
 
-/*************** Routes For Movies Controller *******************/
-
+//Admin login route
 router.post('/login', async (req, res) => {
 
     const { user, password } = req.body;
@@ -50,11 +49,6 @@ router.post('/movie/add', addNewMovie);
 //Delete movie route'
 router.delete('/movie/delete/:id', deleteMovie);
 
-//Route for update actor 
-router.put('/movie/update_watchlink', updateWatchLinkUrl);
-
-/*************** Routes For Actress Controller *******************/
-
 //Route for add new actor 
 router.post('/actor/add', addNewActor);
 
@@ -89,6 +83,8 @@ router.put('/server/status', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
+router.put('/update/videosource', updateVideoSource);
 
 
 export default router;

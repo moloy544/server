@@ -104,14 +104,13 @@ export async function deleteMovie(req, res) {
 };
 
 //Update movie watchlink 
-export async function updateWatchLinkUrl() {
+export async function updateVideoSource(req, res) {
 
     try {
 
-        const newWatchLink = "https://plasti298tomoda.com/play/";
-        const oldWatchLink = "https://harriblex-wefly-i-271.site/play/"
+        const { videoSource, oldVideoSource } = req.body
 
-        const regexValue = new RegExp(oldWatchLink, 'i');
+        const regexValue = new RegExp(oldVideoSource, 'i');
 
         const update = await Movies.updateMany(
             { watchLink: { $regex: regexValue } },
@@ -120,15 +119,19 @@ export async function updateWatchLinkUrl() {
                 {
                     $set: {
                         watchLink: {
-                            $concat: [newWatchLink, "$imdbId"]
+                            $concat: [videoSource, "$imdbId"]
                         }
                     }
                 }
             ]
         );
 
-        
+       return res.json({ 
+        message: `Video source update successfull. modifiedCount: ${update.modifiedCount} and matchedCount: ${update.matchedCount}`
+    });
+
     } catch (error) {
-        console.error("Error updating documents:", error);
+        console.error("Error while updatte video source:", error);
+        return res.status(500).send({ message: "Internal server error while updating video source" });
     };
 };

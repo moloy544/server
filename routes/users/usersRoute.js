@@ -10,7 +10,7 @@ const selectValue = "-_id imdbId title thambnail releaseYear type";
 router.post('/watch_later', async (req, res) => {
     try {
 
-        const { limit, watchLater } = req.body;
+        const { watchLater } = req.body;
 
         const moviesIds = watchLater?.map(data => data.imdbId);
 
@@ -28,9 +28,7 @@ router.post('/watch_later', async (req, res) => {
             return movie._doc;
         });
 
-        const endOfData = (watchLaterData.length < limit - 1);
-
-        res.json({ watchLaterData, endOfData });
+        res.json(watchLaterData);
 
     } catch (error) {
         console.log(error);
