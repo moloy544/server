@@ -9,26 +9,28 @@ const selectValue = "-_id imdbId title thambnail releaseYear type";
 //get watch later movies route
 router.post('/watch_later', async (req, res) => {
     try {
-
         const { watchLater } = req.body;
 
-        const moviesIds = watchLater?.map(data => data.imdbId);
+        const moviesIds = watchLater.map(data => data.imdbId);
 
         const movies = await Movies.find({
             imdbId: { $in: moviesIds }
-        }).sort({ createdAt: -1 }).select(selectValue);
+        }).select(selectValue);
 
-        // Map over the movies and add the 'addAt' field if IMDb ID matches
-        const watchLaterData = movies?.map(movie => {
-            const savedMovie = watchLater?.find(data => data.imdbId === movie.imdbId);
-            // If a match is found, add the 'addAt' field
+        //Map the movies and add the addAt field if IMDb ID matches
+        const watchLaterData = movies.map(movie => {
+            const savedMovie = watchLater.find(data => data.imdbId === movie.imdbId);
+            //If a match is found, add the addAt field
             if (savedMovie) {
                 return { ...movie._doc, addAt: savedMovie.addAt };
             }
             return movie._doc;
         });
 
-        res.json(watchLaterData);
+         //Short by addAt descending order
+        const finalData = watchLaterData.sort((a, b) => new Date(b.addAt) - new Date(a.addAt))
+
+        res.json(finalData);
 
     } catch (error) {
         console.log(error);
