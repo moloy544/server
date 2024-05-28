@@ -1,6 +1,6 @@
 import { countGenres, countIndustry } from "../lib/index.js";
 import Movies from "../models/Movies.Model.js";
-import { createQueryConditionFilter, getDataBetweenDate } from "../utils/dbOperations.js";
+import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
 const selectValue = "-_id imdbId title thambnail releaseYear type";
 
