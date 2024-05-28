@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { createQueryConditionFilter, transformToCapitalize } from "../utils/index.js";
 import { countGenres } from "../lib/index.js";
+import { createQueryConditionFilter } from "../utils/dbOperations.js";
 
 const router = Router();
 
@@ -105,8 +105,6 @@ router.post('/:category', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort } = bodyData?.filterData || {};
-
         const regex = new RegExp(category, 'i')
 
          // creat query condition with filter
@@ -122,16 +120,11 @@ router.post('/:category', async (req, res) => {
             filter: bodyData?.filterData
          });
 
-        const sortFilterCondition = {};
-
-        if (ratingSort) {
-            sortFilterCondition.imdbRating = ratingSort;
-        };
-
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        };
+        // creat sort data conditions based on user provided filter
+        const sortFilterCondition = createSortConditions({
+            filterData: bodyData?.filterData,
+            query: queryCondition
+        });
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(limit)
             .sort({ ...sortFilterCondition, _id: 1 })

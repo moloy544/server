@@ -22,7 +22,7 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     }
 
     const data = await Movies.find(queryCondition)
-      .sort({ releaseYear: -1, fullReleaseDate: -1 })
+      .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1  })
       .limit(initialLimit)
       .select(initialSelectValue);
 

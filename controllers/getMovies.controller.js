@@ -1,6 +1,6 @@
 import { countGenres, countIndustry } from "../lib/index.js";
 import Movies from "../models/Movies.Model.js";
-import { createQueryConditionFilter, getDataBetweenDate } from "../utils/index.js";
+import { createQueryConditionFilter, getDataBetweenDate } from "../utils/dbOperations.js";
 
 const selectValue = "-_id imdbId title thambnail releaseYear type";
 
@@ -65,8 +65,6 @@ export async function getLatestReleaseMovie(req, res) {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort } = bodyData?.filterData || {};
-
         // creat query condition with filter
         const queryCondition = createQueryConditionFilter({
             query: {
@@ -78,16 +76,11 @@ export async function getLatestReleaseMovie(req, res) {
             filter: bodyData?.filterData
         });
 
-        const sortFilterCondition = {};
-
-        if (ratingSort) {
-            sortFilterCondition.imdbRating = ratingSort;
-        };
-
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        };
+        // creat sort data conditions based on user provided filter
+        const sortFilterCondition = createSortConditions({
+            filterData: bodyData?.filterData,
+            query: queryCondition
+        });
 
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
@@ -123,13 +116,11 @@ export async function getRecentlyAddedMovie(req, res) {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort } = bodyData.filterData || {};
-
         // Get the date range condition
         const dateRange = getDataBetweenDate({ type: 'days', value: 20 });
 
-         // creat query condition with filter
-         const queryCondition = createQueryConditionFilter({
+        // creat query condition with filter
+        const queryCondition = createQueryConditionFilter({
             query: {
                 type: 'movie',
                 status: 'released',
@@ -139,16 +130,11 @@ export async function getRecentlyAddedMovie(req, res) {
             filter: bodyData?.filterData
         });
 
-        const sortFilterCondition = {};
-
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        };
-
-        if (ratingSort) {
-            sortFilterCondition.imdbRating = ratingSort;
-        };
+        // creat sort data conditions based on user provided filter
+        const sortFilterCondition = createSortConditions({
+            filterData: bodyData?.filterData,
+            query: queryCondition
+        });
 
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)

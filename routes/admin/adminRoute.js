@@ -5,22 +5,6 @@ import Movies from "../../models/Movies.Model.js";
 
 const router = Router();
 
-//Admin login route
-router.post('/login', async (req, res) => {
-
-    const { user, password } = req.body;
-
-    const LoginUser = "Sanjoy504";
-    const loginPassword = "SANJOY504";
-
-    if (user === LoginUser && password === loginPassword) {
-        return res.status(200).send("Login success");
-    }
-    else {
-        return res.status(400).json({ message: "Invalid credentials" });
-    };
-});
-
 //Get single movies or series details 
 router.get('/movie/get/:imdbId', async (req, res) => {
 
@@ -55,6 +39,9 @@ router.post('/actor/add', addNewActor);
 //Route for update actor 
 router.put('/actor/update:id', updateActor);
 
+// update video source url link route
+router.put('/update/videosource', updateVideoSource);
+
 //update server status
 router.put('/server/status', async (req, res) => {
     try {
@@ -83,8 +70,5 @@ router.put('/server/status', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
-router.put('/update/videosource', updateVideoSource);
-
 
 export default router;

@@ -2,7 +2,7 @@ import { Router } from "express";
 import Movies from '../../models/Movies.Model.js';
 import Actress from "../../models/Actress.Model.js";
 import { countGenres } from "../../lib/index.js";
-import { createQueryConditionFilter } from "../../utils/index.js";
+import { createQueryConditionFilter, createSortConditions } from "../../utils/dbOperations.js";
 
 const router = Router();
 
@@ -55,9 +55,7 @@ router.post('/collaction', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { actor } = bodyData;
-
-        const { dateSort, ratingSort } = bodyData.filterData || {};
+        const { actor, filterData } = bodyData;
 
         const findActor = await Actress.findOne({ imdbId: actor }).select('name');
 
@@ -73,19 +71,14 @@ router.post('/collaction', async (req, res) => {
                 castDetails: { $in: [searchRegex] },
                 status: 'released'
             },
-            filter: bodyData?.filterData
+            filter: filterData
          });
 
-        const sortFilterCondition = {};
-
-        if (ratingSort) {
-            sortFilterCondition.imdbRating = ratingSort;
-        };
-
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        };
+        // creat sort data conditions based on user provided filter
+        const sortFilterCondition = createSortConditions({
+            filterData,
+            query: queryCondition
+        });
 
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)

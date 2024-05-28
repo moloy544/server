@@ -1,8 +1,9 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { getLatestReleaseMovie, getRecentlyAddedMovie, searchHandler } from "../controllers/getMovies.controller.js";
-import { createQueryConditionFilter, getDataBetweenDate, transformToCapitalize } from "../utils/index.js";
+import { transformToCapitalize } from "../utils/index.js";
 import { countGenres, countIndustry } from "../lib/index.js";
+import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
 const router = Router();
 
@@ -16,8 +17,6 @@ router.post('/category/:category', async (req, res) => {
         const queryData = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
 
         const { limit, page, skip, bodyData } = req.body;
-
-        const { dateSort, ratingSort } = bodyData?.filterData || {};
 
         function filterQuery() {
 
@@ -56,17 +55,12 @@ router.post('/category/:category', async (req, res) => {
         if (queryData === "new release") {
             queryCondition.fullReleaseDate = getDataBetweenDate({ type: 'months', value: 6 });
         };
-
-        const sortFilterCondition = {};
-
-        if (ratingSort) {
-            sortFilterCondition.imdbRating = ratingSort;
-        };
-
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        };
+        
+        // creat sort data conditions based on user provided filter
+        const sortFilterCondition = createSortConditions({
+            filterData: bodyData?.filterData,
+            query: queryCondition
+        });
 
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
@@ -75,14 +69,13 @@ router.post('/category/:category', async (req, res) => {
 
         if (!moviesData.length) {
             return res.status(404).json({ message: "No movies found in this category" });
-        }
-
-        let dataToSend = {};
+        };
 
         const endOfData = (moviesData.length < limit - 1);
 
-        dataToSend = { moviesData, endOfData: endOfData };
+        let response = {};
 
+        response = { moviesData, endOfData: endOfData };
 
         if (queryData === "new release" && page && page === 1) {
 
@@ -91,17 +84,17 @@ router.post('/category/:category', async (req, res) => {
                 countIndustry({ query: queryCondition })
             ]);
 
-            dataToSend.genreFilter = genreCount;
-            dataToSend.industryFilter = industryCount;
+            response.genreFilter = genreCount;
+            response.industryFilter = industryCount;
 
         } else if (page && page === 1) {
 
             const genreCount = await countGenres({ query: queryCondition });
 
-            dataToSend.genreFilter = genreCount;
+            response.genreFilter = genreCount;
         }
 
-        return res.status(200).json(dataToSend);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.log(error);
@@ -118,8 +111,6 @@ router.post('/genre/:genre', async (req, res) => {
         const genre = transformToCapitalize(req.params?.genre).replace(/[-]/g, ' ');
 
         const { limit, page, skip, bodyData } = req.body;
-
-        const { dateSort, ratingSort } = bodyData.filterData || {};
 
         function filterQuery() {
 
@@ -145,17 +136,11 @@ router.post('/genre/:genre', async (req, res) => {
             filter: bodyData?.filterData
         });
 
-        const sortFilterCondition = {};
-
-        if (ratingSort) {
-            sortFilterCondition.imdbRating = ratingSort;
-        };
-
-        if (dateSort) {
-
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        };
+        // creat sort data conditions based on user provided filter
+        const sortFilterCondition = createSortConditions({
+            filterData: bodyData?.filterData,
+            query: queryCondition
+        });
 
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
@@ -165,7 +150,7 @@ router.post('/genre/:genre', async (req, res) => {
         const endOfData = (moviesData.length < limit - 1);
 
 
-        let dataToSend = {
+        let response = {
             moviesData,
             endOfData: endOfData
         };
@@ -174,10 +159,10 @@ router.post('/genre/:genre', async (req, res) => {
 
             const industryCount = await countIndustry({ query: queryCondition });
 
-            dataToSend.industryFilter = industryCount;
+            response.industryFilter = industryCount;
         };
 
-        return res.status(200).json(dataToSend);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.log(error);
@@ -203,8 +188,6 @@ router.post('/top-rated', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const { dateSort, ratingSort } = bodyData?.filterData || {};
-
         // creat query condition with filter
         const queryCondition = createQueryConditionFilter({
             query: {
@@ -215,27 +198,22 @@ router.post('/top-rated', async (req, res) => {
             filter: bodyData?.filterData
         });
 
-        const sortFilterCondition = {};
-
-        if (dateSort) {
-            sortFilterCondition.releaseYear = dateSort || -1;
-            sortFilterCondition.fullReleaseDate = dateSort || -1;
-        };
-
-        if (ratingSort) {
-            sortFilterCondition.imdbRating = ratingSort;
-        };
+        // creat sort data conditions based on user provided filter
+        const sortFilterCondition = createSortConditions({
+            filterData: bodyData?.filterData,
+            query: queryCondition
+        });
 
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
             .select(selectValue)
             .sort({ ...sortFilterCondition, _id: 1 });
 
-        let dataToSend = {};
+        let response = {};
 
         const endOfData = (moviesData.length < limit - 1);
 
-        dataToSend = { moviesData, endOfData: endOfData };
+        response = { moviesData, endOfData: endOfData };
 
         if (page && page === 1) {
 
@@ -243,11 +221,11 @@ router.post('/top-rated', async (req, res) => {
                 countGenres({ query: queryCondition }),
                 countIndustry({ query: queryCondition })
             ])
-            dataToSend.genreFilter = genreCount;
-            dataToSend.industryFilter = industryCount;
+            response.genreFilter = genreCount;
+            response.industryFilter = industryCount;
         };
 
-        return res.status(200).json(dataToSend);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.log(error)
