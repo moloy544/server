@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { countGenres } from "../lib/index.js";
-import { createQueryConditionFilter } from "../utils/dbOperations.js";
+import { createQueryConditionFilter, createSortConditions } from "../utils/dbOperations.js";
 
 const router = Router();
 
@@ -41,8 +41,12 @@ router.post('/', async (req, res) => {
             },
         ];
 
-        // Get Netflix, hotstar series separately
-        const [netflixSeries, hotStarSeries] = await Promise.all([
+        // Get category based, Netflix, hotstar series separately
+        const [categoryResult, netflixSeries, hotStarSeries] = await Promise.all([
+
+            // get indistry based series data
+            Movies.aggregate(pipeline).exec(),
+
             //netflix
             Movies.find({
             type: 'series',
@@ -63,9 +67,7 @@ router.post('/', async (req, res) => {
             }).sort({ releaseYear: -1, fullReleaseDate: -1 })
                 .limit(20).select(selectValue).lean().exec(),
             
-    ])
-
-        const categoryResult = await Movies.aggregate(pipeline).exec();
+    ]);
 
         // Include Netflix series in the result
         const sectionOneData = {
