@@ -6,13 +6,9 @@ const selectValue = "-_id imdbId title thambnail releaseYear type";
 
 //search handler function
 export async function searchHandler(req, res) {
-
     try {
-
         const { q } = req.query;
-
         const { limit, skip } = req.body;
-
         const pageSize = limit || 25;
 
         // Remove extra spaces and convert to lowercase
@@ -29,13 +25,9 @@ export async function searchHandler(req, res) {
         const searchData = await Movies.find({
             $or: [
                 { title: { $regex: searchRegex } },
-                { category: { $regex: searchRegex } },
-                { type: { $regex: searchRegex } },
-                { language: { $regex: searchRegex } },
-                { genre: { $in: searchRegex } },
                 { castDetails: { $in: searchRegex } },
                 { searchKeywords: { $regex: searchRegex } },
-                { tags: { $in: searchRegex } },
+                { tags: { $in: q } },
                 { imdbId: q },
                 { releaseYear: parseInt(q) || 0 },
             ],
@@ -46,14 +38,26 @@ export async function searchHandler(req, res) {
 
         const endOfData = (searchData.length < pageSize - 1);
 
-        return res.status(200).json({ moviesData: searchData, endOfData: endOfData });
+        // Create bestResult array
+        const bestResult = searchData.filter((data) => data.title?.toLowerCase().startsWith(q.toLowerCase()))
+
+        // If there are any entries in bestResult, remove these entries from searchData to form similerMatch
+        let similerMatch = searchData;
+        let searchResponse = searchData; 
+
+        if (bestResult.length > 0) {
+            const bestResultIds = new Set(bestResult.map((data) => data.imdbId.toString()));
+            similerMatch = searchData.filter((data) => !bestResultIds.has(data.imdbId.toString()));
+            searchResponse = [...bestResult, ...similerMatch];
+        }
+
+        return res.status(200).json({ moviesData: searchResponse, bestResult, endOfData: endOfData });
 
     } catch (error) {
-        console.log(error)
+        console.log(error);
         return res.status(500).json({ message: "Internal Server Error" });
-    };
-
-};
+    }
+}
 
 
 //Get latest release movies 
