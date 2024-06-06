@@ -92,7 +92,9 @@ router.post('/', async (req, res) => {
         Actress.find({ industry: 'bollywood' }).limit(initialLimit).select('-_id imdbId name avatar industry'),
 
         //Coming soon movies
-        Movies.find({ status: 'coming soon' }).limit(initialLimit).select(initialSelectValue)
+        Movies.find({ status: 'coming soon' })
+        .sort({releaseYear: 1, fullReleaseDate: 1})
+        .limit(initialLimit).select(initialSelectValue)
       ]);
 
       const sectionOneAllData = {
