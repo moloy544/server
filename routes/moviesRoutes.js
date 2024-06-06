@@ -55,7 +55,7 @@ router.post('/category/:category', async (req, res) => {
         if (queryData === "new release") {
             queryCondition.fullReleaseDate = getDataBetweenDate({ type: 'months', value: 6 });
         };
-        
+
         // creat sort data conditions based on user provided filter
         const sortFilterCondition = createSortConditions({
             filterData: bodyData?.filterData,
@@ -252,12 +252,14 @@ router.get('/details_movie/:imdbId', async (req, res) => {
 
         const { genre, castDetails, category } = movieData || {};
 
+        const mainGenre = genre.length > 1 ? genre.filter(genre => genre.toLowerCase() !== "drama") : genre
+
         const randomSkip = Math.floor(Math.random() * (100 - 0 + 1)) + 0;
 
         const [genreList, castList] = await Promise.all([
 
             Movies.find({
-                genre: { $in: genre },
+                genre: { $in: mainGenre },
                 category,
                 imdbId: { $ne: imdbId },
                 status: 'released'
