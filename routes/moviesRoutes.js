@@ -252,14 +252,18 @@ router.get('/details_movie/:imdbId', async (req, res) => {
 
         const { genre, castDetails, category } = movieData || {};
 
-        const mainGenre = genre.length > 1 ? genre.filter(genre => genre.toLowerCase() !== "drama") : genre
-
         const randomSkip = Math.floor(Math.random() * (100 - 0 + 1)) + 0;
+
+        let filterGenre = genre;
+
+        if (genre.length > 1 && genre.includes("Drama")) {
+            filterGenre = genre.filter(g => g !== "Drama")
+        };
 
         const [genreList, castList] = await Promise.all([
 
             Movies.find({
-                genre: { $in: mainGenre },
+                genre: { $in: filterGenre },
                 category,
                 imdbId: { $ne: imdbId },
                 status: 'released'
