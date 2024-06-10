@@ -29,7 +29,7 @@ export async function searchHandler(req, res) {
                 { title: { $regex: searchRegex } },
                 { castDetails: { $in: searchRegex } },
                 { searchKeywords: { $regex: searchRegex } },
-                { tags: { $in: terms } },
+                { tags: { $in: searchRegex } },
                 { imdbId: q },
                 { releaseYear: parseInt(q, 10) || 0 }
             ],
@@ -40,18 +40,23 @@ export async function searchHandler(req, res) {
             .skip(skip)
             .limit(limit)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
-            .select(selectValue); // Adjust 'selectValue' based on your schema
+            .select(selectValue);
 
         const endOfData = searchData.length < limit;
 
+        let searchResponse = searchData;
+
         // Create bestResult array
-        const bestResult = searchData.filter((data) => data.title.toLowerCase().startsWith(cleanedQuery));
+        const bestResult =  searchData.filter((data) => data.title.toLowerCase().startsWith(cleanedQuery));
 
-        // If there are any entries in bestResult, remove these entries from searchData to form similarMatch
-        const bestResultIds = new Set(bestResult.map((data) => data.imdbId.toString()));
-        const similarMatch = searchData.filter((data) => !bestResultIds.has(data.imdbId.toString()));
+        if (bestResult && bestResult.length > 0) {
 
-        const searchResponse = [...bestResult, ...similarMatch];
+            // If there are any entries in bestResult, remove these entries from searchData to form similarMatch
+            const bestResultIds = new Set(bestResult.map((data) => data.imdbId.toString()));
+            const similarMatch = searchData.filter((data) => !bestResultIds.has(data.imdbId.toString()));
+
+            searchResponse = [...bestResult, ...similarMatch];
+        };
 
         return res.status(200).json({ moviesData: searchResponse, endOfData });
 
