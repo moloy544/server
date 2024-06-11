@@ -16,13 +16,8 @@ export async function searchHandler(req, res) {
 
         // Remove extra spaces and convert to lowercase
         const cleanedQuery = q.trim().toLowerCase();
-
-        // Split the query into individual terms
-        const terms = cleanedQuery.split(/\s+/);
-
-        // Construct a regex pattern for fuzzy search
-        const fuzzyRegex = terms.map(term => `(?=.*${term})`).join('');
-        const searchRegex = new RegExp(fuzzyRegex, 'i');
+        
+        const searchRegex = new RegExp(cleanedQuery, 'i');
 
         const searchConditions = {
             $or: [

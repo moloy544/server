@@ -6,7 +6,7 @@ const router = Router();
 
 const initialSelectValue = "-_id imdbId title thambnail releaseYear type";
 
-const initialLimit = 20;
+const initialLimit = 30;
 
 const latestInCategoryListing = async (category, notInLanguage) => {
   try {
@@ -22,7 +22,7 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     }
 
     const data = await Movies.find(queryCondition)
-      .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1  })
+      .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
       .limit(initialLimit)
       .select(initialSelectValue);
 
@@ -42,7 +42,7 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
     if (inGenres?.[0] !== 'Animation') {
       queryCondition.$nin = notInGenres
     }
-    const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: {$gt: 6} })
+    const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: { $gt: 6 } })
       .limit(initialLimit)
       .select(initialSelectValue);
 
@@ -63,6 +63,14 @@ router.post('/', async (req, res) => {
     const offsetNumber = Number(offset);
 
     if (offsetNumber === 1) {
+      
+      // this all selected actress show in home landig page layout
+      const selectedActress = [
+        "Ranbir Kapoor", "Shah Rukh Khan", "Ayushmann Khurrana", 
+        "Kriti Sanon","Rashmika Mandanna", "Kiara Advani", "Shahid Kapoor", 
+        "Katrina Kaif", "Shraddha Kapoor", "Deepika Padukone", "Kartik Aaryan", 
+        "Ranveer Singh", "Anushka Sharma", "Akshay Kumar", "Varun Dhawan", "Vicky Kaushal", 
+        "Aamir Khan", "Salman Khan", "Madhuri Dixit", "Bhumi Pednekar"]
 
       const [
         recentlyAddedMovies,
@@ -89,12 +97,13 @@ router.post('/', async (req, res) => {
         // South latest release movies
         latestInCategoryListing('south'),
 
-        Actress.find({ industry: 'bollywood' }).limit(initialLimit).select('-_id imdbId name avatar industry'),
+        Actress.find({ industry: 'bollywood', name:{$in: selectedActress} })
+        .limit(initialLimit).select('-_id imdbId name avatar industry'),
 
         //Coming soon movies
         Movies.find({ status: 'coming soon' })
-        .sort({releaseYear: 1, fullReleaseDate: 1})
-        .limit(initialLimit).select(initialSelectValue)
+          .sort({ releaseYear: 1, fullReleaseDate: 1 })
+          .limit(initialLimit).select(initialSelectValue)
       ]);
 
       const sectionOneAllData = {

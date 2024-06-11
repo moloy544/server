@@ -1,9 +1,18 @@
 import { Router } from "express";
-import { addNewActor, updateActor } from "./controller/actress.controller.js";
+import { addNewActor, getActorData } from "./controller/actress.controller.js";
 import { addNewMovie, deleteMovie, updateVideoSource } from "./controller/movies.controller.js";
 import Movies from "../../models/Movies.Model.js";
 
 const router = Router();
+
+/*************** Movies Related Routes Section ***********************/
+
+//Add new movie route
+router.post('/movie/add', addNewMovie);
+
+//Delete movie route'
+router.delete('/movie/delete/:id', deleteMovie);
+
 
 //Get single movies or series details 
 router.get('/movie/get/:imdbId', async (req, res) => {
@@ -27,19 +36,18 @@ router.get('/movie/get/:imdbId', async (req, res) => {
 
 });
 
-//Add new movie route
-router.post('/movie/add', addNewMovie);
 
-//Delete movie route'
-router.delete('/movie/delete/:id', deleteMovie);
+/*************** Actor Related Routes Section ********************************/
 
 //Route for add new actor 
 router.post('/actor/add', addNewActor);
 
-//Route for update actor 
-router.put('/actor/update:id', updateActor);
+//Route for add new actor 
+router.post('/actor/get', getActorData);
 
-// update video source url link route
+/*************** Admin Controll Other Routes Section ********************************/
+
+//update video source url link route
 router.put('/update/videosource', updateVideoSource);
 
 //update server status
