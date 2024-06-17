@@ -5,6 +5,7 @@ import moviesRoutes from './moviesRoutes.js';
 import seriesRoutes from './seriesRoutes.js';
 import actressRoute from '../routes/actressRoute/actressRoute.js';
 import userRoute from '../routes/users/usersRoute.js'
+import { getEmbedVideo } from '../controllers/getMovies.controller.js';
 
 const app = express();
 
@@ -28,5 +29,7 @@ app.use(`${mainPath}/series`, seriesRoutes);
 /*********** ( Get Actress Info Movies Ifo route ) ****************/
 app.use(`${mainPath}/actress`, actressRoute);
 
+//Paid customers for getting movies Embed Video
+app.get(mainPath+'/subscriber/embed/:imdbId', getEmbedVideo);
 
 export default app;

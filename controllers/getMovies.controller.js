@@ -12,11 +12,12 @@ export async function searchHandler(req, res) {
 
         if (!q) {
             return res.status(400).json({ message: "Invalid search query" });
-        }
+        };
+        console.log(skip)
 
         // Remove extra spaces and convert to lowercase
         const cleanedQuery = q.trim().toLowerCase();
-        
+
         const searchRegex = new RegExp(cleanedQuery, 'i');
 
         const searchConditions = {
@@ -42,7 +43,7 @@ export async function searchHandler(req, res) {
         let searchResponse = searchData;
 
         // Create bestResult array
-        const bestResult =  searchData.filter((data) => data.title.toLowerCase().startsWith(cleanedQuery));
+        const bestResult = searchData.filter((data) => data.title.toLowerCase().startsWith(cleanedQuery));
 
         if (bestResult && bestResult.length > 0) {
 
@@ -170,4 +171,21 @@ export async function getRecentlyAddedMovie(req, res) {
     };
 };
 
+export async function getEmbedVideo(req, res) {
+    try {
 
+        const { imdbId } = req.params;
+        const movieData = await Movies.findOne({ imdbId }).select('watchLink');
+
+        if (!movieData) {
+            return res.status(404).json({ message: "We are not have this data plese search another" });
+        };
+
+        const source = movieData.watchLink;
+        return res.status(200).json({ source });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}
