@@ -14,7 +14,7 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     const queryCondition = {
       category,
       releaseYear: [2024, 2023],
-      genre: { $nin: ['Animation'] },
+      tags: { $nin: ['Cartoons'] },
       status: 'released'
     }
     if (notInLanguage) {
@@ -22,7 +22,7 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     }
 
     const data = await Movies.find(queryCondition)
-      .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
+      .sort({ releaseYear: -1, fullReleaseDate: -1 })
       .limit(initialLimit)
       .select(initialSelectValue);
 
