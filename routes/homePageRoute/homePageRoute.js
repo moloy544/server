@@ -67,10 +67,10 @@ router.post('/', async (req, res) => {
       // this all selected actress show in home landig page layout
       const selectedActress = [
         "Ranbir Kapoor", "Shah Rukh Khan", "Ayushmann Khurrana", 
-        "Kriti Sanon","Rashmika Mandanna", "Kiara Advani", "Shahid Kapoor", 
+        "Kriti Sanon", "Kiara Advani", "Shahid Kapoor", 
         "Katrina Kaif", "Shraddha Kapoor", "Deepika Padukone", "Kartik Aaryan", 
         "Ranveer Singh", "Anushka Sharma", "Akshay Kumar", "Varun Dhawan", "Vicky Kaushal", 
-        "Aamir Khan", "Salman Khan", "Madhuri Dixit", "Bhumi Pednekar"]
+        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar"]
 
       const [
         recentlyAddedMovies,
@@ -98,7 +98,7 @@ router.post('/', async (req, res) => {
         latestInCategoryListing('south'),
 
         Actress.find({ industry: 'bollywood', name:{$in: selectedActress} })
-        .limit(initialLimit).select('-_id imdbId name avatar industry'),
+        .limit(initialLimit).select('-_id imdbId name avatar industry').sort({_id: 1}),
 
         //Coming soon movies
         Movies.find({ status: 'coming soon' })
