@@ -107,18 +107,24 @@ router.post('/:category', async (req, res) => {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        const regex = new RegExp(category, 'i')
+        const regex = new RegExp(category, 'i');
+
+        const dbQuery = {
+            type: 'series',
+            status: 'released',
+        };
+
+        if (category?.toString().toLocaleLowerCase() !== 'all') {
+            dbQuery.$or = [
+                { category: category },
+                { tags: { $in: [regex] } },
+                { searchKeywords: regex }
+              ];
+        }
 
          // creat query condition with filter
          const queryCondition = createQueryConditionFilter({
-            query: {
-                type: 'series',
-                $or: [
-                    { category: category },
-                    { tags: { $in: regex } },
-                    { searchKeywords: regex },
-                ],
-            },
+            query: dbQuery,
             filter: bodyData?.filterData
          });
 
