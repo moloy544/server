@@ -23,6 +23,8 @@ router.post('/category/:category', async (req, res) => {
             switch (queryData) {
                 case 'new release':
                     return [2023, 2024];
+                    case 'movies':
+                    return 'movie';
                 default:
                     return queryData;
             };
@@ -35,6 +37,7 @@ router.post('/category/:category', async (req, res) => {
             query: {
                 $or: [
                     { category: filterQueryValue },
+                    {type: filterQueryValue},
                     { language: filterQueryValue },
                     {
                         releaseYear: {
@@ -77,7 +80,7 @@ router.post('/category/:category', async (req, res) => {
 
         response = { moviesData, endOfData: endOfData };
 
-        if (queryData === "new release" && page && page === 1) {
+        if (queryData === "new release" || queryData == 'movies' && page && page === 1) {
 
             const [genreCount, industryCount] = await Promise.all([
                 countGenres({ query: queryCondition }),

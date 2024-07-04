@@ -7,32 +7,38 @@ const selectValue = "-_id imdbId title thambnail releaseYear type";
 //search handler function
 export async function searchHandler(req, res) {
     try {
+        
         const { q } = req.query;
-        const { limit = 25, skip = 0 } = req.body;
+
+        const { limit = 30, skip = 0, bodyData } = req.body;
 
         if (!q) {
             return res.status(400).json({ message: "Invalid search query" });
         };
-        console.log(skip)
 
         // Remove extra spaces and convert to lowercase
         const cleanedQuery = q.trim().toLowerCase();
 
         const searchRegex = new RegExp(cleanedQuery, 'i');
 
-        const searchConditions = {
-            $or: [
-                { title: { $regex: searchRegex } },
-                { castDetails: { $in: searchRegex } },
-                { searchKeywords: { $regex: searchRegex } },
-                { tags: { $in: searchRegex } },
-                { imdbId: q },
-                { releaseYear: parseInt(q, 10) || 0 }
-            ],
-            status: 'released'
-        };
+        // creat query condition with filter
+        const queryCondition = createQueryConditionFilter({
+            query: {
+                $or: [
+                    { title: { $regex: searchRegex } },
+                    { castDetails: { $in: searchRegex } },
+                    { searchKeywords: { $regex: searchRegex } },
+                    { tags: { $in: searchRegex } },
+                    { imdbId: q },
+                    { releaseYear: parseInt(q, 10) || 0 }
+                ],
+                status: 'released'
+            },
+            filter: bodyData?.filterData
+        },
+        );
 
-        const searchData = await Movies.find(searchConditions)
+        const searchData = await Movies.find(queryCondition)
             .skip(skip)
             .limit(limit)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
