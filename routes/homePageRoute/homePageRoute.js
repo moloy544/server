@@ -116,22 +116,22 @@ router.post('/', async (req, res) => {
           },
           {
             title: 'Hollywood latest release',
-            linkUrl: 'browse/latest/hollywood',
+            linkUrl: '/browse/latest/hollywood',
             moviesData: latestHollywoodMovies
           },
           {
             title: 'Bollywood latest release',
-            linkUrl: 'browse/latest/bollywood',
+            linkUrl: '/browse/latest/bollywood',
             moviesData: latestBollywoodMovies
           },
           {
             title: 'South latest release',
-            linkUrl: 'browse/latest/south',
+            linkUrl: '/browse/latest/south',
             moviesData: latestSouthMovies
           },
           {
             title: 'Upcoming movies',
-            linkUrl: comingSoonMovies?.length >= initialLimit ? 'browse/category/coming-soon' : null,
+            linkUrl: comingSoonMovies?.length >= initialLimit ? '/browse/category/coming-soon' : null,
             moviesData: comingSoonMovies
           },
         ],
@@ -179,17 +179,17 @@ router.post('/', async (req, res) => {
           },
           {
             title: 'Top IMDB rated movies',
-            linkUrl: 'browse/top-rated',
+            linkUrl: '/browse/top-rated',
             movies: topImbdRatingMovies
           },
           {
             title: 'Romance collections',
-            linkUrl: 'browse/genre/romance',
+            linkUrl: '/browse/genre/romance',
             movies: romanceMovies
           },
           {
             title: 'Action collections',
-            linkUrl: 'browse/genre/action',
+            linkUrl: '/browse/genre/action',
             movies: actionMovies
           }
         ]
@@ -231,23 +231,23 @@ router.post('/', async (req, res) => {
 
           {
             title: 'Thriller collections',
-            linkUrl: 'browse/genre/thriller',
+            linkUrl: '/browse/genre/thriller',
             movies: thrillerMovies
           },
 
           {
             title: 'Comedy collections',
-            linkUrl: 'browse/genre/comedy',
+            linkUrl: '/browse/genre/comedy',
             movies: comedyMovies
           },
           {
             title: 'Horror collections',
-            linkUrl: 'browse/genre/horror',
+            linkUrl: '/browse/genre/horror',
             movies: horrorMovies
           },
           {
             title: 'Watch with family',
-            linkUrl: 'browse/genre/family',
+            linkUrl: '/browse/genre/family',
             movies: familyMovies
           }
         ]
@@ -281,17 +281,17 @@ router.post('/', async (req, res) => {
         sliderMovies: [
           {
             title: 'Special for kids',
-            linkUrl: 'browse/genre/animation',
+            linkUrl: '/browse/genre/animation',
             movies: forKidsMovies
           },
           {
             title: 'Science Fiction collections',
-            linkUrl: 'browse/genre/sci-fi',
+            linkUrl: '/browse/genre/sci-fi',
             movies: scienceFictionMovies
           },
           {
             title: 'Crime collections',
-            linkUrl: 'browse/genre/crime',
+            linkUrl: '/browse/genre/crime',
             movies: crimeMovies
           }
         ]
