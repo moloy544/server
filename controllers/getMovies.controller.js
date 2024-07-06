@@ -7,7 +7,7 @@ const selectValue = "-_id imdbId title thambnail releaseYear type";
 //search handler function
 export async function searchHandler(req, res) {
     try {
-        
+
         const { q } = req.query;
 
         const { limit = 30, skip = 0, bodyData } = req.body;
@@ -19,13 +19,18 @@ export async function searchHandler(req, res) {
         // Remove extra spaces and convert to lowercase
         const cleanedQuery = q.trim().toLowerCase();
 
+        // Create an array of regex patterns for each word in the query for title search
+        const splitQuery = cleanedQuery.split(' ');
+        const titleRegexArray = splitQuery.map(term => new RegExp(term, 'i'));
+
+        // Create a single regex pattern for the entire query
         const searchRegex = new RegExp(cleanedQuery, 'i');
 
         // creat query condition with filter
         const queryCondition = createQueryConditionFilter({
             query: {
                 $or: [
-                    { title: { $regex: searchRegex } },
+                    { title: { $in: titleRegexArray } },
                     { castDetails: { $in: searchRegex } },
                     { searchKeywords: { $regex: searchRegex } },
                     { tags: { $in: searchRegex } },
