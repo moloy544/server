@@ -6,45 +6,45 @@ const moviesModel = new Schema({
         type: String,
         require: true
     },
-    imdbRating:{
+    imdbRating: {
         type: Number,
     },
-    thambnail:{
+    thambnail: {
         type: String,
         require: true,
     },
-    title:{
+    title: {
         type: String,
         require: true,
     },
-    releaseYear:{
+    releaseYear: {
         type: Number,
         require: true,
     },
     fullReleaseDate: {
-        type: Date, 
+        type: Date,
         require: true,
     },
-    industry:{
+    category: {
         type: String,
         require: true,
     },
-    type:{
+    type: {
         type: String,
         require: true,
     },
-    language:{
+    language: {
         type: String,
         require: true,
     },
-    genre:{
+    genre: {
         type: Array,
         require: true,
     },
-    watchLink:{
+    watchLink: {
         type: String,
     },
-    castDetails:{
+    castDetails: {
         type: Array,
         require: true,
     },
@@ -52,7 +52,7 @@ const moviesModel = new Schema({
         type: String,
         require: true
     },
-    tags:{
+    tags: {
         type: Array,
         require: false,
     },

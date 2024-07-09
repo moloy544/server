@@ -250,7 +250,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
 
         const { genre, castDetails, category } = movieData || {};
 
-        const randomSkip = Math.floor(Math.random() * (100 - 0 + 1)) + 0;
+        const randomSkip = Math.floor(Math.random() * (50 - 0 + 1)) + 0;
 
         let filterGenre = genre;
 

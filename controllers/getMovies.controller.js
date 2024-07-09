@@ -4,8 +4,9 @@ import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } 
 
 const selectValue = "-_id imdbId title thambnail releaseYear type";
 
-//search handler function
+// Search handler function
 export async function searchHandler(req, res) {
+
     try {
 
         const { q } = req.query;
@@ -14,7 +15,7 @@ export async function searchHandler(req, res) {
 
         if (!q) {
             return res.status(400).json({ message: "Invalid search query" });
-        };
+        }
 
         // Remove extra spaces and convert to lowercase
         const cleanedQuery = q.trim().toLowerCase();
@@ -26,22 +27,21 @@ export async function searchHandler(req, res) {
         // Create a single regex pattern for the entire query
         const searchRegex = new RegExp(cleanedQuery, 'i');
 
-        // creat query condition with filter
+        // Create query condition with filter
         const queryCondition = createQueryConditionFilter({
             query: {
                 $or: [
                     { title: { $in: titleRegexArray } },
                     { castDetails: { $in: searchRegex } },
-                    { searchKeywords: { $regex: searchRegex } },
                     { tags: { $in: searchRegex } },
-                    { imdbId: q },
+                    { searchKeywords: { $regex: searchRegex } },
+                    { genre: { $in: searchRegex } },
+                    { imdbId: cleanedQuery },
                     { releaseYear: parseInt(q, 10) || 0 }
                 ],
-                status: 'released'
             },
             filter: bodyData?.filterData
-        },
-        );
+        });
 
         const searchData = await Movies.find(queryCondition)
             .skip(skip)
@@ -54,16 +54,35 @@ export async function searchHandler(req, res) {
         let searchResponse = searchData;
 
         // Create bestResult array
-        const bestResult = searchData.filter((data) => data.title.toLowerCase().startsWith(cleanedQuery));
+        const bestResult = searchData.map(data => {
+            const lowerTitleWords = data.title.toLowerCase().split(' ');
+            const tags = data.tags && data.tags.length > 0 ? data.tags.map(tag => tag.toLowerCase()) : [];
 
-        if (bestResult && bestResult.length > 0) {
+            // Calculate match count for title and tags
+            const matchCount = splitQuery.reduce((count, term) => {
+                if (lowerTitleWords.includes(term) || (tags.length > 0 && tags.includes(term))) {
+                    return count + 1;
+                }
+                return count;
+            }, 0);
+
+            return { data, matchCount };
+        });
+
+        if (bestResult.length > 0) {
+
+            // Sort bestResult by matchCount in descending order
+            bestResult.sort((a, b) => b.matchCount - a.matchCount);
+
+            // Extract the best results' data
+            const bestResultData = bestResult.map(result => result.data);
 
             // If there are any entries in bestResult, remove these entries from searchData to form similarMatch
-            const bestResultIds = new Set(bestResult.map((data) => data.imdbId.toString()));
-            const similarMatch = searchData.filter((data) => !bestResultIds.has(data.imdbId.toString()));
+            const bestResultIds = new Set(bestResultData.map(data => data.imdbId.toString()));
+            const similarMatch = searchData.filter(data => !bestResultIds.has(data.imdbId.toString()));
 
-            searchResponse = [...bestResult, ...similarMatch];
-        };
+            searchResponse = [...bestResultData, ...similarMatch];
+        }
 
         return res.status(200).json({ moviesData: searchResponse, endOfData });
 
@@ -71,7 +90,8 @@ export async function searchHandler(req, res) {
         console.error(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
-}
+};
+
 
 //Get latest release movies 
 export async function getLatestReleaseMovie(req, res) {
