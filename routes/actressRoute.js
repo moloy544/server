@@ -1,8 +1,8 @@
 import { Router } from "express";
-import Movies from '../../models/Movies.Model.js';
-import Actress from "../../models/Actress.Model.js";
-import { countGenres } from "../../lib/index.js";
-import { createQueryConditionFilter, createSortConditions } from "../../utils/dbOperations.js";
+import Movies from '../models/Movies.Model.js';
+import Actress from "../models/Actress.Model.js";
+import { createQueryConditionFilter, createSortConditions } from "../utils/dbOperations.js";
+import { genarateFilters } from "../utils/genarateFilter.js";
 
 const router = Router();
 
@@ -34,7 +34,7 @@ router.post('/info/:imdbId', async (req, res) => {
         const imdbId = req.params.imdbId
 
         const actor = await Actress.findOne({ imdbId }).select('-_id imdbId name avatar industry');
-        
+
         if (!actor) {
 
             return res.status(404).json({ message: 'Actor not found in our collaction' });
@@ -72,7 +72,7 @@ router.post('/collaction', async (req, res) => {
                 status: 'released'
             },
             filter: filterData
-         });
+        });
 
         // creat sort data conditions based on user provided filter
         const sortFilterCondition = createSortConditions({
@@ -89,20 +89,22 @@ router.post('/collaction', async (req, res) => {
             return res.status(404).json({ message: "Movies not found" });
         };
 
-        let dataToSend = {};
-
         const endOfData = (moviesData.length < limit - 1);
 
-        dataToSend = { moviesData, endOfData: endOfData };
+        // creat initial response data add more responses data as needed
+        const response = { moviesData, endOfData: endOfData };
+
+        // initial filterOption need
+        const filteOptionsNeeded = ['genre'];
 
         if (page && page === 1) {
-
-            const genreCount = await countGenres({ query: queryCondition });
-
-            dataToSend.genreFilter = genreCount;
+            response.filterOptions = await genarateFilters({
+                query: queryCondition,
+                filterNeed: filteOptionsNeeded
+            });
         };
 
-        return res.status(200).json(dataToSend);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.log(error);

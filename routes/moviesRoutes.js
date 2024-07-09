@@ -2,8 +2,8 @@ import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import { getLatestReleaseMovie, getRecentlyAddedMovie, searchHandler } from "../controllers/getMovies.controller.js";
 import { transformToCapitalize } from "../utils/index.js";
-import { countGenres, countIndustry } from "../lib/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
+import { genarateFilters } from "../utils/genarateFilter.js";
 
 const router = Router();
 
@@ -23,7 +23,7 @@ router.post('/category/:category', async (req, res) => {
             switch (queryData) {
                 case 'new release':
                     return [2023, 2024];
-                    case 'movies':
+                case 'movies':
                     return 'movie';
                 default:
                     return queryData;
@@ -37,7 +37,7 @@ router.post('/category/:category', async (req, res) => {
             query: {
                 $or: [
                     { category: filterQueryValue },
-                    {type: filterQueryValue},
+                    { type: filterQueryValue },
                     { language: filterQueryValue },
                     {
                         releaseYear: {
@@ -76,26 +76,22 @@ router.post('/category/:category', async (req, res) => {
 
         const endOfData = (moviesData.length < limit - 1);
 
-        let response = {};
+        // creat initial response data add more responses data as needed
+        const response = { moviesData, endOfData: endOfData };
 
-        response = { moviesData, endOfData: endOfData };
+        // initial filterOption need
+        const filteOptionsNeeded = ['type', 'genre'];
 
         if (queryData === "new release" || queryData == 'movies' && page && page === 1) {
+            filteOptionsNeeded.push('industry');
+        };
 
-            const [genreCount, industryCount] = await Promise.all([
-                countGenres({ query: queryCondition }),
-                countIndustry({ query: queryCondition })
-            ]);
-
-            response.genreFilter = genreCount;
-            response.industryFilter = industryCount;
-
-        } else if (page && page === 1) {
-
-            const genreCount = await countGenres({ query: queryCondition });
-
-            response.genreFilter = genreCount;
-        }
+        if (page && page === 1) {
+            response.filterOptions = await genarateFilters({
+                query: queryCondition,
+                filterNeed: filteOptionsNeeded
+            })
+        };
 
         return res.status(200).json(response);
 
@@ -152,17 +148,17 @@ router.post('/genre/:genre', async (req, res) => {
 
         const endOfData = (moviesData.length < limit - 1);
 
+        // creat initial response data add more responses data as needed
+        const response = { moviesData, endOfData: endOfData };
 
-        let response = {
-            moviesData,
-            endOfData: endOfData
-        };
+        // initial filterOption need
+        const filteOptionsNeeded = ['type', 'industry', 'provider'];
 
         if (page && page === 1) {
-
-            const industryCount = await countIndustry({ query: queryCondition });
-
-            response.industryFilter = industryCount;
+            response.filterOptions = await genarateFilters({
+                query: queryCondition,
+                filterNeed: filteOptionsNeeded
+            });
         };
 
         return res.status(200).json(response);
@@ -212,20 +208,19 @@ router.post('/top-rated', async (req, res) => {
             .select(selectValue)
             .sort({ ...sortFilterCondition, _id: 1 });
 
-        let response = {};
-
         const endOfData = (moviesData.length < limit - 1);
 
-        response = { moviesData, endOfData: endOfData };
+        // creat initial response data add more responses data as needed
+        const response = { moviesData, endOfData: endOfData };
+
+        // initial filterOption need
+        const filteOptionsNeeded = ['type', 'genre', 'industry'];
 
         if (page && page === 1) {
-
-            const [genreCount, industryCount] = await Promise.all([
-                countGenres({ query: queryCondition }),
-                countIndustry({ query: queryCondition })
-            ])
-            response.genreFilter = genreCount;
-            response.industryFilter = industryCount;
+            response.filterOptions = await genarateFilters({
+                query: queryCondition,
+                filterNeed: filteOptionsNeeded
+            });
         };
 
         return res.status(200).json(response);
@@ -236,7 +231,7 @@ router.post('/top-rated', async (req, res) => {
     };
 
 });
-
+  
 
 //get single movie or series details with suggestions data
 router.get('/details_movie/:imdbId', async (req, res) => {

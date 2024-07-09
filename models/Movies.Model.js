@@ -25,7 +25,7 @@ const moviesModel = new Schema({
         type: Date, 
         require: true,
     },
-    category:{
+    industry:{
         type: String,
         require: true,
     },

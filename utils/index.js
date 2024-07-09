@@ -12,3 +12,14 @@ export const transformToCapitalize = (text) => {
   return capitalizedWords?.join(' ');
 };
 
+export const parseCookie = (cookieHeader) => {
+  const cookies = {};
+  cookieHeader?.split(';').forEach(cookie => {
+      const parts = cookie.split('=');
+      const name = parts.shift().trim();
+      const value = decodeURIComponent(parts.join('='));
+      cookies[name] = value;
+  });
+  return cookies;
+};
+

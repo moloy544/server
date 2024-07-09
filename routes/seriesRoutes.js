@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { countGenres } from "../lib/index.js";
 import { createQueryConditionFilter, createSortConditions } from "../utils/dbOperations.js";
+import { genarateFilters } from "../utils/genarateFilter.js";
 
 const router = Router();
 
@@ -142,16 +142,20 @@ router.post('/:category', async (req, res) => {
 
         const endOfData = (moviesData.length < limit - 1);
 
-        dataToSend = { moviesData, endOfData: endOfData };
+         // creat initial response data add more responses data as needed
+         const response = { moviesData, endOfData: endOfData };
 
+         // initial filterOption need
+         const filteOptionsNeeded = ['genre'];
+ 
         if (page && page === 1) {
-
-            const genreCount = await countGenres({ query: queryCondition });
-
-            dataToSend.genreFilter = genreCount;
+            response.filterOptions = await genarateFilters({
+                query: queryCondition,
+                filterNeed: filteOptionsNeeded
+            });
         };
 
-        return res.status(200).json(dataToSend);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.log(error);

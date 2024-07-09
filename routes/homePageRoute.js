@@ -1,6 +1,6 @@
 import { Router } from "express";
-import Movies from '../../models/Movies.Model.js';
-import Actress from "../../models/Actress.Model.js";
+import Movies from '../models/Movies.Model.js';
+import Actress from "../models/Actress.Model.js";
 
 const router = Router();
 
@@ -204,7 +204,6 @@ router.post('/', async (req, res) => {
         comedyMovies,
         horrorMovies,
         familyMovies,
-        forKidsMovies,
       ] = await Promise.all([
 
         //Thriller movies

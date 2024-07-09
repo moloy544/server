@@ -1,6 +1,6 @@
 import { Router } from "express";
-import Reports from "../../models/Reports.Model.js";
-import Movies from "../../models/Movies.Model.js";
+import Reports from "../models/Reports.Model.js";
+import Movies from "../models/Movies.Model.js";
 
 const router = Router();
 

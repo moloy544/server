@@ -1,4 +1,4 @@
-import { countGenres, countIndustry } from "../lib/index.js";
+import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
@@ -104,20 +104,22 @@ export async function getLatestReleaseMovie(req, res) {
             .select(selectValue)
             .sort({ ...sortFilterCondition, _id: 1 });
 
-        let dataToSend = {};
-
         const endOfData = (moviesData.length < limit - 1);
 
-        dataToSend = { moviesData, endOfData: endOfData };
+        // creat initial response data add more responses data as needed
+        const response = { moviesData, endOfData: endOfData };
+
+        // initial filterOption need
+        const filteOptionsNeeded = ['type', 'genre'];
 
         if (page && page === 1) {
-
-            const genreCount = await countGenres({ query: queryCondition });
-
-            dataToSend.genreFilter = genreCount;
+            response.filterOptions = await genarateFilters({
+                query: queryCondition,
+                filterNeed: filteOptionsNeeded
+            })
         };
 
-        return res.status(200).json(dataToSend);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.log(error)
@@ -158,23 +160,22 @@ export async function getRecentlyAddedMovie(req, res) {
             .select(selectValue)
             .sort({ ...sortFilterCondition, createdAt: -1, _id: 1 });
 
-        let dataToSend = {};
-
         const endOfData = (moviesData.length < limit - 1);
 
-        dataToSend = { moviesData, endOfData: endOfData };
+        // creat initial response data add more responses data as needed
+        const response = { moviesData, endOfData: endOfData };
+
+        // initial filterOption need
+        const filteOptionsNeeded = ['type', 'genre', 'industry', 'provider'];
 
         if (page && page === 1) {
-
-            const [genreCount, industryCount] = await Promise.all([
-                countGenres({ query: queryCondition }),
-                countIndustry({ query: queryCondition })
-            ])
-            dataToSend.genreFilter = genreCount;
-            dataToSend.industryFilter = industryCount;
+            response.filterOptions = await genarateFilters({
+                query: queryCondition,
+                filterNeed: filteOptionsNeeded
+            });
         };
 
-        return res.status(200).json(dataToSend);
+        return res.status(200).json(response);
 
     } catch (error) {
         console.log(error)
