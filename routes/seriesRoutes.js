@@ -108,11 +108,15 @@ router.post('/:category', async (req, res) => {
         const { limit, page, skip, bodyData } = req.body;
 
         const regex = new RegExp(category, 'i');
-
+       
+        // initial db query
         const dbQuery = {
             type: 'series',
             status: 'released',
         };
+
+          // initial filterOption need
+          const filteOptionsNeeded = ['genre'];
 
         if (category?.toString().toLocaleLowerCase() !== 'all') {
             dbQuery.$or = [
@@ -120,7 +124,11 @@ router.post('/:category', async (req, res) => {
                 { tags: { $in: [regex] } },
                 { searchKeywords: regex }
               ];
-        }
+             
+        }else{
+            
+            filteOptionsNeeded.push('industry', 'provider');
+        };
 
          // creat query condition with filter
          const queryCondition = createQueryConditionFilter({
@@ -138,15 +146,10 @@ router.post('/:category', async (req, res) => {
             .sort({ ...sortFilterCondition, _id: 1 })
             .select(selectValue);
 
-            let dataToSend = {};
-
         const endOfData = (moviesData.length < limit - 1);
 
          // creat initial response data add more responses data as needed
          const response = { moviesData, endOfData: endOfData };
-
-         // initial filterOption need
-         const filteOptionsNeeded = ['genre'];
  
         if (page && page === 1) {
             response.filterOptions = await genarateFilters({
