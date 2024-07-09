@@ -6,14 +6,13 @@ import seriesRoutes from './seriesRoutes.js';
 import actressRoute from './actressRoute.js';
 import userRoute from './usersRoute.js'
 import { getEmbedVideo } from '../controllers/getMovies.controller.js';
-import { validateAdmin } from '../middlewares/adminValidator.js';
 
 const app = express();
 
 const mainPath = "/api/v1";
 
 /************ ( Admin Access Route ) ****************/
-app.use(`${mainPath}/admin`, validateAdmin, adminRoute);
+app.use(`${mainPath}/admin`, adminRoute);
 
 /*********** ( User Route ) ****************/
 app.use(`${mainPath}/user`,  userRoute);
