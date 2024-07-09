@@ -12,6 +12,23 @@ export const transformToCapitalize = (text) => {
   return capitalizedWords?.join(' ');
 };
 
+export const removeDuplicateConsecutiveChars = (text) => {
+  if (!text) return text;
+
+  let result = '';
+  let prevChar = '';
+
+  for (let i = 0; i < text.length; i++) {
+      let char = text[i];
+      if (char !== prevChar) {
+          result += char;
+          prevChar = char;
+      }
+  }
+
+  return result;
+};
+
 export const parseCookie = (cookieHeader) => {
   const cookies = {};
   cookieHeader?.split(';').forEach(cookie => {

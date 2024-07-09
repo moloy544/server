@@ -55,7 +55,10 @@ export async function searchHandler(req, res) {
 
         // Create bestResult array
         const bestResult = searchData.map(data => {
-            const lowerTitleWords = data.title.toLowerCase().split(' ');
+            // Convert title to lowercase to match with query words and tags
+            const cleanLowerTitle = data.title?.trim().toLowerCase();
+            const lowerTitleWords = cleanLowerTitle.split(' ');
+
             const tags = data.tags && data.tags.length > 0 ? data.tags.map(tag => tag.toLowerCase()) : [];
 
             // Calculate match count for title and tags
@@ -66,13 +69,25 @@ export async function searchHandler(req, res) {
                 return count;
             }, 0);
 
-            return { data, matchCount };
+            // Check if title starts with any of the query words
+            const startsWithCount = splitQuery.reduce((count, term) => {
+                if (cleanLowerTitle.startsWith(term)) {
+                    return count + 1;
+                }
+                return count;
+            }, 0);
+
+            return { data, matchCount, startsWithCount };
         });
 
         if (bestResult.length > 0) {
-
-            // Sort bestResult by matchCount in descending order
-            bestResult.sort((a, b) => b.matchCount - a.matchCount);
+            // Sort bestResult by startsWithCount first, then by matchCount in descending order
+            bestResult.sort((a, b) => {
+                if (b.startsWithCount !== a.startsWithCount) {
+                    return b.startsWithCount - a.startsWithCount;
+                }
+                return b.matchCount - a.matchCount;
+            });
 
             // Extract the best results' data
             const bestResultData = bestResult.map(result => result.data);
@@ -83,6 +98,7 @@ export async function searchHandler(req, res) {
 
             searchResponse = [...bestResultData, ...similarMatch];
         }
+
 
         return res.status(200).json({ moviesData: searchResponse, endOfData });
 
