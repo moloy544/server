@@ -21,6 +21,8 @@ router.post('/category/:category', async (req, res) => {
         function filterQuery() {
 
             switch (queryData) {
+                case 'new release':
+                    return [2023, 2024];
                 case 'movies':
                     return 'movie';
                 default:
@@ -37,6 +39,12 @@ router.post('/category/:category', async (req, res) => {
                     { category: filterQueryValue },
                     { type: filterQueryValue },
                     { language: filterQueryValue },
+                    {
+                        releaseYear: {
+                            $in: Array.isArray(filterQueryValue) ? filterQueryValue : [parseInt(filterQueryValue) || 0]
+                        }
+                    },
+                    { status: filterQueryValue }
                 ]
             },
             filter: bodyData?.filterData
