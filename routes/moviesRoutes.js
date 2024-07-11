@@ -21,8 +21,6 @@ router.post('/category/:category', async (req, res) => {
         function filterQuery() {
 
             switch (queryData) {
-                case 'new release':
-                    return [2023, 2024];
                 case 'movies':
                     return 'movie';
                 default:
