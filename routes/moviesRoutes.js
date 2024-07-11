@@ -39,24 +39,19 @@ router.post('/category/:category', async (req, res) => {
                     { category: filterQueryValue },
                     { type: filterQueryValue },
                     { language: filterQueryValue },
-                    {
-                        releaseYear: {
-                            $in: Array.isArray(filterQueryValue) ? filterQueryValue : [parseInt(filterQueryValue) || 0]
-                        }
-                    },
-                    { status: filterQueryValue }
                 ]
             },
             filter: bodyData?.filterData
-        },
-        );
+        });
 
-        if (queryData !== 'coming soon') {
-            queryCondition.status = 'released';
+        if (queryData === 'coming soon') {
+            queryCondition.status = 'coming soon';
+        } else {
+            queryCondition.status = { $ne: 'coming soon' };
         };
 
         if (queryData === "new release") {
-            queryCondition.fullReleaseDate = getDataBetweenDate({ type: 'months', value: 6 });
+            queryCondition.fullReleaseDate = getDataBetweenDate({ type: 'months', value: 8 });
         };
 
         // creat sort data conditions based on user provided filter
@@ -80,10 +75,14 @@ router.post('/category/:category', async (req, res) => {
         const response = { moviesData, endOfData: endOfData };
 
         // initial filterOption need
-        const filteOptionsNeeded = ['type', 'genre'];
+        const filteOptionsNeeded = ['genre'];
 
         if (queryData === "new release" || queryData == 'movies' && page && page === 1) {
-            filteOptionsNeeded.push('industry');
+            if (queryData === "new release") {
+                filteOptionsNeeded.push('industry');
+            } else {
+                filteOptionsNeeded.push('type');
+            }
         };
 
         if (page && page === 1) {
@@ -231,7 +230,7 @@ router.post('/top-rated', async (req, res) => {
     };
 
 });
-  
+
 
 //get single movie or series details with suggestions data
 router.get('/details_movie/:imdbId', async (req, res) => {
