@@ -81,16 +81,17 @@ router.post('/category/:category', async (req, res) => {
         const response = { moviesData, endOfData: endOfData };
 
         // initial filterOption need
-        const filteOptionsNeeded = ['genre'];
-
-        if (queryData === "new release" || queryData == 'movies' && page && page === 1) {
-            if (queryData === "new release") {
-                filteOptionsNeeded.push('industry');
-            } else {
-                filteOptionsNeeded.push('type');
+        const filteOptionsNeeded = ['genre', 'type'];
+    
+        if (queryData === "new release" || queryData === "movies" && page && page === 1) {
+            // check is query is movies so remove type from filter options
+            if (queryData === "movies") {
+                filteOptionsNeeded.pop()
             }
-        };
 
+            filteOptionsNeeded.push('industry');
+        };
+        // if page is 1 then generate filter options
         if (page && page === 1) {
             response.filterOptions = await genarateFilters({
                 query: queryCondition,
