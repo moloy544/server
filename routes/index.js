@@ -3,7 +3,7 @@ import adminRoute from './admin/adminRoute.js';
 import homePageRoute from './homePageRoute.js';
 import moviesRoutes from './moviesRoutes.js';
 import seriesRoutes from './seriesRoutes.js';
-import actressRoute from './actressRoute.js';
+import actressRoute from './actorsRoute.js';
 import userRoute from './usersRoute.js'
 import { getEmbedVideo } from '../controllers/getMovies.controller.js';
 
