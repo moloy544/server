@@ -1,3 +1,4 @@
+import { isValidObjectId } from "mongoose";
 import Movies from "../../../models/Movies.Model.js";
 import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
 
@@ -85,6 +86,8 @@ export async function deleteMovie(req, res) {
 
         if (!id) {
             return res.status(400).send({ message: "Invalid request. Missing id." });
+        }else if(!isValidObjectId(id)) {
+            return res.status(400).send({ message: "Invalid request. Invalid id format." });
         }
 
         const deleteMovie = await Movies.deleteOne({ _id: id });
