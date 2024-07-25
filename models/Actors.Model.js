@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const actressModel = new Schema({
+const actorsModel = new Schema({
     imdbId: {
         type: String,
         require: true,
@@ -19,6 +19,6 @@ const actressModel = new Schema({
     }
 });
 
-const Actress = model('Actress', actressModel);
+const Actors = model('Actors', actorsModel);
 
-export default Actress;
+export default Actors;

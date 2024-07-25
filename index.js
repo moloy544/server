@@ -19,6 +19,7 @@ app.use(cors({
 
 //User Request Json Limit
 app.use(json({limit: "100kb"}));
+app.use(express.urlencoded({ extended: true }));
 
 connectToDatabase()
 .then(() => {

@@ -1,25 +1,40 @@
-import Actress from "../../../models/Actress.Model.js";
+
+import Actors from "../../../models/Actors.Model.js";
 import { uploadOnCloudinary } from "../../../utils/cloudinary.js";
+import { bufferToDataUri } from "../../../utils/index.js";
 
 // add actor controller
 export async function addNewActor(req, res) {
 
     try {
 
-        const { actorData } = req.body;
+        const { data } = req.body;
 
-        const { imdbId, avatar } = actorData || {};
+        const file = req.file;
 
-        const findActor = await Actress.findOne({ imdbId });
+        const parseData = data ? JSON.parse(data) : {};
+
+        const { imdbId } = parseData;
+
+        if (!imdbId) {
+            return res.status(400).json({ message: "imdbId is required" });
+        };
+
+        const findActor = await Actors.findOne({ imdbId });
+
+        // creat a new data object for store in database
+        const newData = parseData;
 
         // if actor  is fond so update existing actor data
         if (findActor) {
 
             // check if actor data avatar is not equal to existing avatar so update and replace existing avatar to new avatar
-            if (avatar && findActor.avatar !== avatar) {
+            if (file) {
+
+                const fileUri = bufferToDataUri(file);
 
                 const uploadCloudinary = await uploadOnCloudinary({
-                    image: avatar,
+                    image: fileUri,
                     imageId: findActor._id,
                     folderPath: "moviesbazaar/actress_avatar"
                 });
@@ -28,13 +43,13 @@ export async function addNewActor(req, res) {
                     return res.status(300).json({ message: "Error while upload on cloudinary" });
                 };
 
-                actorData.avatar = uploadCloudinary.secure_url;
+                newData.avatar = uploadCloudinary.secure_url;
             };
 
             // Update the existing movie with the new data
             const updateActor = await Actress.findOneAndUpdate(
                 { imdbId },
-                { $set: actorData },
+                { $set: newData },
                 { new: true }
             );
 
@@ -42,9 +57,13 @@ export async function addNewActor(req, res) {
 
         };
 
-        // if actor is not exist the add new actor document
+        if (!file) {
+            return res.status(400).json({ message: "Avatar is required" });
+        };
 
-        const newActor = new Actress(actorData);
+        // if actor is not exist the add new actor document
+        const newActor = new Actors(newData);
+        const avatar = bufferToDataUri(file);
 
         // upload new actor avatar on cloudinary server
         const uploadCloudinary = await uploadOnCloudinary({
@@ -77,7 +96,7 @@ export async function getActorData(req, res) {
 
         const { imdbId } = req.body || {};
 
-        const actor = await Actress.findOne({ imdbId }).select('-_id -__v');
+        const actor = await Actors.findOne({ imdbId }).select('-_id -__v');
 
         if (!actor) {
             return res.status(404).json({ message: "Actor not found" });

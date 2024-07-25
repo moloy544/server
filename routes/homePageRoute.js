@@ -1,12 +1,12 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import Actress from "../models/Actress.Model.js";
+import Actors from "../models/Actors.Model.js";
 
 const router = Router();
 
 const initialSelectValue = "-_id imdbId title thambnail releaseYear type";
 
-const initialLimit = 30;
+const initialLimit = 20;
 
 const latestInCategoryListing = async (category, notInLanguage) => {
   try {
@@ -61,23 +61,15 @@ router.post('/', async (req, res) => {
     const { offset } = req.body;
 
     const offsetNumber = Number(offset);
+    let dataIsEnd = false;
 
     if (offsetNumber === 1) {
-      
-      // this all selected actress show in home landig page layout
-      const selectedActress = [
-        "Ranbir Kapoor", "Shah Rukh Khan", "Ayushmann Khurrana", 
-        "Kriti Sanon", "Kiara Advani", "Shahid Kapoor", 
-        "Katrina Kaif", "Shraddha Kapoor", "Deepika Padukone", "Kartik Aaryan", 
-        "Ranveer Singh", "Anushka Sharma", "Akshay Kumar", "Varun Dhawan", "Vicky Kaushal", 
-        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar"]
 
       const [
         recentlyAddedMovies,
         latestHollywoodMovies,
         latestBollywoodMovies,
         latestSouthMovies,
-        bollywoodActressData,
         comingSoonMovies
       ] = await Promise.all([
 
@@ -97,58 +89,67 @@ router.post('/', async (req, res) => {
         // South latest release movies
         latestInCategoryListing('south'),
 
-        Actress.find({ industry: 'bollywood', name:{$in: selectedActress} })
-        .limit(initialLimit).select('-_id imdbId name avatar industry').sort({_id: 1}),
-
         //Coming soon movies
         Movies.find({ status: 'coming soon' })
           .sort({ releaseYear: 1, fullReleaseDate: 1 })
           .limit(initialLimit).select(initialSelectValue)
       ]);
 
-      const sectionOneAllData = {
+      const sliderMovies = [
+        {
+          title: 'Recently Added',
+          linkUrl: recentlyAddedMovies?.length >= initialLimit ? '/browse/recently-added' : null,
+          moviesData: recentlyAddedMovies
+        },
+        {
+          title: 'Hollywood latest release',
+          linkUrl: '/browse/latest/hollywood',
+          moviesData: latestHollywoodMovies
+        },
+        {
+          title: 'Bollywood latest release',
+          linkUrl: '/browse/latest/bollywood',
+          moviesData: latestBollywoodMovies
+        },
+        {
+          title: 'South latest release',
+          linkUrl: '/browse/latest/south',
+          moviesData: latestSouthMovies
+        },
+        {
+          title: 'Upcoming movies',
+          linkUrl: comingSoonMovies?.length >= initialLimit ? '/browse/category/coming-soon' : null,
+          moviesData: comingSoonMovies
+        },
+      ];
 
-        sliderMovies: [
-          {
-            title: 'Recently Added',
-            linkUrl: recentlyAddedMovies?.length >= initialLimit ? '/browse/recently-added' : null,
-            moviesData: recentlyAddedMovies
-          },
-          {
-            title: 'Hollywood latest release',
-            linkUrl: '/browse/latest/hollywood',
-            moviesData: latestHollywoodMovies
-          },
-          {
-            title: 'Bollywood latest release',
-            linkUrl: '/browse/latest/bollywood',
-            moviesData: latestBollywoodMovies
-          },
-          {
-            title: 'South latest release',
-            linkUrl: '/browse/latest/south',
-            moviesData: latestSouthMovies
-          },
-          {
-            title: 'Upcoming movies',
-            linkUrl: comingSoonMovies?.length >= initialLimit ? '/browse/category/coming-soon' : null,
-            moviesData: comingSoonMovies
-          },
-        ],
-        bollywoodActressData
-      }
-
-      return res.status(200).json({ sectionOne: sectionOneAllData });
+      return res.status(200).json({ sliderMovies, dataIsEnd });
 
     } else if (offsetNumber === 2) {
 
+      // this all selected actress show in home landig page layout
+      const selectedActress = [
+        "Ranbir Kapoor", "Shah Rukh Khan", "Ayushmann Khurrana",
+        "Kriti Sanon", "Kiara Advani", "Shahid Kapoor",
+        "Katrina Kaif", "Shraddha Kapoor", "Deepika Padukone", "Kartik Aaryan",
+        "Ranveer Singh", "Anushka Sharma", "Akshay Kumar", "Varun Dhawan", "Vicky Kaushal",
+        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar"]
+
       const [
+        bollywoodActorsData,
+        southActorsData,
         topImbdRatingMovies,
         seriesList,
         romanceMovies,
-        actionMovies,
-
       ] = await Promise.all([
+
+        // bollywood hindi actors
+        Actors.find({ industry: 'bollywood', name: { $in: selectedActress } })
+          .limit(initialLimit).select('-_id imdbId name avatar industry').sort({ _id: 1 }),
+
+        // south actors
+        Actors.find({ industry: 'south' })
+          .limit(initialLimit).select('-_id imdbId name avatar industry').sort({ _id: 1 }),
 
         //Top IMDB Rated Movies Listing
         Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
@@ -164,47 +165,52 @@ router.post('/', async (req, res) => {
         genreListing({
           inGenres: ['Romance']
         }),
-        //Action movies
-        genreListing({
-          inGenres: ['Action']
-        }),
+
       ]);
 
-      const sectionTwoAllData = {
-        sliderMovies: [
-          {
-            title: 'Watch latest series',
-            linkUrl: '/series',
-            movies: seriesList
-          },
-          {
-            title: 'Top IMDB rated movies',
-            linkUrl: '/browse/top-rated',
-            movies: topImbdRatingMovies
-          },
-          {
-            title: 'Romance collections',
-            linkUrl: '/browse/genre/romance',
-            movies: romanceMovies
-          },
-          {
-            title: 'Action collections',
-            linkUrl: '/browse/genre/action',
-            movies: actionMovies
-          }
-        ]
-      };
+      const sliderActors = [{
+        title: 'Movies by bollywood actors',
+        linkUrl: bollywoodActorsData.length === initialLimit ? '/actors/bollywood' : null,
+        actors: bollywoodActorsData
+      }, {
+        title: 'Movies by south actors',
+        linkUrl: southActorsData.length === initialLimit ? '/actors/south' : null,
+        actors: southActorsData
+      }];
 
-      return res.status(200).json({ sectionTwo: sectionTwoAllData });
+      const sliderMovies = [
+        {
+          title: 'Watch latest series',
+          linkUrl: '/series',
+          movies: seriesList
+        },
+        {
+          title: 'Top IMDB rated movies',
+          linkUrl: '/browse/top-rated',
+          movies: topImbdRatingMovies
+        },
+        {
+          title: 'Romance collections',
+          linkUrl: '/browse/genre/romance',
+          movies: romanceMovies
+        }
+      ];
+
+      return res.status(200).json({ sliderActors, sliderMovies, dataIsEnd });
 
     } else if (offsetNumber === 3) {
 
       const [
+        actionMovies,
         thrillerMovies,
         comedyMovies,
         horrorMovies,
-        familyMovies,
       ] = await Promise.all([
+
+        //Action movies
+        genreListing({
+          inGenres: ['Action']
+        }),
 
         //Thriller movies
         genreListing({
@@ -219,48 +225,48 @@ router.post('/', async (req, res) => {
         genreListing({
           inGenres: ['Horror']
         }),
-        //Family movies
-        genreListing({
-          inGenres: ['Family']
-        }),
       ]);
 
-      const sectionThreeAllData = {
-        sliderMovies: [
+      const sliderMovies = [
+        {
+          title: 'Action collections',
+          linkUrl: '/browse/genre/action',
+          movies: actionMovies
+        },
 
-          {
-            title: 'Thriller collections',
-            linkUrl: '/browse/genre/thriller',
-            movies: thrillerMovies
-          },
+        {
+          title: 'Thriller collections',
+          linkUrl: '/browse/genre/thriller',
+          movies: thrillerMovies
+        },
 
-          {
-            title: 'Comedy collections',
-            linkUrl: '/browse/genre/comedy',
-            movies: comedyMovies
-          },
-          {
-            title: 'Horror collections',
-            linkUrl: '/browse/genre/horror',
-            movies: horrorMovies
-          },
-          {
-            title: 'Watch with family',
-            linkUrl: '/browse/genre/family',
-            movies: familyMovies
-          }
-        ]
-      };
+        {
+          title: 'Comedy collections',
+          linkUrl: '/browse/genre/comedy',
+          movies: comedyMovies
+        },
+        {
+          title: 'Horror collections',
+          linkUrl: '/browse/genre/horror',
+          movies: horrorMovies
+        },
+      ];
 
-      return res.status(200).json({ sectionThree: sectionThreeAllData })
+      return res.status(200).json({ sliderMovies, dataIsEnd })
 
     } else if (offsetNumber === 4) {
 
       const [
+        familyMovies,
         forKidsMovies,
         scienceFictionMovies,
         crimeMovies
       ] = await Promise.all([
+
+        //Family movies
+        genreListing({
+          inGenres: ['Family']
+        }),
 
         //For kids movies in animation
         genreListing({
@@ -276,27 +282,30 @@ router.post('/', async (req, res) => {
         })
       ]);
 
-      const sectionFourAllData = {
-        sliderMovies: [
-          {
-            title: 'Special for kids',
-            linkUrl: '/browse/genre/animation',
-            movies: forKidsMovies
-          },
-          {
-            title: 'Science Fiction collections',
-            linkUrl: '/browse/genre/sci-fi',
-            movies: scienceFictionMovies
-          },
-          {
-            title: 'Crime collections',
-            linkUrl: '/browse/genre/crime',
-            movies: crimeMovies
-          }
-        ]
-      };
-
-      return res.status(200).json({ sectionFour: sectionFourAllData })
+      const sliderMovies = [
+        {
+          title: 'Watch with family',
+          linkUrl: '/browse/genre/family',
+          movies: familyMovies
+        },
+        {
+          title: 'Special for kids',
+          linkUrl: '/browse/genre/animation',
+          movies: forKidsMovies
+        },
+        {
+          title: 'Science Fiction collections',
+          linkUrl: '/browse/genre/sci-fi',
+          movies: scienceFictionMovies
+        },
+        {
+          title: 'Crime collections',
+          linkUrl: '/browse/genre/crime',
+          movies: crimeMovies
+        }
+      ];
+      dataIsEnd = true;
+      return res.status(200).json({ sliderMovies, dataIsEnd })
 
     } else {
 

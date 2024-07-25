@@ -1,6 +1,7 @@
 import { isValidObjectId } from "mongoose";
 import Movies from "../../../models/Movies.Model.js";
 import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
+import { bufferToDataUri } from "../../../utils/index.js";
 
 //add movie controller
 export async function addNewMovie(req, res) {
@@ -8,21 +9,30 @@ export async function addNewMovie(req, res) {
 
         const { data } = req.body;
 
-        const { imdbId, thambnail } = data;
+        const file = req.file;
 
-        const newData = { ...data };
+        const parseData = data ? JSON.parse(data) : {};
+
+        // get movie imdb id
+        const { imdbId } = parseData;
 
         // Check if the movie is available
         const findMovie = await Movies.findOne({ imdbId });
 
+        // creat a new data object for store in database
+        const newData = parseData;
+
+        // check if movie already exist so update 
         if (findMovie) {
 
-            // If movie exists, update with new data
-            if (thambnail && findMovie.thambnail !== thambnail) {
+            // If new file is provided the upload new file in cloudinary
+            if (file) {
+
+                const fileUri = bufferToDataUri(file);
 
                 // Upload new thumbnail to Cloudinary
                 const uploadCloudinary = await uploadOnCloudinary({
-                    image: thambnail,
+                    image: fileUri,
                     publicId: findMovie._id,
                     folderPath: "moviesbazaar/thambnails"
                 });
@@ -45,31 +55,38 @@ export async function addNewMovie(req, res) {
             return res.status(200).json({ message: "Movie has been updated with new data", movieData: updateMovie });
         };
 
-        // If movie doesn't exist, add a new one
+        // check if new movie thambnail is send or not if not send then send error message
+        if (!file) {
+            return res.status(400).json({ message: "Please provide a movie thumbnail" });
+        };
+
+        // creat a new movie document in mongodb
         const movie = new Movies(newData);
         const saveMovie = await movie.save();
 
+        // check if movie is save or not if not send then send error message
         if (!saveMovie) {
             return res.status(500).json({ message: "Error while adding movie to the database" });
         };
 
-        // Upload thumbnail to Cloudinary for the new movie
-        if (thambnail) {
-            const uploadCloudinary = await uploadOnCloudinary({
-                image: thambnail,
-                publicId: saveMovie._id,
-                folderPath: "moviesbazaar/thambnails"
-            });
+        const fileUri = bufferToDataUri(file);
 
-            if (!uploadCloudinary.secure_url) {
-                return res.status(500).json({ message: "Error while uploading to Cloudinary" });
-            };
+        // if movie is successfully saved then upload file in cloudinary
+        const uploadCloudinary = await uploadOnCloudinary({
+            image: fileUri,
+            publicId: saveMovie._id,
+            folderPath: "moviesbazaar/thambnails"
+        });
 
-            // Update the new movie's thambnail field with the Cloudinary URL
-            saveMovie.thambnail = uploadCloudinary.secure_url;
-
-            await saveMovie.save();
+        // check upload fail in cloudinary then send error message
+        if (!uploadCloudinary.secure_url) {
+            return res.status(500).json({ message: "Error while uploading to Cloudinary" });
         };
+
+        // Update the new movie's thambnail field with the Cloudinary URL
+        saveMovie.thambnail = uploadCloudinary.secure_url;
+
+        await saveMovie.save();
 
         return res.status(200).json({ message: "Movie added successfully", movieData: saveMovie });
 
@@ -86,7 +103,7 @@ export async function deleteMovie(req, res) {
 
         if (!id) {
             return res.status(400).send({ message: "Invalid request. Missing id." });
-        }else if(!isValidObjectId(id)) {
+        } else if (!isValidObjectId(id)) {
             return res.status(400).send({ message: "Invalid request. Invalid id format." });
         }
 
@@ -129,9 +146,9 @@ export async function updateVideoSource(req, res) {
             ]
         );
 
-       return res.json({ 
-        message: `Video source update successfull. modifiedCount: ${update.modifiedCount} and matchedCount: ${update.matchedCount}`
-    });
+        return res.json({
+            message: `Video source update successfull. modifiedCount: ${update.modifiedCount} and matchedCount: ${update.matchedCount}`
+        });
 
     } catch (error) {
         console.error("Error while updatte video source:", error);

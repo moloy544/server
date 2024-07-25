@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import Actress from "../models/Actress.Model.js";
+import Actress from "../models/Actors.Model.js";
 import { createQueryConditionFilter, createSortConditions } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
 

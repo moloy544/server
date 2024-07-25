@@ -1,14 +1,15 @@
 import { Router } from "express";
-import { addNewActor, getActorData } from "./controller/actress.controller.js";
+import { addNewActor, getActorData } from "./controller/actors.controller.js";
 import { addNewMovie, deleteMovie, updateVideoSource } from "./controller/movies.controller.js";
 import Movies from "../../models/Movies.Model.js";
+import { multerUpload } from "../../utils/multer.js";
 
 const router = Router();
 
 /*************** Movies Related Routes Section ***********************/
 
 //Add new movie route
-router.post('/movie/add', addNewMovie);
+router.post('/movie/add', multerUpload.single('file'), addNewMovie);
 
 //Delete movie route'
 router.delete('/movie/delete/:id', deleteMovie);
@@ -40,7 +41,7 @@ router.get('/movie/get/:imdbId', async (req, res) => {
 /*************** Actor Related Routes Section ********************************/
 
 //Route for add new actor 
-router.post('/actor/add', addNewActor);
+router.post('/actor/add', multerUpload.single('file'), addNewActor);
 
 //Route for add new actor 
 router.post('/actor/get', getActorData);
