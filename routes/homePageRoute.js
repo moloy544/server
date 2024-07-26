@@ -99,27 +99,27 @@ router.post('/', async (req, res) => {
         {
           title: 'Recently Added',
           linkUrl: recentlyAddedMovies?.length >= initialLimit ? '/browse/recently-added' : null,
-          moviesData: recentlyAddedMovies
+          movies: recentlyAddedMovies
         },
         {
           title: 'Hollywood latest release',
           linkUrl: '/browse/latest/hollywood',
-          moviesData: latestHollywoodMovies
+          movies: latestHollywoodMovies
         },
         {
           title: 'Bollywood latest release',
           linkUrl: '/browse/latest/bollywood',
-          moviesData: latestBollywoodMovies
+          movies: latestBollywoodMovies
         },
         {
           title: 'South latest release',
           linkUrl: '/browse/latest/south',
-          moviesData: latestSouthMovies
+          movies: latestSouthMovies
         },
         {
           title: 'Upcoming movies',
           linkUrl: comingSoonMovies?.length >= initialLimit ? '/browse/category/coming-soon' : null,
-          moviesData: comingSoonMovies
+          movies: comingSoonMovies
         },
       ];
 
