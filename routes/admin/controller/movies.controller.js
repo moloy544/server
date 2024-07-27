@@ -75,7 +75,7 @@ export async function addNewMovie(req, res) {
         const uploadCloudinary = await uploadOnCloudinary({
             image: fileUri,
             publicId: saveMovie._id,
-            folderPath: "moviesbazaar/thambnails"
+            folderPath: "movies/thumbnails"
         });
 
         // check upload fail in cloudinary then send error message
@@ -107,11 +107,21 @@ export async function deleteMovie(req, res) {
             return res.status(400).send({ message: "Invalid request. Invalid id format." });
         }
 
+         // Fetch the movie to get the image link
+         const movie = await Movies.findOne({ _id: id, });
+
+         if (!movie) {
+             return res.status(404).send({ message: "Movie not found" });
+         }
+ 
+         const imageLink = movie.thambnail; // Assuming imageLink is stored in the movie document
+         
         const deleteMovie = await Movies.deleteOne({ _id: id });
 
         if (deleteMovie.deletedCount > 0) {
+
             //Delete movie image from cloudinary server
-            await deleteImageFromCloudinary({ publicId: `moviesbazaar/thambnails/${id}` });
+            await deleteImageFromCloudinary({ imageLink, id: id });
 
             return res.status(200).send({ message: "Movie deleted successfully" });
         } else {
