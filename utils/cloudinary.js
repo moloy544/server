@@ -16,7 +16,6 @@ const cloudinary_config_2 = {
     api_secret: process.env.CLOUDINARY_API_SECRET_2
 };
 
-
 const uploadOnCloudinary = async ({ image, publicId, folderPath }) => {
     try {
 

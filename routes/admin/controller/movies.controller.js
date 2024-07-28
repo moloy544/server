@@ -34,7 +34,7 @@ export async function addNewMovie(req, res) {
                 const uploadCloudinary = await uploadOnCloudinary({
                     image: fileUri,
                     publicId: findMovie._id,
-                    folderPath: "moviesbazaar/thambnails"
+                    folderPath: "movies/thumbnails"
                 });
 
                 if (!uploadCloudinary.secure_url) {
