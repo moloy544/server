@@ -40,10 +40,11 @@ const uploadOnCloudinary = async ({ image, publicId, folderPath }) => {
     }
 };
 
+// Function to delete image from Cloudinary
 const deleteImageFromCloudinary = async ({ id, imageLink }) => {
     try {
         if (!id || !imageLink) {
-           
+
             return { status: 404, message: "Missing value found!" };
         }
 
@@ -61,7 +62,7 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
         } else {
             return { status: 400, message: "Unknown Cloudinary account" };
         };
-       
+
         // configure the cloudinary account
         cloudinary.config(config);
 
@@ -76,4 +77,37 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
     }
 };
 
-export { uploadOnCloudinary, deleteImageFromCloudinary };
+// function for delete for first cloudinary account image 
+const deleteFirstAccountCloudinaryImage = async ({ id, imageLink }) => {
+    try {
+        if (!id || !imageLink) {
+
+            return { status: 404, message: "Missing value found!" };
+        }
+
+        const public_id = `moviesbazaar/thambnails/${id}`;
+        const match = imageLink.match(/https:\/\/res.cloudinary.com\/([^\/]+)\//);
+        const extractedValue = match ? match[1] : null;
+
+        // check if image is first cloudinery account the delete it
+        if (extractedValue === cloudName1) {
+
+            // configure the first cloudinary account
+            cloudinary.config(cloudinary_config_1);
+
+            // Delete the image from First Cloudinary Account
+            await cloudinary.api.delete_resources([public_id], { type: 'upload', resource_type: 'image' });
+
+        };
+
+    } catch (error) {
+        console.log(error);
+        return { status: 500, message: "Error while deleting image from Cloudinary" };
+    }
+};
+
+export {
+    uploadOnCloudinary,
+    deleteImageFromCloudinary,
+    deleteFirstAccountCloudinaryImage
+};

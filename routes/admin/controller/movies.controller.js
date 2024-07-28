@@ -1,6 +1,6 @@
 import { isValidObjectId } from "mongoose";
 import Movies from "../../../models/Movies.Model.js";
-import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
+import { deleteFirstAccountCloudinaryImage, deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
 import { bufferToDataUri } from "../../../utils/index.js";
 
 //add movie controller
@@ -30,11 +30,17 @@ export async function addNewMovie(req, res) {
 
                 const fileUri = bufferToDataUri(file);
 
-                // Upload new thumbnail to Cloudinary
+                // Upload new thumbnail to Secomd Cloudinary Account
                 const uploadCloudinary = await uploadOnCloudinary({
                     image: fileUri,
                     publicId: findMovie._id,
                     folderPath: "movies/thumbnails"
+                });
+
+                // delet image from first cloudinary account before deleting thumbnail its check if is first account image then delete
+                deleteFirstAccountCloudinaryImage({
+                    imageLink: findMovie.thambnail,
+                    id: findMovie._id
                 });
 
                 if (!uploadCloudinary.secure_url) {
@@ -107,15 +113,15 @@ export async function deleteMovie(req, res) {
             return res.status(400).send({ message: "Invalid request. Invalid id format." });
         }
 
-         // Fetch the movie to get the image link
-         const movie = await Movies.findOne({ _id: id, });
+        // Fetch the movie to get the image link
+        const movie = await Movies.findOne({ _id: id, });
 
-         if (!movie) {
-             return res.status(404).send({ message: "Movie not found" });
-         }
- 
-         const imageLink = movie.thambnail; // Assuming imageLink is stored in the movie document
-         
+        if (!movie) {
+            return res.status(404).send({ message: "Movie not found" });
+        }
+
+        const imageLink = movie.thambnail; // Assuming imageLink is stored in the movie document
+
         const deleteMovie = await Movies.deleteOne({ _id: id });
 
         if (deleteMovie.deletedCount > 0) {
