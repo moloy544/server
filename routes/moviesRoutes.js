@@ -263,7 +263,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
         if (genre.length > 1 && genre.includes("Drama")) {
             filterGenre = genre.filter(g => g !== "Drama")
         };
-
+     
         const [genreList, castList] = await Promise.all([
 
             Movies.find({

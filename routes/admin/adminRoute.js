@@ -3,6 +3,7 @@ import { addNewActor, getActorData } from "./controller/actors.controller.js";
 import { addNewMovie, deleteMovie, updateVideoSource } from "./controller/movies.controller.js";
 import Movies from "../../models/Movies.Model.js";
 import { multerUpload } from "../../utils/multer.js";
+import { newAppUpdateRelease } from "./controller/app.controller.js";
 
 const router = Router();
 
@@ -51,6 +52,9 @@ router.post('/actor/get', getActorData);
 //update video source url link route
 router.put('/update/videosource', updateVideoSource);
 
+// app new update release route
+router.post('/release_new_update', newAppUpdateRelease);
+
 //update server status
 router.put('/server/status', async (req, res) => {
     try {
@@ -70,7 +74,7 @@ router.put('/server/status', async (req, res) => {
             { $set: { server: serverStatus } }
         );
 
-       
+
         return res.status(200).json({
             message: `Movies updated successfully. modifiedCount: ${updateData.modifiedCount} and matchedCount: ${updateData.matchedCount}`,
         });

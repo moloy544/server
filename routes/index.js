@@ -4,7 +4,8 @@ import homePageRoute from './homePageRoute.js';
 import moviesRoutes from './moviesRoutes.js';
 import seriesRoutes from './seriesRoutes.js';
 import actressRoute from './actorsRoute.js';
-import userRoute from './usersRoute.js'
+import userRoute from './usersRoute.js';
+import mobileAppRoute from './applicationRoutes/mobileApp.route.js';
 import { getEmbedVideo } from '../controllers/getMovies.controller.js';
 
 const app = express();
@@ -31,5 +32,8 @@ app.use(`${mainPath}/actress`, actressRoute);
 
 //Paid customers for getting movies Embed Video
 app.get(mainPath+'/subscriber/embed/:imdbId', getEmbedVideo);
+
+/************** Only Mobile Application Related Route **********************/
+app.use(`${mainPath}/mobile_application`, mobileAppRoute);
 
 export default app;
