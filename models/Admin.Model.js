@@ -6,6 +6,11 @@ const appUpdateSchema = new Schema({
     updateLink: { type: String, required: true },
     updateInfo: { type: String, required: true },
     updateTitle: { type: String, required: true },
+    isMandatory: {
+        type: Boolean,
+        default: false,
+        required: true,
+    },
     releaseDate: { type: Date, default: Date.now },
 });
 
