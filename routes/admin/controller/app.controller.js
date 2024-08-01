@@ -13,11 +13,11 @@ export async function newAppUpdateRelease(req, res) {
             return res.status(400).json({ message: "Update data is required" });
         };
 
-        const { title, description, downloadLink, version } = updateData || {};
+        const { title, description, downloadLink, version, isMandatory } = updateData || {};
 
-        if (!title ||!description ||!downloadLink ||!version) {
+        if (!title ||!description ||!downloadLink ||!version || !isMandatory) {
             return res.status(400).json({ message: "Missing fields found. all fields are required." });
-        };
+        }
 
         if (!downloadLink.startsWith('https://')) {
             return res.status(400).json({ message: "Invalid new updated app release link." });
@@ -34,6 +34,7 @@ export async function newAppUpdateRelease(req, res) {
             updateLink: downloadLink,
             updateInfo: description,
             updateTitle: title,
+            isMandatory
         };
         const newDocument = new AppUpdate(updateDetails);
         await newDocument.save();
