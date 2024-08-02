@@ -171,3 +171,27 @@ export async function updateVideoSource(req, res) {
         return res.status(500).send({ message: "Internal server error while updating video source" });
     };
 };
+
+
+export async function makeDocumentsStringToArray(field) {
+
+    try {
+
+        // Update the documents
+        await Movies.updateMany(
+          { [field]: { $type: 'string' } },
+          [
+            {
+              $set: {
+                [field]: { $cond: { if: { $isArray: `$${field}` }, then: `$${field}`, else: [`$${field}`] } }
+              }
+            }
+          ]
+        );
+    
+        console.log(`Field "${field}" updated successfully.`);
+      } catch (error) {
+        console.error(`Error updating field "${field}":`, error);
+      };
+
+}

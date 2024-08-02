@@ -1,65 +1,63 @@
 import { Schema, model } from "mongoose";
 
 const moviesModel = new Schema({
-
-    imdbId: {
-        type: String,
-        require: true
-    },
-    imdbRating: {
-        type: Number,
-    },
-    thambnail: {
-        type: String,
-        require: true,
-    },
-    title: {
-        type: String,
-        require: true,
-    },
-    releaseYear: {
-        type: Number,
-        require: true,
-    },
-    fullReleaseDate: {
-        type: Date,
-        require: true,
-    },
-    category: {
-        type: String,
-        require: true,
-    },
-    type: {
-        type: String,
-        require: true,
-    },
-    language: {
-        type: String,
-        require: true,
-    },
-    genre: {
-        type: Array,
-        require: true,
-    },
-    watchLink: {
-        type: String,
-    },
-    castDetails: {
-        type: Array,
-        require: true,
-    },
-    status: {
-        type: String,
-        require: true
-    },
-    tags: {
-        type: Array,
-        require: false,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
+  imdbId: {
+    type: String,
+    required: true,
+  },
+  imdbRating: {
+    type: Number,
+  },
+  thambnail: {
+    type: String,
+    required: true,
+  },
+  title: {
+    type: String,
+    required: true,
+  },
+  releaseYear: {
+    type: Number,
+    required: true,
+  },
+  fullReleaseDate: {
+    type: Date,
+    required: true,
+  },
+  category: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    required: true,
+  },
+  language: {
+    type: String,
+    required: true,
+  },
+  genre: {
+    type: [String],
+    required: true,
+  },
+  watchLink: {
+    type: [String],
+  },
+  castDetails: {
+    type: [String],
+    required: true,
+  },
+  status: {
+    type: String,
+    required: true,
+  },
+  tags: {
+    type: [String],
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Movies = model('Movies', moviesModel);
