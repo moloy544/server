@@ -4,6 +4,7 @@ import { getLatestReleaseMovie, getRecentlyAddedMovie, searchHandler } from "../
 import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
+import { updateWatchLinks } from "./admin/controller/movies.controller.js";
 
 const router = Router();
 
@@ -82,7 +83,7 @@ router.post('/category/:category', async (req, res) => {
 
         // initial filterOption need
         const filteOptionsNeeded = ['genre', 'type'];
-    
+
         if (queryData === "new release" || queryData === "movies" && page && page === 1) {
             // check is query is movies so remove type from filter options
             if (queryData === "movies") {
@@ -243,6 +244,12 @@ router.post('/top-rated', async (req, res) => {
 router.get('/details_movie/:imdbId', async (req, res) => {
     try {
         const { imdbId } = req.params;
+        let ip = req.ip;
+
+        // If behind a proxy, get the first IP from the 'x-forwarded-for' header
+        if (req.headers['x-forwarded-for']) {
+            ip = req.headers['x-forwarded-for'].split(',')[0];
+        };
 
         if (!imdbId) {
             return res.status(400).json({ message: "imdbId is required" });
@@ -263,7 +270,13 @@ router.get('/details_movie/:imdbId', async (req, res) => {
         if (genre.length > 1 && genre.includes("Drama")) {
             filterGenre = genre.filter(g => g !== "Drama")
         };
-     
+
+        /**const domainToFind = "https://cdn4507.loner300artoa.com";
+        const pathToFind = "/stream2/i-cdn-0/";
+        const newDomain = "https://cdn4521.loner300artoa.com";
+        const newPath = "/stream2/i-arch-400/";
+        updateWatchLinks({domainToFind, pathToFind, newDomain, newPath});**/
+
         const [genreList, castList] = await Promise.all([
 
             Movies.find({
@@ -280,13 +293,12 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             }).limit(50).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
         ]);
 
-        return res.status(200).json({ movieData, suggetions: { genreList, castList } });
+        return res.status(200).json({ movieData, suggetions: { genreList, castList }, ip });
 
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
 
 export default router;

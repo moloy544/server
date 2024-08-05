@@ -17,6 +17,9 @@ app.use(cors({
   credentials: true
 }));
 
+// Trust the proxy
+app.set('trust proxy', true);
+
 //User Request Json Limit
 app.use(json({limit: "100kb"}));
 app.use(express.urlencoded({ extended: true }));

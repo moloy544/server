@@ -195,3 +195,34 @@ export async function makeDocumentsStringToArray(field) {
       };
 
 }
+
+export async function updateWatchLinks({ domainToFind, pathToFind, newDomain, newPath }) {
+    try {
+        // Find all documents that have watchLink matching the specified pattern
+        const movies = await Movies.find({ watchLink: { $elemMatch: { $regex: `${domainToFind}${pathToFind}` } } });
+
+        // Create an array of promises for updating each document
+        const updatePromises = movies.map(async (doc) => {
+            // Update each watchLink that matches the specified pattern
+            const updatedWatchLink = doc.watchLink.map(link => {
+                if (link.includes(`${domainToFind}${pathToFind}`)) {
+                    return link.replace(`${domainToFind}${pathToFind}`, `${newDomain}${newPath}`);
+                }
+                return link;
+            });
+
+            // Update the document with the modified watchLink array
+            await Movies.updateOne(
+                { _id: doc._id },
+                { $set: { watchLink: updatedWatchLink } }
+            );
+        });
+
+        // Wait for all update operations to complete
+        await Promise.all(updatePromises);
+
+        console.log('Watch links updated successfully.');
+    } catch (error) {
+        console.error('Error updating watch links:', error);
+    }
+}
