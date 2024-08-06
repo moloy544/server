@@ -44,7 +44,7 @@ export async function addNewMovie(req, res) {
                 });
 
                 if (!uploadCloudinary.secure_url) {
-                    return res.status(500).json({ message: "Error while uploading to Cloudinary" });
+                    return res.status(500).json({ message: "Error while update thumbnail" });
                 };
 
                 // Update movieData with new thumbnail URL
@@ -68,31 +68,35 @@ export async function addNewMovie(req, res) {
 
         // creat a new movie document in mongodb
         const movie = new Movies(newData);
-        const saveMovie = await movie.save();
-
-        // check if movie is save or not if not send then send error message
-        if (!saveMovie) {
-            return res.status(500).json({ message: "Error while adding movie to the database" });
-        };
 
         const fileUri = bufferToDataUri(file);
 
         // if movie is successfully saved then upload file in cloudinary
         const uploadCloudinary = await uploadOnCloudinary({
             image: fileUri,
-            publicId: saveMovie._id,
+            publicId: movie._id,
             folderPath: "movies/thumbnails"
         });
 
         // check upload fail in cloudinary then send error message
         if (!uploadCloudinary.secure_url) {
-            return res.status(500).json({ message: "Error while uploading to Cloudinary" });
+            return res.status(500).json({ message: "Error while uploading thumbnail" });
         };
 
-        // Update the new movie's thambnail field with the Cloudinary URL
-        saveMovie.thambnail = uploadCloudinary.secure_url;
+        // add thumbnail to mongoose Model object
+        movie.thambnail = uploadCloudinary.secure_url;
 
-        await saveMovie.save();
+        // save the document in mongodb
+        const saveMovie = await movie.save();
+
+        // check if movie is save or not if not send then send error message and delete thumbnail from cloudinary
+        if (!saveMovie) {
+            deleteImageFromCloudinary({
+                id: movie.id,
+                imageLink: uploadCloudinary.secure_url
+            })
+            return res.status(500).json({ message: "Error while adding movie to the database" });
+        };
 
         return res.status(200).json({ message: "Movie added successfully", movieData: saveMovie });
 
@@ -179,20 +183,20 @@ export async function makeDocumentsStringToArray(field) {
 
         // Update the documents
         await Movies.updateMany(
-          { [field]: { $type: 'string' } },
-          [
-            {
-              $set: {
-                [field]: { $cond: { if: { $isArray: `$${field}` }, then: `$${field}`, else: [`$${field}`] } }
-              }
-            }
-          ]
+            { [field]: { $type: 'string' } },
+            [
+                {
+                    $set: {
+                        [field]: { $cond: { if: { $isArray: `$${field}` }, then: `$${field}`, else: [`$${field}`] } }
+                    }
+                }
+            ]
         );
-    
+
         console.log(`Field "${field}" updated successfully.`);
-      } catch (error) {
+    } catch (error) {
         console.error(`Error updating field "${field}":`, error);
-      };
+    };
 
 }
 
