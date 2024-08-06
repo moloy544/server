@@ -122,7 +122,7 @@ export async function getLatestReleaseMovie(req, res) {
         const queryCondition = createQueryConditionFilter({
             query: {
                 category: querySlug,
-                fullReleaseDate: getDataBetweenDate({ type: 'months', value: 6 }),
+                fullReleaseDate: getDataBetweenDate({ type: 'months', value: 10 }),
                 type: 'movie',
                 status: 'released'
             },
