@@ -2,7 +2,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
-const selectValue = "-_id imdbId title thambnail releaseYear type";
+const selectValue = "-_id imdbId title thambnail releaseYear type tags";
 
 // Search handler function
 export async function searchHandler(req, res) {
@@ -22,7 +22,6 @@ export async function searchHandler(req, res) {
 
         // Create an array of regex patterns for each word in the query for title search
         const splitQuery = cleanedQuery.split(' ');
-        const titleRegexArray = splitQuery.map(term => new RegExp(term, 'i'));
 
         // Create a single regex pattern for the entire query
         const searchRegex = new RegExp(cleanedQuery, 'i');
@@ -31,7 +30,7 @@ export async function searchHandler(req, res) {
         const queryCondition = createQueryConditionFilter({
             query: {
                 $or: [
-                    { title: { $in: titleRegexArray } },
+                    { title: { $regex: searchRegex } },
                     { castDetails: { $in: searchRegex } },
                     { tags: { $in: searchRegex } },
                     { searchKeywords: { $regex: searchRegex } },
@@ -46,7 +45,7 @@ export async function searchHandler(req, res) {
         const searchData = await Movies.find(queryCondition)
             .skip(skip)
             .limit(limit)
-            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+            .sort({releaseYear: -1, fullReleaseDate: -1, _id: -1})
             .select(selectValue);
 
         const endOfData = searchData.length < limit;
@@ -63,7 +62,8 @@ export async function searchHandler(req, res) {
 
             // Calculate match count for title and tags
             const matchCount = splitQuery.reduce((count, term) => {
-                if (lowerTitleWords.includes(term) || (tags.length > 0 && tags.includes(term))) {
+
+                if (lowerTitleWords.includes(term) || (tags.length > 0 && tags.includes(term) || tags.includes(cleanedQuery)) || cleanLowerTitle.startsWith(cleanedQuery)) {
                     return count + 1;
                 }
                 return count;
@@ -71,7 +71,7 @@ export async function searchHandler(req, res) {
 
             // Check if title starts with any of the query words
             const startsWithCount = splitQuery.reduce((count, term) => {
-                if (cleanLowerTitle.startsWith(term)) {
+                if (cleanedQuery.startsWith(cleanLowerTitle) || cleanLowerTitle.startsWith(term)) {
                     return count + 1;
                 }
                 return count;
