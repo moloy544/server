@@ -83,7 +83,7 @@ router.post('/category/:category', async (req, res) => {
 
         // initial filterOption need
         const filteOptionsNeeded = ['genre', 'type'];
-    
+
         if (queryData === "new release" || queryData === "movies" && page && page === 1) {
             // check is query is movies so remove type from filter options
             if (queryData === "movies") {
@@ -255,7 +255,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             return res.status(404).json({ message: "Movie not found" });
         }
 
-        const { genre, castDetails, category } = movieData || {};
+        const { genre, castDetails, category, watchLink } = movieData || {};
 
         const randomSkip = Math.floor(Math.random() * (50 - 0 + 1)) + 0;
 
@@ -270,7 +270,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
         const newDomain = "https://cdn4521.loner300artoa.com";
         const newPath = "/stream2/i-arch-400/";
         updateWatchLinks({domainToFind, pathToFind, newDomain, newPath});**/
-     
+
         const [genreList, castList] = await Promise.all([
 
             Movies.find({
@@ -286,6 +286,35 @@ router.get('/details_movie/:imdbId', async (req, res) => {
                 status: 'released'
             }).limit(50).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
         ]);
+
+       // reorder the watch links and add m3u8 hls link at the beginning of array
+        function reorderWatchLinks(watchLinks) {
+            const m3u8LinkIndex = watchLinks.findIndex(link => link.includes('.m3u8'));
+
+            if (m3u8LinkIndex > 0) {
+                // Move the m3u8 link to the first position
+                const [m3u8Link] = watchLinks.splice(m3u8LinkIndex, 1);
+                watchLinks.unshift(m3u8Link);
+            }
+
+            return watchLinks;
+        };
+
+        // if watchLinks are greater than 1 then filter out watchLinks
+        if (watchLink.length > 1) {
+
+            // filter out watchlinks
+            const isBegMediaWatchLinkAvailable = watchLink.findIndex(links => links.includes('bigtimedelivery.net'));
+            if (isBegMediaWatchLinkAvailable !== -1) {
+                const filterLinks = watchLink.filter(link => !link.includes('loner300artoa.com/stream2/'));
+                const reOrderLiks = reorderWatchLinks(filterLinks);
+                movieData.watchLink = reOrderLiks;
+            } else {
+                const reOrderLiks = reorderWatchLinks(watchLink);
+                movieData.watchLink = reOrderLiks;
+            }
+
+        };
 
         return res.status(200).json({ movieData, suggetions: { genreList, castList } });
 
