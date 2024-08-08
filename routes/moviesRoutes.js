@@ -4,11 +4,36 @@ import { getLatestReleaseMovie, getRecentlyAddedMovie, searchHandler } from "../
 import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
-import { updateWatchLinks } from "./admin/controller/movies.controller.js";
 
 const router = Router();
 
 const selectValue = "-_id imdbId title thambnail releaseYear type";
+
+router.get('/generate-sitemap', async (req, res) => {
+    try {
+        const { onlyCount = false, limit = 50000 } = req.query;
+        if (onlyCount === 'true') {
+            const totalCount = await Movies.countDocuments();
+            return res.json({ totalCount });
+        } else {
+            const data = await Movies.find()
+                .select('-_id imdbId title type createdAt')
+                .limit(parseInt(limit));
+
+            const updatedMovies = data.map(movie => ({
+                ...movie.toObject(),
+                createdAt: movie.createdAt || new Date(), // Use a default date if createdAt is missing
+            }));
+
+            const totalCount = data.length;
+            return res.json({ movies: updatedMovies, totalCount });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
 
 //Route For Client Category Listing /listing/category/:query
 router.post('/category/:category', async (req, res) => {
@@ -244,11 +269,11 @@ router.post('/top-rated', async (req, res) => {
 router.get('/details_movie/:imdbId', async (req, res) => {
     try {
         const { imdbId } = req.params;
+        const suggetion = req.query.suggetion === 'true';
 
         if (!imdbId) {
             return res.status(400).json({ message: "imdbId is required" });
-        }
-
+        };
         const movieData = await Movies.findOne({ imdbId });
 
         if (!movieData) {
@@ -262,17 +287,39 @@ router.get('/details_movie/:imdbId', async (req, res) => {
         let filterGenre = genre;
 
         if (genre.length > 1 && genre.includes("Drama")) {
-            filterGenre = genre.filter(g => g !== "Drama")
+            filterGenre = genre.filter(g => g !== "Drama");
+        }
+
+        function reorderWatchLinks(watchLinks) {
+            const m3u8LinkIndex = watchLinks.findIndex(link => link.includes('.m3u8'));
+
+            if (m3u8LinkIndex > 0) {
+                const [m3u8Link] = watchLinks.splice(m3u8LinkIndex, 1);
+                watchLinks.unshift(m3u8Link);
+            }
+
+            return watchLinks;
+        }
+
+        if (watchLink.length > 1) {
+            const isBegMediaWatchLinkAvailable = watchLink.findIndex(links => links.includes('bigtimedelivery.net'));
+            if (isBegMediaWatchLinkAvailable !== -1) {
+                const filterLinks = watchLink.filter(link => !link.includes('loner300artoa.com/stream2/'));
+                const reOrderLiks = reorderWatchLinks(filterLinks);
+                movieData.watchLink = reOrderLiks;
+            } else {
+                const reOrderLiks = reorderWatchLinks(watchLink);
+                movieData.watchLink = reOrderLiks;
+            }
+        }
+        
+        // check if suggestions is no need so return only movie details
+        if (!suggetion) {
+            return res.status(200).json({ movieData });
         };
 
-        /**const domainToFind = "https://cdn4507.loner300artoa.com";
-        const pathToFind = "/stream2/i-cdn-0/";
-        const newDomain = "https://cdn4521.loner300artoa.com";
-        const newPath = "/stream2/i-arch-400/";
-        updateWatchLinks({domainToFind, pathToFind, newDomain, newPath});**/
-
+        // Fetch suggestions only when suggetion is true
         const [genreList, castList] = await Promise.all([
-
             Movies.find({
                 genre: { $in: filterGenre },
                 category,
@@ -286,35 +333,6 @@ router.get('/details_movie/:imdbId', async (req, res) => {
                 status: 'released'
             }).limit(50).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
         ]);
-
-       // reorder the watch links and add m3u8 hls link at the beginning of array
-        function reorderWatchLinks(watchLinks) {
-            const m3u8LinkIndex = watchLinks.findIndex(link => link.includes('.m3u8'));
-
-            if (m3u8LinkIndex > 0) {
-                // Move the m3u8 link to the first position
-                const [m3u8Link] = watchLinks.splice(m3u8LinkIndex, 1);
-                watchLinks.unshift(m3u8Link);
-            }
-
-            return watchLinks;
-        };
-
-        // if watchLinks are greater than 1 then filter out watchLinks
-        if (watchLink.length > 1) {
-
-            // filter out watchlinks
-            const isBegMediaWatchLinkAvailable = watchLink.findIndex(links => links.includes('bigtimedelivery.net'));
-            if (isBegMediaWatchLinkAvailable !== -1) {
-                const filterLinks = watchLink.filter(link => !link.includes('loner300artoa.com/stream2/'));
-                const reOrderLiks = reorderWatchLinks(filterLinks);
-                movieData.watchLink = reOrderLiks;
-            } else {
-                const reOrderLiks = reorderWatchLinks(watchLink);
-                movieData.watchLink = reOrderLiks;
-            }
-
-        };
 
         return res.status(200).json({ movieData, suggetions: { genreList, castList } });
 

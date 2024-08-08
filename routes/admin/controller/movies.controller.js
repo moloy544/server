@@ -55,7 +55,7 @@ export async function addNewMovie(req, res) {
             const updateMovie = await Movies.findOneAndUpdate(
                 { imdbId },
                 { $set: newData },
-                { new: true, fields: { createdAt: 0 } }
+                { new: true }
             );
 
             return res.status(200).json({ message: "Movie has been updated with new data", movieData: updateMovie });
