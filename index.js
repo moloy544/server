@@ -34,7 +34,6 @@ connectToDatabase()
     console.log("MONGO db connection failed ! ", err);
   });
 
-
   //App All Routes In This Route
   app.use(appAllRoutes);
 
