@@ -10,16 +10,21 @@ const selectValue = "imdbId title thambnail releaseYear type";
 
 router.post('/industry', async (req, res) => {
     try {
+        const { industry, skip, limit = 30 } = req.body;
+        const transformIndustry = industry?.toLowerCase();
 
-        const industry = req.body.industry?.toLowerCase();
+        const actorsData = await Actress.find({ transformIndustry })
+            .select('-_id imdbId name avatar industry')
+            .skip(skip || 0)
+            .limit(limit);
 
-        const actorsInIndustry = await Actress.find({ industry }).select('-_id imdbId name avatar industry');
-
-        if (actorsInIndustry.length === 0) {
+        if (actorsData.length === 0) {
             return res.status(404).json({ message: 'No actress found in this industry' });
         };
 
-        return res.status(200).json({ actors: actorsInIndustry, industry });
+        const dataIsEnd = (actorsData.length < limit - 1);
+
+        return res.status(200).json({ actors: actorsData, industry, dataIsEnd });
 
     } catch (error) {
         console.log(error);
