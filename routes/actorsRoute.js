@@ -13,7 +13,7 @@ router.post('/industry', async (req, res) => {
         const { industry, skip, limit = 30 } = req.body;
         const transformIndustry = industry?.toLowerCase();
 
-        const actorsData = await Actress.find({ transformIndustry })
+        const actorsData = await Actress.find({ industry: transformIndustry })
             .select('-_id imdbId name avatar industry')
             .skip(skip || 0)
             .limit(limit);
