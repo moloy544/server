@@ -2,7 +2,7 @@ const validateAdmin = async (req, res, next) => {
 
   try {
     const token = req.cookies?.['admin'];
-console.log(token)
+
     if (!token) {
       return res.status(401).json({ message: 'Admin is Unauthorized' });
     }

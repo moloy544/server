@@ -143,40 +143,6 @@ export async function deleteMovie(req, res) {
     }
 };
 
-//Update movie watchlink 
-export async function updateVideoSource(req, res) {
-
-    try {
-
-        const { videoSource, oldVideoSource } = req.body
-
-        const regexValue = new RegExp(oldVideoSource, 'i');
-
-        const update = await Movies.updateMany(
-            { watchLink: { $regex: regexValue } },
-
-            [
-                {
-                    $set: {
-                        watchLink: {
-                            $concat: [videoSource, "$imdbId"]
-                        }
-                    }
-                }
-            ]
-        );
-
-        return res.json({
-            message: `Video source update successfull. modifiedCount: ${update.modifiedCount} and matchedCount: ${update.matchedCount}`
-        });
-
-    } catch (error) {
-        console.error("Error while updatte video source:", error);
-        return res.status(500).send({ message: "Internal server error while updating video source" });
-    };
-};
-
-
 export async function makeDocumentsStringToArray(field) {
 
     try {
@@ -200,8 +166,14 @@ export async function makeDocumentsStringToArray(field) {
 
 }
 
-export async function updateWatchLinks({ domainToFind, pathToFind, newDomain, newPath }) {
+export async function updateVideoSource(req, res) {
+
     try {
+        const { domainToFind, pathToFind, newDomain, newPath } = req.body;
+
+        if (!domainToFind ||!pathToFind ||!newDomain ||!newPath) {
+            return res.status(400).json({ message: 'Missing required fields: domainToFind, pathToFind, newDomain, newPath' });
+        }
         // Find all documents that have watchLink matching the specified pattern
         const movies = await Movies.find({ watchLink: { $elemMatch: { $regex: `${domainToFind}${pathToFind}` } } });
 
@@ -225,8 +197,10 @@ export async function updateWatchLinks({ domainToFind, pathToFind, newDomain, ne
         // Wait for all update operations to complete
         await Promise.all(updatePromises);
 
-        console.log('Watch links updated successfully.');
+        return res.status(200).json({ message: 'Video Source updated successfully.' });
+
     } catch (error) {
-        console.error('Error updating watch links:', error);
+        console.error('Error while updating Video Source', error);
+        return res.status(500).json({ message: 'Internal server error while updating Video Source' });
     }
 }
