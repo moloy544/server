@@ -304,7 +304,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
         if (watchLink.length > 1) {
             const isBegMediaWatchLinkAvailable = watchLink.findIndex(links => links.includes('bigtimedelivery.net'));
             if (isBegMediaWatchLinkAvailable !== -1) {
-                const filterLinks = watchLink.filter(link => !link.includes('loner300artoa.com/stream2/'));
+                const filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com'));
                 const reOrderLiks = reorderWatchLinks(filterLinks);
                 movieData.watchLink = reOrderLiks;
             } else {
