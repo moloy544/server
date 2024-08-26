@@ -45,7 +45,7 @@ export async function searchHandler(req, res) {
         const searchData = await Movies.find(queryCondition)
             .skip(skip)
             .limit(limit)
-            .sort({releaseYear: -1, fullReleaseDate: -1, _id: -1})
+            .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
             .select(selectValue);
 
         const endOfData = searchData.length < limit;
@@ -99,6 +99,11 @@ export async function searchHandler(req, res) {
             searchResponse = [...bestResultData, ...similarMatch];
         }
 
+        // Clean the response data by removing the tags field
+        searchResponse = searchResponse.map(({ _doc }) => {
+            const { tags, ...cleanedData } = _doc;
+            return cleanedData;
+        });
 
         return res.status(200).json({ moviesData: searchResponse, endOfData });
 
