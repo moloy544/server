@@ -301,18 +301,21 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             return watchLinks;
         }
 
-        if (watchLink.length > 1) {
-            const isBegMediaWatchLinkAvailable = watchLink.findIndex(links => links.includes('bigtimedelivery.net'));
-            if (isBegMediaWatchLinkAvailable !== -1) {
-                const filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com'));
+        if (watchLink.length > 2) {
+            const isJupiterDotComLinkAvailable = watchLink.findIndex(links => links.includes('jupiter.com'));
+            if (isJupiterDotComLinkAvailable !== -1) {
+                const filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
                 const reOrderLiks = reorderWatchLinks(filterLinks);
                 movieData.watchLink = reOrderLiks;
             } else {
                 const reOrderLiks = reorderWatchLinks(watchLink);
                 movieData.watchLink = reOrderLiks;
             }
+        } else if (watchLink.length > 1) {
+            const reOrderLiks = reorderWatchLinks(watchLink);
+            movieData.watchLink = reOrderLiks;
         }
-        
+
         // check if suggestions is no need so return only movie details
         if (!suggetion) {
             return res.status(200).json({ movieData });
