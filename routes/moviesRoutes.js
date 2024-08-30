@@ -265,24 +265,27 @@ router.post('/top-rated', async (req, res) => {
 });
 
 
-//get single movie or series details with suggestions data
 router.get('/details_movie/:imdbId', async (req, res) => {
     try {
         const { imdbId } = req.params;
-        const suggetion = req.query.suggetion === 'true';
+        const suggestion = req.query.suggestion === 'true';
 
         if (!imdbId) {
             return res.status(400).json({ message: "imdbId is required" });
-        };
-        const movieData = await Movies.findOne({ imdbId });
+        }
+
+        const movieData = await Movies.findOne({ imdbId }).lean(); // Using .lean() to work with a plain JS object
 
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" });
         }
 
-        const { genre, castDetails, category, watchLink } = movieData || {};
+        // Clone movieData to avoid direct mutation issues
+        let modifiedMovieData = JSON.parse(JSON.stringify(movieData)); // Deep copy to avoid reference issues
 
-        const randomSkip = Math.floor(Math.random() * (50 - 0 + 1)) + 0;
+        const { genre, castDetails, category, watchLink } = modifiedMovieData;
+
+        const randomSkip = Math.floor(Math.random() * 50); // Random skip value for suggestions
 
         let filterGenre = genre;
 
@@ -293,35 +296,39 @@ router.get('/details_movie/:imdbId', async (req, res) => {
         function reorderWatchLinks(watchLinks) {
             const m3u8LinkIndex = watchLinks.findIndex(link => link.includes('.m3u8'));
 
-            if (m3u8LinkIndex > 0) {
+            if (m3u8LinkIndex > -1) { // Check if m3u8 link exists
                 const [m3u8Link] = watchLinks.splice(m3u8LinkIndex, 1);
                 watchLinks.unshift(m3u8Link);
             }
 
-            return watchLinks;
+            const linksData = watchLinks.map((link, index) => ({
+                source: link,
+                label: `Server ${index + 1}`,
+                labelTag: link.includes('.m3u8') ? '(No Ads)' : '(Multi language)'
+            }));
+
+            return linksData;
         }
 
-        if (watchLink.length > 2) {
-            const isJupiterDotComLinkAvailable = watchLink.findIndex(links => links.includes('jupiter.com'));
-            if (isJupiterDotComLinkAvailable !== -1) {
-                const filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
-                const reOrderLiks = reorderWatchLinks(filterLinks);
-                movieData.watchLink = reOrderLiks;
-            } else {
-                const reOrderLiks = reorderWatchLinks(watchLink);
-                movieData.watchLink = reOrderLiks;
+        // Check if watchLink exists and reorder if necessary
+        if (Array.isArray(watchLink) && watchLink.length > 1) {
+            let filterLinks = watchLink;
+
+            // Filter logic if jupiter.com link is present
+            if (watchLink.some(link => link.includes('jupiter.com'))) {
+                filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
             }
-        } else if (watchLink.length > 1) {
-            const reOrderLiks = reorderWatchLinks(watchLink);
-            movieData.watchLink = reOrderLiks;
+
+            // Assign the reordered links back to modifiedMovieData.watchLink
+            modifiedMovieData.watchLink = reorderWatchLinks(filterLinks);
         }
 
-        // check if suggestions is no need so return only movie details
-        if (!suggetion) {
-            return res.status(200).json({ movieData });
-        };
+        // Check if suggestions are needed
+        if (!suggestion) {
+            return res.status(200).json({ movieData: modifiedMovieData });
+        }
 
-        // Fetch suggestions only when suggetion is true
+        // Fetch suggestions only when suggestion is true
         const [genreList, castList] = await Promise.all([
             Movies.find({
                 genre: { $in: filterGenre },
@@ -337,7 +344,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             }).limit(50).select(selectValue).sort({ imdbId: -1 }).lean().exec(),
         ]);
 
-        return res.status(200).json({ movieData, suggetions: { genreList, castList } });
+        return res.status(200).json({ movieData: modifiedMovieData, suggestions: { genreList, castList } });
 
     } catch (error) {
         console.log(error);
