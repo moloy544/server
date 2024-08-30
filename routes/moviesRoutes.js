@@ -269,7 +269,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
     try {
         const { imdbId } = req.params;
         const suggestion = req.query.suggestion === 'true';
-
+    
         if (!imdbId) {
             return res.status(400).json({ message: "imdbId is required" });
         }
