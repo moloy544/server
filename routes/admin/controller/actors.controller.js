@@ -47,7 +47,7 @@ export async function addNewActor(req, res) {
             };
 
             // Update the existing movie with the new data
-            const updateActor = await Actress.findOneAndUpdate(
+            const updateActor = await Actors.findOneAndUpdate(
                 { imdbId },
                 { $set: newData },
                 { new: true }

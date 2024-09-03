@@ -19,6 +19,20 @@ const actorsModel = new Schema({
     }
 });
 
+// Pre-save middleware to convert the 'name' field to lowercase
+actorsModel.pre('save', function(next) {
+    if (this.isModified('name')) {
+        try {
+            this.name = this.name.toLowerCase();
+            next(); // Continue with the save operation
+        } catch (error) {
+            next(error); // Pass the error to error handling middleware
+        }
+    } else {
+        next(); // Proceed if no changes to 'name'
+    }
+});
+
 const Actors = model('Actors', actorsModel);
 
 export default Actors;

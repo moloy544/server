@@ -26,17 +26,23 @@ export async function searchHandler(req, res) {
         // Create a single regex pattern for the entire query
         const searchRegex = new RegExp(cleanedQuery, 'i');
 
+        // Construct a regex pattern for fuzzy search
+        const fuzzyRegex = splitQuery?.map(term => `(?=.*${term})`).join('');
+
+        const searchArryRegex = new RegExp(fuzzyRegex, 'i');
+
         // Create query condition with filter
         const queryCondition = createQueryConditionFilter({
             query: {
                 $or: [
                     { title: { $regex: searchRegex } },
-                    { castDetails: { $in: searchRegex } },
+                    { title: { $in: searchArryRegex } }, // Fuzzy search for title
                     { tags: { $in: searchRegex } },
+                    { castDetails: { $in: searchRegex } },
                     { searchKeywords: { $regex: searchRegex } },
                     { genre: { $in: searchRegex } },
                     { imdbId: cleanedQuery },
-                    { releaseYear: parseInt(q, 10) || 0 }
+                    { releaseYear: parseInt(q, 10) || 0 },
                 ],
             },
             filter: bodyData?.filterData

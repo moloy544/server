@@ -133,7 +133,7 @@ router.post('/', async (req, res) => {
         "Kriti Sanon", "Kiara Advani", "Shahid Kapoor",
         "Katrina Kaif", "Shraddha Kapoor", "Deepika Padukone", "Kartik Aaryan",
         "Ranveer Singh", "Anushka Sharma", "Akshay Kumar", "Varun Dhawan", "Vicky Kaushal",
-        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar"]
+        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar"].map(name => name.toLowerCase());
 
       const [
         bollywoodActorsData,
