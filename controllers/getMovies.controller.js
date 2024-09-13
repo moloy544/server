@@ -183,7 +183,7 @@ export async function getRecentlyAddedMovie(req, res) {
         const { limit, page, skip, bodyData } = req.body;
 
         // Get the date range condition
-        const dateRange = getDataBetweenDate({ type: 'days', value: 20 });
+        const dateRange = getDataBetweenDate({ type: 'months', value: 1 });
 
         // creat query condition with filter
         const queryCondition = createQueryConditionFilter({
