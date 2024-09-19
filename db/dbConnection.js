@@ -1,11 +1,16 @@
 import { connect } from 'mongoose';
 
+let isConnected = false;
+
 const connectToDatabase = async () => {
+  if (isConnected) {
+    return;
+  }
 
   try {
-
     const connectionInstance = await connect(process.env.DB_CONNECTION_URL);
-    console.log(`MongoDB is connected to Grocerit db host :${connectionInstance.connection.host}`);
+    isConnected = true;
+    console.log(`MongoDB connected to host: ${connectionInstance.connection.host}`);
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
   }
