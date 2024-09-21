@@ -269,23 +269,24 @@ router.get('/details_movie/:imdbId', async (req, res) => {
     try {
         const { imdbId } = req.params;
         const suggestion = req.query.suggestion === 'true';
-    
-        if (!imdbId) {
-            return res.status(400).json({ message: "imdbId is required" });
+
+        if (!imdbId || imdbId.trim() === ' ' || imdbId.trim() === '' || imdbId.length <= 6) {
+
+            return res.status(400).json({ message: "imdbId id is missmatch" });
         }
 
-        const movieData = await Movies.findOne({ imdbId }).lean(); // Using .lean() to work with a plain JS object
+        const movieData = await Movies.findOne({ imdbId }).lean(); //Using .lean() to work with a plain JS object
 
         if (!movieData) {
             return res.status(404).json({ message: "Movie not found" });
         }
 
         // Clone movieData to avoid direct mutation issues
-        let modifiedMovieData = JSON.parse(JSON.stringify(movieData)); // Deep copy to avoid reference issues
+        let modifiedMovieData = JSON.parse(JSON.stringify(movieData)); //Deep copy to avoid reference issues
 
         const { genre, castDetails, category, watchLink } = modifiedMovieData;
 
-        const randomSkip = Math.floor(Math.random() * 50); // Random skip value for suggestions
+        const randomSkip = Math.floor(Math.random() * 50); //Random skip value for suggestions
 
         let filterGenre = genre;
 
@@ -296,7 +297,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
         function reorderWatchLinks(watchLinks) {
             const m3u8LinkIndex = watchLinks.findIndex(link => link.includes('.m3u8'));
 
-            if (m3u8LinkIndex > -1) { // Check if m3u8 link exists
+            if (m3u8LinkIndex > -1) { //Check if m3u8 link exists
                 const [m3u8Link] = watchLinks.splice(m3u8LinkIndex, 1);
                 watchLinks.unshift(m3u8Link);
             }
@@ -310,11 +311,11 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             return linksData;
         }
 
-        // Check if watchLink exists and reorder if necessary
+        //Check if watchLink exists and reorder if necessary
         if (Array.isArray(watchLink) && watchLink.length > 1) {
             let filterLinks = watchLink;
 
-            // Filter logic if jupiter.com link is present
+            //Filter logic if jupiter.com link is present
             if (watchLink.some(link => link.includes('jupiter.com'))) {
                 filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
             }
@@ -323,12 +324,12 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             modifiedMovieData.watchLink = reorderWatchLinks(filterLinks);
         }
 
-        // Check if suggestions are needed
+        //Check if suggestions are needed
         if (!suggestion) {
             return res.status(200).json({ movieData: modifiedMovieData });
         }
 
-        // Fetch suggestions only when suggestion is true
+        //Fetch suggestions only when suggestion is true
         const [genreList, castList] = await Promise.all([
             Movies.find({
                 genre: { $in: filterGenre },
