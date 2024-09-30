@@ -7,7 +7,7 @@ import { bufferToDataUri } from "../../../utils/index.js";
 export async function addNewMovie(req, res) {
     try {
 
-        const { data } = req.body;
+        const { data, createdDateUpdate } = req.body;
 
         const file = req.file;
 
@@ -50,7 +50,9 @@ export async function addNewMovie(req, res) {
                 // Update movieData with new thumbnail URL
                 newData.thambnail = uploadCloudinary.secure_url
             };
-
+            if (createdDateUpdate && createdDateUpdate === "yes") {
+                newData.createdAt = Date.now();
+            }
             // Update the existing movie with the new data
             const updateMovie = await Movies.findOneAndUpdate(
                 { imdbId },
@@ -174,7 +176,7 @@ export async function updateVideoSource(req, res) {
     try {
         const { domainToFind, newDomain } = req.body;
 
-        if (!domainToFind ||!newDomain) {
+        if (!domainToFind || !newDomain) {
             return res.status(400).json({ message: 'Missing required fields: domainToFind, newDomain' });
         }
         // Find all documents that have watchLink matching the specified pattern

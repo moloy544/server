@@ -68,6 +68,7 @@ router.get('/movies/one_by_one', async (req, res) => {
         })
             .select("-_id")  // Added watchLink to response for clarity
             .limit(1)
+            .sort({ createdAt: 1, _id: 1 })
 
         if (!movie.length) {
             return res.status(404).json({ message: "No movies found with more than 1 watch link" });
@@ -95,7 +96,7 @@ router.put('/update/movies/audio_and_video_type', async (req, res) => {
         // Check if the movie with the provided imdbId exists and update it
         const updateMovie = await Movies.findOneAndUpdate(
             { imdbId },
-            { $set: { multiAudio, videoType} },
+            { $set: { multiAudio, videoType } },
             { new: true }
         );
 
