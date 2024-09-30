@@ -67,7 +67,10 @@ export async function addNewMovie(req, res) {
         };
 
         // creat a new movie document in mongodb
-        const movie = new Movies(newData);
+        const movie = new Movies({
+            ...newData,
+            createdAt: Date.now()
+        });
 
         const fileUri = bufferToDataUri(file);
 

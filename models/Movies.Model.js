@@ -43,6 +43,14 @@ const moviesModel = new Schema({
   watchLink: {
     type: [String],
   },
+  multiAudio:{
+    type: Boolean,
+    required: true,
+  },
+  videoType:{
+    type: String,
+    required: true,
+  },
   castDetails: {
     type: [String],
     required: true,
@@ -56,7 +64,7 @@ const moviesModel = new Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now,
+    require: true,
   },
 });
 
