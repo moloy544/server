@@ -18,7 +18,8 @@ router.get('/generate-sitemap', async (req, res) => {
         } else {
             const data = await Movies.find()
                 .select('-_id imdbId title type createdAt')
-                .limit(parseInt(limit));
+                .sort({ createdAt: -1 })
+                .limit(parseInt(limit))
 
             const updatedMovies = data.map(movie => ({
                 ...movie.toObject(),
