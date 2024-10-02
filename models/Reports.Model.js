@@ -7,7 +7,10 @@ const reportsSchema = new Schema({
     ref: 'Movies',
     required: true,
   },
-  
+  user:{
+    type: String,
+    require: true
+  },
   selectedReports: {
     type: [String],
     required: true,

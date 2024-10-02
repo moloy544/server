@@ -46,3 +46,14 @@ export function bufferToDataUri(file) {
   const mimeType = file.mimetype;
   return `data:${mimeType};base64,${base64}`;
 };
+
+// Parse Cookie from request header
+export const parseCookies = (request) => {
+  const list = {},
+      rc = request.headers.cookie;
+  rc && rc.split(';').forEach((cookie) => {
+      const parts = cookie.split('=');
+      list[parts.shift().trim()] = decodeURI(parts.join('='));
+  });
+  return list;
+};

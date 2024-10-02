@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Reports from "../models/Reports.Model.js";
 import Movies from "../models/Movies.Model.js";
+import { parseCookies } from "../utils/index.js";
 
 const router = Router();
 
@@ -27,7 +28,7 @@ router.post('/watch_later', async (req, res) => {
             return movie._doc;
         });
 
-         //Short by addAt descending order
+        //Short by addAt descending order
         const finalData = watchLaterData.sort((a, b) => new Date(b.addAt) - new Date(a.addAt))
 
         res.json(finalData);
@@ -44,13 +45,23 @@ router.post('/action/report', async (req, res) => {
 
         const { reportData } = req.body;
 
-        const newReport = new Reports(reportData);
+        //Get the user id from cookies
+        const cookies = parseCookies(req);
 
+        //Check if user is have userid or not
+        const userId = cookies['moviesbazar_user'];
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized action not allowed' });
+        };
+
+        //Create a new report object with user id and report data
+        const newReport = new Reports({ ...reportData, user: userId });
+           
         const saveReport = await newReport.save();
 
         if (saveReport) {
 
-            return res.status(200).json({ message: 'Report successfull', saveReport });
+            return res.status(200).json({ message: 'Report successfull' });
 
         } else {
 
@@ -59,7 +70,7 @@ router.post('/action/report', async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ message: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error Please Try Again Later" });
     }
 });
 
