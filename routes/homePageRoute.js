@@ -97,7 +97,7 @@ router.post('/', async (req, res) => {
 
       const sliderMovies = [
         {
-          title: 'Recently Added',
+          title: 'Recently Added & Updated',
           linkUrl: recentlyAddedMovies?.length >= initialLimit ? '/browse/recently-added' : null,
           movies: recentlyAddedMovies
         },
