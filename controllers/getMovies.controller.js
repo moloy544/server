@@ -232,16 +232,15 @@ export async function getRecentlyAddedMovie(req, res) {
 
 export async function getEmbedVideo(req, res) {
     try {
+        const { contentId } = req.body;
 
-        const { imdbId } = req.params;
-        const movieData = await Movies.findOne({ imdbId }).select('watchLink');
+        const movie = await Movies.findOne({ imdbId: contentId }).select('-_id watchLink status');
 
-        if (!movieData) {
-            return res.status(404).json({ message: "We are not have this data plese search another" });
-        };
+        if (!movie) {
+            return res.status(404).json({ message: 'Content not found' });
+        }
 
-        const source = movieData.watchLink;
-        return res.status(200).json({ source });
+        return res.status(200).json({ source: movie.watchLink, status: movie.status});
 
     } catch (error) {
         console.log(error);

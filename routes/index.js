@@ -31,7 +31,7 @@ app.use(`${mainPath}/series`, seriesRoutes);
 app.use(`${mainPath}/actress`, actressRoute);
 
 //Paid customers for getting movies Embed Video
-app.get(mainPath+'/subscriber/embed/:imdbId', getEmbedVideo);
+app.post(mainPath+'/subscriber/embed', getEmbedVideo);
 
 /************** Only Mobile Application Related Route **********************/
 app.use(`${mainPath}/mobile_application`, mobileAppRoute);
