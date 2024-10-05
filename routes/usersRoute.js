@@ -4,12 +4,17 @@ import Movies from "../models/Movies.Model.js";
 import { parseCookies } from "../utils/index.js";
 import crypto from "crypto"
 
-// Utility to generate a 15-digit random ID
-const generateRandomId = () => {
-    const part1 = crypto.randomInt(1000000000, 9999999999);  // 10-digit number
-    const part2 = crypto.randomInt(10000, 99999);            // 5-digit number
-    return `${part1}${part2}`;                               // Concatenate both parts
-};
+// Function to generate a random alphanumeric string of a specified length
+function generateRandomID(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
 
 const router = Router();
 
@@ -59,11 +64,14 @@ router.post('/action/report', async (req, res) => {
         //Check if user is have userid or not
         let userId = cookies['moviesbazar_user'];
         if (!userId) {
-            // Generate a 15-digit random user ID
-            userId = generateRandomId();
+            // Generate a 20-digit random user ID
+            userId = generateRandomID(20);
 
             // Check if the environment is production
             const isProduction = process.env.NODE_ENV === 'production';
+
+            // Define cookie expiration for 1 year
+            const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year in seconds
 
             // Set the 'user' cookie with the random ID
             res.cookie('moviesbazar_user', userId, {
@@ -71,6 +79,7 @@ router.post('/action/report', async (req, res) => {
                 sameSite: isProduction ? 'none' : 'lax', // Cookie security
                 secure: isProduction, // Secure cookie in production
                 httpOnly: true, // Prevent client-side JS from accessing the cookie
+                maxAge: cookieMaxAge, // Set max age to 1 year
             });
         };
 
