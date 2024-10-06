@@ -19,7 +19,11 @@ const reportsSchema = new Schema({
   writtenReport: {
     type: String,
   },
- 
+  reportStatus:{
+    type: String,
+    default: "Pending",
+    enum: ["Pending", "Resolved", "Dismissed"]
+  },
   reportedAt: {
     type: Date,
     default: Date.now,

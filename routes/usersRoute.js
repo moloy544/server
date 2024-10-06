@@ -55,52 +55,73 @@ router.post('/watch_later', async (req, res) => {
 //Report movies route
 router.post('/action/report', async (req, res) => {
     try {
-
         const { reportData } = req.body;
-
-        //Get the user id from cookies
         const cookies = parseCookies(req);
-
-        //Check if user is have userid or not
         let userId = cookies['moviesbazar_user'];
+
+        // Generate new userId if not found
         if (!userId) {
-            // Generate a 20-digit random user ID
             userId = generateRandomID(20);
-
-            // Check if the environment is production
             const isProduction = process.env.NODE_ENV === 'production';
-
-            // Define cookie expiration for 1 year
-            const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year in seconds
-
-            // Set the 'user' cookie with the random ID
+            const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year
             res.cookie('moviesbazar_user', userId, {
-                path: '/', // The cookie is available throughout the site
-                sameSite: isProduction ? 'none' : 'lax', // Cookie security
-                secure: isProduction, // Secure cookie in production
-                httpOnly: true, // Prevent client-side JS from accessing the cookie
-                maxAge: cookieMaxAge, // Set max age to 1 year
+                path: '/',
+                sameSite: isProduction ? 'none' : 'lax',
+                secure: isProduction,
+                httpOnly: true,
+                maxAge: cookieMaxAge,
             });
-        };
+        }
 
-        //Create a new report object with user id and report data
-        const newReport = new Reports({ ...reportData, user: userId });
+        const { movie, selectedReports, writtenReport } = reportData;
+        
+        // Find existing pending report
+        let findReport = await Reports.findOne({ user: userId, movie, reportStatus: 'Pending' });
 
-        const saveReport = await newReport.save();
+        if (findReport) {
+            // Check for new report options
+            const existingReports = findReport.selectedReports;
+            const newReports = selectedReports.filter(report => !existingReports.includes(report));
 
-        if (saveReport) {
+            // If no new report options and written report is the same, return early
+            if (newReports.length === 0 && findReport.writtenReport === writtenReport) {
+                return res.status(400).json({ 
+                    message: 'You have already submitted the selected report. Our team is reviewing the issue and will resolve it as quickly as possible. Thank you for your patience.' 
+                });
+            } else {
+                // Add new report options and update written report if changed
+                findReport.selectedReports.push(...newReports);
 
-            return res.status(200).json({ message: 'Report successfull' });
+                if (findReport.writtenReport !== writtenReport) {
+                    findReport.writtenReport = writtenReport;
+                }
 
+                // Update status and timestamp
+                findReport.reportedAt = Date.now();
+
+                await findReport.save();
+                return res.status(200).json({ message: 'Report updated with new options.' });
+            }
         } else {
+            // Create a new report
+            const newReport = new Reports({
+                ...reportData,
+                user: userId
+            });
 
-            return res.status(500).json({ message: 'Report is not success' });
-        };
+            const saveReport = await newReport.save();
 
+            if (saveReport) {
+                return res.status(200).json({ message: 'Report submitted successfully.' });
+            } else {
+                return res.status(500).json({ message: 'Report submission failed.' });
+            }
+        }
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ message: "Internal Server Error Please Try Again Later" });
+        return res.status(500).json({ message: "Internal Server Error. Please try again later." });
     }
 });
+
 
 export default router;
