@@ -22,7 +22,7 @@ router.get('/generate-sitemap', async (req, res) => {
                 .limit(parseInt(limit)).lean();
 
             const updatedMovies = data.map(movie => ({
-                ...movie.toObject(),
+                ...movie,
                 createdAt: movie.createdAt || new Date(), // Use a default date if createdAt is missing
             }));
 
