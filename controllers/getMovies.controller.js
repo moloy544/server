@@ -52,7 +52,7 @@ export async function searchHandler(req, res) {
             .skip(skip)
             .limit(limit)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
-            .select(selectValue).lean();
+            .select(selectValue);
 
         const endOfData = searchData.length < limit;
 
