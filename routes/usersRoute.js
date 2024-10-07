@@ -36,7 +36,7 @@ router.post('/watch_later', async (req, res) => {
             const savedMovie = watchLater.find(data => data.imdbId === movie.imdbId);
             //If a match is found, add the addAt field
             if (savedMovie) {
-                return { ...movie._doc, addAt: savedMovie.addAt };
+                return { ...movie, addAt: savedMovie.addAt };
             }
             return movie._doc;
         });
