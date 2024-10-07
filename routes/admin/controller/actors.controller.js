@@ -96,7 +96,7 @@ export async function getActorData(req, res) {
 
         const { imdbId } = req.body || {};
 
-        const actor = await Actors.findOne({ imdbId }).select('-_id -__v');
+        const actor = await Actors.findOne({ imdbId }).select('-_id -__v').lean();
 
         if (!actor) {
             return res.status(404).json({ message: "Actor not found" });

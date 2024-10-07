@@ -52,7 +52,7 @@ export async function searchHandler(req, res) {
             .skip(skip)
             .limit(limit)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
-            .select(selectValue);
+            .select(selectValue).lean();
 
         const endOfData = searchData.length < limit;
 
@@ -149,7 +149,7 @@ export async function getLatestReleaseMovie(req, res) {
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
             .select(selectValue)
-            .sort({ ...sortFilterCondition, _id: 1 });
+            .sort({ ...sortFilterCondition, _id: 1 }).lean();
 
         const endOfData = (moviesData.length < limit - 1);
 
@@ -205,7 +205,7 @@ export async function getRecentlyAddedMovie(req, res) {
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
             .select(selectValue)
-            .sort({ ...sortFilterCondition, createdAt: -1, _id: 1 });
+            .sort({ ...sortFilterCondition, createdAt: -1, _id: 1 }).lean();
 
         const endOfData = (moviesData.length < limit - 1);
 
@@ -234,7 +234,7 @@ export async function getEmbedVideo(req, res) {
     try {
         const { contentId } = req.body;
 
-        const movie = await Movies.findOne({ imdbId: contentId }).select('-_id watchLink status');
+        const movie = await Movies.findOne({ imdbId: contentId }).select('-_id watchLink status').lean();
 
         if (!movie) {
             return res.status(404).json({ message: 'Content not found' });

@@ -29,7 +29,7 @@ router.post('/watch_later', async (req, res) => {
 
         const movies = await Movies.find({
             imdbId: { $in: moviesIds }
-        }).select(selectValue);
+        }).select(selectValue).lean();
 
         //Map the movies and add the addAt field if IMDb ID matches
         const watchLaterData = movies.map(movie => {

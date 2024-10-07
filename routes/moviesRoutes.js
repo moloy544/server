@@ -19,7 +19,7 @@ router.get('/generate-sitemap', async (req, res) => {
             const data = await Movies.find()
                 .select('-_id imdbId title type createdAt')
                 .sort({ createdAt: -1 })
-                .limit(parseInt(limit))
+                .limit(parseInt(limit)).lean();
 
             const updatedMovies = data.map(movie => ({
                 ...movie.toObject(),
@@ -96,7 +96,7 @@ router.post('/category/:category', async (req, res) => {
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
             .select(selectValue)
-            .sort({ ...sortFilterCondition, _id: 1 });
+            .sort({ ...sortFilterCondition, _id: 1 }).lean();
 
         if (!moviesData.length) {
             return res.status(404).json({ message: "No movies found in this category" });
@@ -177,7 +177,7 @@ router.post('/genre/:genre', async (req, res) => {
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
             .select(selectValue)
-            .sort({ ...sortFilterCondition, _id: 1 });
+            .sort({ ...sortFilterCondition, _id: 1 }).lean();
 
         const endOfData = (moviesData.length < limit - 1);
 
@@ -239,7 +239,7 @@ router.post('/top-rated', async (req, res) => {
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
             .select(selectValue)
-            .sort({ ...sortFilterCondition, _id: 1 });
+            .sort({ ...sortFilterCondition, _id: 1 }).lean();
 
         const endOfData = (moviesData.length < limit - 1);
 
@@ -322,13 +322,13 @@ router.get('/details_movie/:imdbId', async (req, res) => {
                 category,
                 imdbId: { $ne: imdbId },
                 status: 'released'
-            }).limit(25).skip(randomSkip).lean().exec(),
+            }).limit(25).skip(randomSkip).lean(),
 
             Movies.find({
                 castDetails: { $in: castDetails },
                 imdbId: { $ne: imdbId },
                 status: 'released'
-            }).limit(25).lean().exec(),
+            }).limit(25).lean(),
         ]);
 
         return res.status(200).json({ movieData: modifiedMovieData, suggestions: { genreList, castList } });

@@ -24,7 +24,7 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     const data = await Movies.find(queryCondition)
       .sort({ releaseYear: -1, fullReleaseDate: -1 })
       .limit(initialLimit)
-      .select(initialSelectValue);
+      .select(initialSelectValue).lean();
 
     return data;
 
@@ -44,7 +44,7 @@ const genreListing = async ({ inGenres, notInGenres = ['Animation'] }) => {
     }
     const data = await Movies.find({ genre: queryCondition, type: 'movie', imdbRating: { $gt: 6 } })
       .limit(initialLimit)
-      .select(initialSelectValue);
+      .select(initialSelectValue).lean();
 
     return data;
   } catch (error) {
@@ -77,7 +77,7 @@ router.post('/', async (req, res) => {
           status: 'released',
           createdAt: { $exists: true },
           tags: { $nin: ['Cartoons'] },
-        }).sort({ createdAt: -1 }).limit(initialLimit).select(initialSelectValue),
+        }).sort({ createdAt: -1 }).limit(initialLimit).select(initialSelectValue).lean(),
 
         // Hollywood release movies
         latestInCategoryListing('hollywood'),
@@ -136,25 +136,25 @@ router.post('/', async (req, res) => {
          //Coming soon movies
          Movies.find({ status: 'coming soon' })
          .sort({ releaseYear: 1, fullReleaseDate: 1 })
-         .limit(initialLimit).select(initialSelectValue),
+         .limit(initialLimit).select(initialSelectValue).lean(),
 
         // bollywood hindi actors
         Actors.find({ industry: 'bollywood', name: { $in: selectedActress } })
-          .limit(initialLimit).select('-_id imdbId name avatar industry').sort({ _id: 1 }),
+          .limit(initialLimit).select('-_id imdbId name avatar industry').sort({ _id: 1 }).lean(),
 
         // south actors
         Actors.find({ industry: 'south' })
-          .limit(initialLimit).select('-_id imdbId name avatar industry').sort({ _id: 1 }),
+          .limit(initialLimit).select('-_id imdbId name avatar industry').sort({ _id: 1 }).lean(),
 
         //Top IMDB Rated Movies Listing
         Movies.find({ imdbRating: { $gt: 7 }, type: 'movie' })
           .sort({ imdbRating: -1, _id: 1 })
-          .select(initialSelectValue).limit(initialLimit),
+          .select(initialSelectValue).limit(initialLimit).lean(),
 
         //Series Listing
         Movies.find({ type: 'series' })
           .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
-          .select(initialSelectValue).limit(initialLimit),
+          .select(initialSelectValue).limit(initialLimit).lean(),
 
         //Romance movies
         genreListing({

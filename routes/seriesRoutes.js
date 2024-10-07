@@ -144,7 +144,7 @@ router.post('/:category', async (req, res) => {
 
         const moviesData = await Movies.find(queryCondition).skip(skip).limit(limit)
             .sort({ ...sortFilterCondition, _id: 1 })
-            .select(selectValue);
+            .select(selectValue).lean();
 
         const endOfData = (moviesData.length < limit - 1);
 
