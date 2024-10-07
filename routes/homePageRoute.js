@@ -70,7 +70,6 @@ router.post('/', async (req, res) => {
         latestHollywoodMovies,
         latestBollywoodMovies,
         latestSouthMovies,
-        comingSoonMovies
       ] = await Promise.all([
 
         //Recently added movies 
@@ -89,10 +88,6 @@ router.post('/', async (req, res) => {
         // South latest release movies
         latestInCategoryListing('south'),
 
-        //Coming soon movies
-        Movies.find({ status: 'coming soon' })
-          .sort({ releaseYear: 1, fullReleaseDate: 1 })
-          .limit(initialLimit).select(initialSelectValue)
       ]);
 
       const sliderMovies = [
@@ -116,11 +111,6 @@ router.post('/', async (req, res) => {
           linkUrl: '/browse/latest/south',
           movies: latestSouthMovies
         },
-        {
-          title: 'Upcoming movies',
-          linkUrl: comingSoonMovies?.length >= initialLimit ? '/browse/category/coming-soon' : null,
-          movies: comingSoonMovies
-        },
       ];
 
       return res.status(200).json({ sliderMovies, dataIsEnd });
@@ -136,12 +126,17 @@ router.post('/', async (req, res) => {
         "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar"].map(name => name.toLowerCase());
 
       const [
+        comingSoonMovies,
         bollywoodActorsData,
         southActorsData,
         topImbdRatingMovies,
         seriesList,
         romanceMovies,
       ] = await Promise.all([
+         //Coming soon movies
+         Movies.find({ status: 'coming soon' })
+         .sort({ releaseYear: 1, fullReleaseDate: 1 })
+         .limit(initialLimit).select(initialSelectValue),
 
         // bollywood hindi actors
         Actors.find({ industry: 'bollywood', name: { $in: selectedActress } })
@@ -179,6 +174,11 @@ router.post('/', async (req, res) => {
       }];
 
       const sliderMovies = [
+        {
+          title: 'Upcoming movies',
+          linkUrl: comingSoonMovies?.length >= initialLimit ? '/browse/category/coming-soon' : null,
+          movies: comingSoonMovies
+        },
         {
           title: 'Watch latest series',
           linkUrl: '/series',
