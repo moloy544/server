@@ -46,10 +46,11 @@ router.post('/category/:category', async (req, res) => {
         const { limit, page, skip, bodyData } = req.body;
 
         function filterQuery() {
-
+            const date = new Date();
+            const currentYear = date.getFullYear();
             switch (queryData) {
                 case 'new release':
-                    return [2023, 2024];
+                    return currentYear;
                 case 'movies':
                     return 'movie';
                 default:
@@ -67,9 +68,7 @@ router.post('/category/:category', async (req, res) => {
                     { type: filterQueryValue },
                     { language: filterQueryValue },
                     {
-                        releaseYear: {
-                            $in: Array.isArray(filterQueryValue) ? filterQueryValue : [parseInt(filterQueryValue) || 0]
-                        }
+                        releaseYear: parseInt(filterQueryValue) || 0
                     },
                     { status: filterQueryValue }
                 ]
