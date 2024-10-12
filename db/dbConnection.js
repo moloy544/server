@@ -4,7 +4,7 @@ const connectToDatabase = async () => {
 
   try {
     const connectionInstance = await connect(process.env.DB_CONNECTION_URL,{
-      maxIdleTimeMS: 600000 * 6     // Close idle connections after 1 hours
+      maxIdleTimeMS: 600000 * 3     // Close idle connections after 30 min
     });
 
     console.log(`MongoDB is connected to moviesbazar db host :${connectionInstance.connection.host}`);
