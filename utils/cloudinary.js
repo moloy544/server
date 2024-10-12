@@ -20,7 +20,7 @@ const uploadOnCloudinary = async ({ image, publicId, folderPath }) => {
     try {
 
         // Set configuration to cloudinary_config_2 for upload 
-        cloudinary.config(cloudinary_config_2);
+        cloudinary.config(cloudinary_config_1);
 
         if (!image && !publicId && !folderPath) {
             return { status: 404, message: "Some fields are missing" };
@@ -78,27 +78,25 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
 };
 
 // function for delete for first cloudinary account image 
-const deleteFirstAccountCloudinaryImage = async ({ id, imageLink }) => {
+const deleteBackupAccountImage = async ({ id, imageLink }) => {
     try {
         if (!id || !imageLink) {
 
             return { status: 404, message: "Missing value found!" };
         }
 
-        const public_id = `moviesbazaar/thambnails/${id}`;
+        const public_id = `movies/thumbnails/${id}`;
         const match = imageLink.match(/https:\/\/res.cloudinary.com\/([^\/]+)\//);
         const extractedValue = match ? match[1] : null;
 
-        // check if image is first cloudinery account the delete it
-        if (extractedValue === cloudName1) {
-
+        if (extractedValue !== cloudName2) {
+            return;
+        };
             // configure the first cloudinary account
-            cloudinary.config(cloudinary_config_1);
+            cloudinary.config(cloudinary_config_2);
 
             // Delete the image from First Cloudinary Account
             await cloudinary.api.delete_resources([public_id], { type: 'upload', resource_type: 'image' });
-
-        };
 
     } catch (error) {
         console.log(error);
@@ -109,5 +107,5 @@ const deleteFirstAccountCloudinaryImage = async ({ id, imageLink }) => {
 export {
     uploadOnCloudinary,
     deleteImageFromCloudinary,
-    deleteFirstAccountCloudinaryImage
+    deleteBackupAccountImage
 };

@@ -1,6 +1,6 @@
 import { isValidObjectId } from "mongoose";
 import Movies from "../../../models/Movies.Model.js";
-import { deleteFirstAccountCloudinaryImage, deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
+import { deleteBackupAccountImage, deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
 import { bufferToDataUri } from "../../../utils/index.js";
 
 //add movie controller
@@ -37,8 +37,8 @@ export async function addNewMovie(req, res) {
                     folderPath: "movies/thumbnails"
                 });
 
-                // delet image from first cloudinary account before deleting thumbnail its check if is first account image then delete
-                deleteFirstAccountCloudinaryImage({
+                // delete image from backup cloudinary account before deleting thumbnail its check if is backup account image then delete
+                deleteBackupAccountImage({
                     imageLink: findMovie.thambnail,
                     id: findMovie._id
                 });
