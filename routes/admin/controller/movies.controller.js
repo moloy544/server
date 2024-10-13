@@ -14,7 +14,7 @@ export async function addNewMovie(req, res) {
         const parseData = data ? JSON.parse(data) : {};
 
         // get movie imdb id
-        const { imdbId } = parseData;
+        const { imdbId, extranalImage_uri } = parseData;
 
         // Check if the movie is available
         const findMovie = await Movies.findOne({ imdbId });
@@ -49,7 +49,10 @@ export async function addNewMovie(req, res) {
 
                 // Update movieData with new thumbnail URL
                 newData.thambnail = uploadCloudinary.secure_url
+            } else if (extranalImage_uri && extranalImage_uri !== newData.thambnail) {
+                newData.thambnail = extranalImage_uri
             };
+
             if (createdDateUpdate && createdDateUpdate === "yes") {
                 newData.createdAt = Date.now();
             }
@@ -63,42 +66,44 @@ export async function addNewMovie(req, res) {
             return res.status(200).json({ message: "Movie has been updated with new data", movieData: updateMovie });
         };
 
-        // check if new movie thambnail is send or not if not send then send error message
-        if (!file) {
-            return res.status(400).json({ message: "Please provide a movie thumbnail" });
-        };
-
         // creat a new movie document in mongodb
         const movie = new Movies({
             ...newData,
             createdAt: Date.now()
         });
 
-        const fileUri = bufferToDataUri(file);
+        if (file) {
 
-        // if movie is successfully saved then upload file in cloudinary
-        const uploadCloudinary = await uploadOnCloudinary({
-            image: fileUri,
-            publicId: movie._id,
-            folderPath: "movies/thumbnails"
-        });
+            const fileUri = bufferToDataUri(file);
 
-        // check upload fail in cloudinary then send error message
-        if (!uploadCloudinary.secure_url) {
-            return res.status(500).json({ message: "Error while uploading thumbnail" });
-        };
+            // if movie is successfully saved then upload file in cloudinary
+            const uploadCloudinary = await uploadOnCloudinary({
+                image: fileUri,
+                publicId: movie._id,
+                folderPath: "movies/thumbnails"
+            });
 
-        // add thumbnail to mongoose Model object
-        movie.thambnail = uploadCloudinary.secure_url;
+            // check upload fail in cloudinary then send error message
+            if (!uploadCloudinary.secure_url) {
+                return res.status(500).json({ message: "Error while uploading thumbnail" });
+            };
+
+            // add thumbnail to mongoose Model object
+            movie.thambnail = uploadCloudinary.secure_url;
+        } else if (extranalImage_uri) {
+            movie.thambnail = extranalImage_uri
+        } else {
+            return res.status(400).json({ message: "Please provide a movie thumbnail" });
+        }
 
         // save the document in mongodb
         const saveMovie = await movie.save();
 
         // check if movie is save or not if not send then send error message and delete thumbnail from cloudinary
-        if (!saveMovie) {
+        if (!saveMovie && file) {
             deleteImageFromCloudinary({
                 id: movie.id,
-                imageLink: uploadCloudinary.secure_url
+                imageLink: movie.thambnail
             })
             return res.status(500).json({ message: "Error while adding movie to the database" });
         };
