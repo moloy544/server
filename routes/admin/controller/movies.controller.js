@@ -49,8 +49,15 @@ export async function addNewMovie(req, res) {
 
                 // Update movieData with new thumbnail URL
                 newData.thambnail = uploadCloudinary.secure_url
-            } else if (extranalImage_uri && extranalImage_uri !== newData.thambnail) {
-                newData.thambnail = extranalImage_uri
+            } else if (extranalImage_uri && extranalImage_uri !== findMovie.thambnail) {
+                const isCloudinaryImage = findMovie.thambnail.includes('res.cloudinary.com');
+                if (isCloudinaryImage) {
+                    deleteImageFromCloudinary({
+                        id: findMovie._id,
+                        imageLink: findMovie.thambnail
+                    })
+                };
+                newData.thambnail = extranalImage_uri;
             };
 
             if (createdDateUpdate && createdDateUpdate === "yes") {

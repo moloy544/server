@@ -61,6 +61,7 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
             public_id = `movies/thumbnails/${id}`;
         } else {
             return { status: 400, message: "Unknown Cloudinary account" };
+            
         };
 
         // configure the cloudinary account
@@ -92,11 +93,11 @@ const deleteBackupAccountImage = async ({ id, imageLink }) => {
         if (extractedValue !== cloudName2) {
             return;
         };
-            // configure the first cloudinary account
-            cloudinary.config(cloudinary_config_2);
+        // configure the first cloudinary account
+        cloudinary.config(cloudinary_config_2);
 
-            // Delete the image from First Cloudinary Account
-            await cloudinary.api.delete_resources([public_id], { type: 'upload', resource_type: 'image' });
+        // Delete the image from First Cloudinary Account
+        await cloudinary.api.delete_resources([public_id], { type: 'upload', resource_type: 'image' });
 
     } catch (error) {
         console.log(error);
