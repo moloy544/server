@@ -25,9 +25,12 @@ app.use(express.urlencoded({ extended: true }));
 
 connectToDatabase()
 .then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server is running at port : ${PORT}`);
-    })
+     // Listen only if NOT on Vercel
+     if (!process.env.VERCEL) {
+      app.listen(PORT, () => {
+        console.log(`Server is running at port: ${PORT}`);
+      });
+    }
   })
   .catch((err) => {
     console.log("MONGO db connection failed ! ", err);
@@ -36,4 +39,5 @@ connectToDatabase()
   //App All Routes In This Route
   app.use(appAllRoutes);
 
-  
+//Export the app instance for use in other files
+export default app; 

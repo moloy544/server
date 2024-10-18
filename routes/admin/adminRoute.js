@@ -57,18 +57,19 @@ router.post('/release_new_update', newAppUpdateRelease);
 
 router.get('/movies/one_by_one', async (req, res) => {
     try {
-
+        const { category } = req.body.category || 'bollywood';
         // Find movies where watchLink array has more than 1 link
         const movie = await Movies.find({
-            $expr: { $gt: [{ $size: "$watchLink" }, 1] },  // watchLink array length > 1
+            $expr: { $lt: [{ $size: "$watchLink" }, 2] },  // watchLink array length > 1
             type: 'movie',
-            language: 'hindi dubbed',
+            category,
+            status: 'released',
             multiAudio: { $exists: false },  // multiAudio field does not exist
             videoType: { $exists: false },   // videoType field does not exist
         })
             .select("-_id")  // Added watchLink to response for clarity
             .limit(1)
-            .sort({ createdAt: 1, _id: 1 })
+            .sort({ releaseYear: -1, fullReleaseDate: -1 })
 
         if (!movie.length) {
             return res.status(404).json({ message: "No movies found with more than 1 watch link" });
