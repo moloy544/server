@@ -176,7 +176,7 @@ export async function getLatestReleaseMovie(req, res) {
 };
 
 //Get Recently Added Movies or Series Controller 
-export async function getRecentlyAddedMovie(req, res) {
+export async function getRecentlyAddedContents(req, res) {
 
     try {
 
@@ -188,7 +188,6 @@ export async function getRecentlyAddedMovie(req, res) {
         // creat query condition with filter
         const queryCondition = createQueryConditionFilter({
             query: {
-                type: 'movie',
                 status: 'released',
                 tags: { $nin: ['Cartoons'] },
                 createdAt: { $exists: true, ...dateRange }

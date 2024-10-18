@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { getLatestReleaseMovie, getRecentlyAddedMovie, searchHandler } from "../controllers/getMovies.controller.js";
+import { getLatestReleaseMovie, getRecentlyAddedContents, searchHandler } from "../controllers/getMovies.controller.js";
 import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
@@ -207,7 +207,7 @@ router.post('/search', searchHandler);
 
 //get recently added movies or series
 //Top Rated IMDb ratings movies 
-router.post('/recently-added', getRecentlyAddedMovie);
+router.post('/recently-added', getRecentlyAddedContents);
 
 //Latest release movies 
 router.post('/latest/:query', getLatestReleaseMovie);
