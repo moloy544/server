@@ -153,7 +153,7 @@ router.post('/', async (req, res) => {
 
         //Series Listing
         Movies.find({ type: 'series' })
-          .sort({ releaseYear: -1, fullReleaseDate: -1, _id: 1 })
+          .sort({ releaseYear: -1, fullReleaseDate: -1 })
           .select(initialSelectValue).limit(initialLimit).lean(),
 
         //Romance movies
