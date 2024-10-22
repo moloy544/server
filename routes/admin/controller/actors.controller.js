@@ -69,7 +69,7 @@ export async function addNewActor(req, res) {
         const uploadCloudinary = await uploadOnCloudinary({
             image: avatar,
             publicId: newActor._id,
-            folderPath: "actor_avatar"
+            folderPath: "moviesbazaar/actress_avatar"
         });
 
         if (!uploadCloudinary.secure_url) {

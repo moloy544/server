@@ -2,6 +2,7 @@ import { connect } from 'mongoose';
 
 const dbConnectionUrl = process.env.DB_CONNECTION_URL;
 const dbConnectionSecondUrl = process.env.DB_CONNECTION_SECOND_URL;
+const testDbConnection = process.env.TESRTING_DB_CONNECTION_URL;
 
 const connectToDatabase = async () => {
   try {
@@ -13,7 +14,7 @@ const connectToDatabase = async () => {
     });
     console.log(`MongoDB is connected to the main DB host: ${connectionInstance.connection.host}`);
   } catch (error) {
-    console.error('Error connecting to primary MongoDB:', error);
+    console.error('Error connecting to main MongoDB:', error);
 
     // Attempt to connect to the secondary database
     try {

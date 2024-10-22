@@ -7,7 +7,7 @@ const reportsSchema = new Schema({
     ref: 'Movies',
     required: true,
   },
-  user:{
+  user: {
     type: String,
     require: true
   },
@@ -19,7 +19,7 @@ const reportsSchema = new Schema({
   writtenReport: {
     type: String,
   },
-  reportStatus:{
+  reportStatus: {
     type: String,
     default: "Pending",
     enum: ["Pending", "Resolved", "Dismissed"]
@@ -30,6 +30,33 @@ const reportsSchema = new Schema({
   },
 });
 
+const requestSchema = new Schema({ 
+  user: {
+    type: String,
+    required: true,
+  },
+  contentTitle: {
+    type: String,
+    required: true
+  },
+  industery: {
+    type: String,
+    required: true
+  },
+  message: {
+    type: String,
+    required: false
+  },
+  requestedAt: {  // Fixed typo from "requestdAt"
+    type: Date,
+    default: Date.now,
+  }
+});
+
+const Requests = model('Requests', requestSchema);
 const Reports = model('Reports', reportsSchema);
 
-export default Reports;
+export {
+  Requests,  // export requests model
+  Reports    // export reports model
+};

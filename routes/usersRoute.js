@@ -1,8 +1,10 @@
 import { Router } from "express";
-import Reports from "../models/Reports.Model.js";
+import { Reports, Requests } from "../models/Users.Model.js";
 import Movies from "../models/Movies.Model.js";
 import { parseCookies } from "../utils/index.js";
-import crypto from "crypto"
+
+const router = Router();
+const selectValue = "-_id imdbId title thambnail releaseYear type";
 
 // Function to generate a random alphanumeric string of a specified length
 function generateRandomID(length) {
@@ -13,12 +15,7 @@ function generateRandomID(length) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
-}
-
-
-const router = Router();
-
-const selectValue = "-_id imdbId title thambnail releaseYear type";
+};
 
 //get watch later movies route
 router.post('/watch_later', async (req, res) => {
@@ -74,7 +71,7 @@ router.post('/action/report', async (req, res) => {
         }
 
         const { movie, selectedReports, writtenReport } = reportData;
-        
+
         // Find existing pending report
         let findReport = await Reports.findOne({ user: userId, movie, reportStatus: 'Pending' });
 
@@ -85,8 +82,8 @@ router.post('/action/report', async (req, res) => {
 
             // If no new report options and written report is the same, return early
             if (newReports.length === 0 && findReport.writtenReport === writtenReport) {
-                return res.status(400).json({ 
-                    message: 'You have already submitted the selected report. Our team is reviewing the issue and will resolve it as quickly as possible. Thank you for your patience.' 
+                return res.status(400).json({
+                    message: 'You have already submitted the selected report. Our team is reviewing the issue and will resolve it as quickly as possible. Thank you for your patience.'
                 });
             } else {
                 // Add new report options and update written report if changed
@@ -123,5 +120,49 @@ router.post('/action/report', async (req, res) => {
     }
 });
 
+//User request content route
+router.post('/action/request', async (req, res) => {
+    try {
+        const data = req.body;
+        const cookies = parseCookies(req);
+        let userId = cookies['moviesbazar_user'];
+
+        // Generate new userId if not found
+        if (!userId) {
+            userId = generateRandomID(20);
+            const isProduction = process.env.NODE_ENV === 'production';
+            const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year
+            res.cookie('moviesbazar_user', userId, {
+                path: '/',
+                sameSite: isProduction ? 'none' : 'lax',
+                secure: isProduction,
+                httpOnly: true,
+                maxAge: cookieMaxAge,
+            });
+        }
+
+        const { contentTitle, industery, message } = data;
+
+        if (contentTitle === "" || industery === "") return res.status(400).json({ message: "Content title and industry are required" });
+
+        // Create a new request document
+        const newRequest = new Requests({
+            ...data,
+            user: userId
+        });
+
+        const saveReport = await newRequest.save();
+
+        if (saveReport) {
+            return res.status(200).json({ message: 'Request submitted successfully.' });
+        } else {
+            return res.status(500).json({ message: 'Request submission failed.' });
+        }
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error. Please try again later." });
+    }
+});
 
 export default router;

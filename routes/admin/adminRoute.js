@@ -57,19 +57,17 @@ router.post('/release_new_update', newAppUpdateRelease);
 
 router.get('/movies/one_by_one', async (req, res) => {
     try {
-        const { category } = req.body.category || 'bollywood';
+
+        // Create a single regex pattern for the entire query
+        const searchRegex = new RegExp(`https://res.cloudinary.com/moviesbazar/image/upload/`, 'i');
         // Find movies where watchLink array has more than 1 link
         const movie = await Movies.find({
-            $expr: { $lt: [{ $size: "$watchLink" }, 2] },  // watchLink array length > 1
-            type: 'movie',
-            category,
-            status: 'released',
-            multiAudio: { $exists: false },  // multiAudio field does not exist
-            videoType: { $exists: false },   // videoType field does not exist
+           thambnail: {$regex: searchRegex}
         })
             .select("-_id")  // Added watchLink to response for clarity
             .limit(1)
-            .sort({ releaseYear: -1, fullReleaseDate: -1 })
+            .sort({ createdAt: -1 })
+
 
         if (!movie.length) {
             return res.status(404).json({ message: "No movies found with more than 1 watch link" });
