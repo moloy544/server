@@ -24,6 +24,10 @@ const reportsSchema = new Schema({
     default: "Pending",
     enum: ["Pending", "Resolved", "Dismissed"]
   },
+  userLocationDetails:{
+    type: Object,
+    required: false
+  },
   reportedAt: {
     type: Date,
     default: Date.now,
@@ -47,7 +51,25 @@ const requestSchema = new Schema({
     type: String,
     required: false
   },
-  requestedAt: {  // Fixed typo from "requestdAt"
+  userLocationDetails:{
+    type: Object,
+    required: false
+  },
+  reuestStatus: {
+    type: String,
+    default: "Pending",
+    enum: ["Pending", "Resolved", "Dismissed"]
+  },
+  content:{
+    type: Schema.Types.ObjectId,
+    ref: 'Movies',
+    required: false,
+  },
+  reply:{
+    type: String,
+    required: false
+  },
+  requestedAt: {
     type: Date,
     default: Date.now,
   }

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Reports, Requests } from "../models/Users.Model.js";
 import Movies from "../models/Movies.Model.js";
 import { parseCookies } from "../utils/index.js";
+import { getUserLocationDetails } from "../service/service.js";
 
 const router = Router();
 const selectValue = "-_id imdbId title thambnail releaseYear type";
@@ -15,6 +16,21 @@ function generateRandomID(length) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
+};
+
+// function to setup user cookies
+function setupUserCookies(res, userId) {
+    const isProduction = process.env.NODE_ENV === 'production';
+    // Calculate user expiration date (180 days 6 months from now)
+    const cookieMaxAge = new Date();
+    cookieMaxAge.setDate(cookieMaxAge.getDate() + 180);
+    res.cookie('moviesbazar_user', userId, {
+        path: '/',
+        sameSite: isProduction ? 'none' : 'lax',
+        secure: isProduction,
+        httpOnly: true,
+        maxAge: cookieMaxAge,
+    });
 };
 
 //get watch later movies route
@@ -39,9 +55,9 @@ router.post('/watch_later', async (req, res) => {
         });
 
         //Short by addAt descending order
-        const finalData = watchLaterData.sort((a, b) => new Date(b.addAt) - new Date(a.addAt))
+        const finalData = watchLaterData.sort((a, b) => new Date(b.addAt) - new Date(a.addAt));
 
-        res.json(finalData);
+        res.status(200).json(finalData);
 
     } catch (error) {
         console.log(error);
@@ -59,15 +75,7 @@ router.post('/action/report', async (req, res) => {
         // Generate new userId if not found
         if (!userId) {
             userId = generateRandomID(20);
-            const isProduction = process.env.NODE_ENV === 'production';
-            const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year
-            res.cookie('moviesbazar_user', userId, {
-                path: '/',
-                sameSite: isProduction ? 'none' : 'lax',
-                secure: isProduction,
-                httpOnly: true,
-                maxAge: cookieMaxAge,
-            });
+            setupUserCookies(res, userId);
         }
 
         const { movie, selectedReports, writtenReport } = reportData;
@@ -100,11 +108,27 @@ router.post('/action/report', async (req, res) => {
                 return res.status(200).json({ message: 'Report updated with new options.' });
             }
         } else {
-            // Create a new report
-            const newReport = new Reports({
+
+            const documentData = {
                 ...reportData,
                 user: userId
-            });
+            };
+
+            // get user location details 
+            const userLocationDetails = await getUserLocationDetails();
+            // add user location details to request document if available
+            if (userLocationDetails && typeof userLocationDetails === "object") {
+
+                const { country_name, region, city } = userLocationDetails;
+                // add user location details to mongo documet
+                documentData.userLocationDetails = {
+                    country: country_name,
+                    region,
+                    city,
+                }
+            };
+            // Create a new report
+            const newReport = new Reports(documentData);
 
             const saveReport = await newReport.save();
 
@@ -130,26 +154,34 @@ router.post('/action/request', async (req, res) => {
         // Generate new userId if not found
         if (!userId) {
             userId = generateRandomID(20);
-            const isProduction = process.env.NODE_ENV === 'production';
-            const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year
-            res.cookie('moviesbazar_user', userId, {
-                path: '/',
-                sameSite: isProduction ? 'none' : 'lax',
-                secure: isProduction,
-                httpOnly: true,
-                maxAge: cookieMaxAge,
-            });
+            setupUserCookies(res, userId);
         }
 
-        const { contentTitle, industery, message } = data;
+        const { contentTitle, industery } = data;
 
         if (contentTitle === "" || industery === "") return res.status(400).json({ message: "Content title and industry are required" });
 
-        // Create a new request document
-        const newRequest = new Requests({
+        // initialize mongo document object
+        const documentData = {
             ...data,
             user: userId
-        });
+        };
+
+        // get user location details 
+        const userLocationDetails = await getUserLocationDetails();
+        // add user location details to request document if available
+        if (userLocationDetails && typeof userLocationDetails === "object") {
+
+            const { country_name, region, city } = userLocationDetails;
+            // add user location details to mongo documet
+            documentData.userLocationDetails = {
+                country: country_name,
+                region,
+                city,
+            }
+        };
+        // Create a new request document
+        const newRequest = new Requests(documentData);
 
         const saveReport = await newRequest.save();
 
@@ -162,6 +194,55 @@ router.post('/action/request', async (req, res) => {
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Internal Server Error. Please try again later." });
+    }
+});
+
+// get user request contents 
+router.post('/requests_data', async (req, res) => {
+    try {
+        const cookies = parseCookies(req);
+        let userId = cookies['moviesbazar_user'];
+        const { status, skip = 0, limit = 20 } = req.body;
+
+        // Generate new userId if not found
+        if (!userId) {
+            userId = generateRandomID(20);
+            setupUserCookies(res, userId);
+            return res.status(200).json({ message: "No user found!" });
+        }
+
+        // get the user requested data with specific fields populated from the 'content' reference
+        const userRequests = await Requests.find({ user: userId, reuestStatus: status || 'Resolved' })
+            .limit(limit)
+            .skip(skip)
+            .select('-_id -userLocationDetails -user')
+            .lean()
+            .populate('content', selectValue);  // Select specific fields in 'content'
+
+        if (!userRequests || userRequests.length === 0) {
+            return res.status(200).json({ message: "No user requests found!" });
+        };
+
+        const endOfData = (userRequests.length < limit - 1);
+
+        const requestsData = userRequests.filter(data => !data.content);
+
+        const response = { endOfData };
+        if (requestsData.length > 0) {
+            response.requests = requestsData
+        }
+
+        const contents = userRequests.filter(data => data.content);
+
+        if (contents.length > 0) {
+            response.requestsWithData = contents;
+        };
+        // return the movies data along with the request data
+        return res.status(200).json(response);
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
