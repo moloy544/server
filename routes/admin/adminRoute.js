@@ -4,6 +4,7 @@ import { addNewMovie, deleteMovie, updateVideoSource } from "./controller/movies
 import Movies from "../../models/Movies.Model.js";
 import { multerUpload } from "../../utils/multer.js";
 import { newAppUpdateRelease } from "./controller/app.controller.js";
+import DownloadLinks from "../../models/DownloadLinks.Model.js";
 
 const router = Router();
 
@@ -81,33 +82,22 @@ router.get('/movies/one_by_one', async (req, res) => {
 });
 
 
-//update server status
-router.put('/update/movies/audio_and_video_type', async (req, res) => {
+// Add new download links for movies
+router.post('/add/downloadlinks', async (req, res) => {
     try {
-        const { imdbId,
-            multiAudio,
-            videoType } = req.body;
+        const data = req.body;
+        const id = data.content_id;
 
-        if (!imdbId) {
-            return res.status(400).json({ message: "IMDb ID is required to update movie details" });
+        if (!id) {
+            return res.status(400).json({ message: "Content ID is required for link movies to download links" });
+        };
+
+        const newDownloadLinks = new DownloadLinks(data);
+        const result = await newDownloadLinks.save();
+        if (!result) {
+            return res.status(500).json({ message: "Failed to add download links" });
         }
-
-        // Check if the movie with the provided imdbId exists and update it
-        const updateMovie = await Movies.findOneAndUpdate(
-            { imdbId },
-            { $set: { multiAudio, videoType } },
-            { new: true }
-        );
-
-        // If no movie is found or updated, return an error
-        if (!updateMovie) {
-            return res.status(404).json({ message: `Movie with IMDb ID: ${imdbId} not found` });
-        }
-
-        return res.status(200).json({
-            message: `Movie with IMDb ID: ${imdbId} updated successfully`,
-            updatedMovie: updateMovie,  // Returning the updated movie details
-        });
+        return res.status(200).json({ message: "Download links added successfully", downloadLinks: result });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "Internal Server Error" });

@@ -1,72 +1,34 @@
 import { Schema, model } from "mongoose";
 
-const moviesModel = new Schema({
-  imdbId: {
-    type: String,
-    required: true,
-  },
-  imdbRating: {
-    type: Number,
-  },
-  thambnail: {
-    type: String,
-    required: true,
-  },
-  title: {
-    type: String,
-    required: true,
-  },
-  releaseYear: {
-    type: Number,
-    required: true,
-  },
-  fullReleaseDate: {
-    type: Date,
-    required: true,
-  },
-  category: {
-    type: String,
-    required: true,
-  },
-  type: {
-    type: String,
-    required: true,
-  },
-  language: {
-    type: String,
-    required: true,
-  },
-  genre: {
-    type: [String],
-    required: true,
-  },
-  watchLink: {
-    type: [String],
-  },
-  multiAudio:{
-    type: Boolean,
-    required: true,
-  },
-  videoType:{
-    type: String,
-    required: true,
-  },
-  castDetails: {
-    type: [String],
-    required: true,
-  },
-  status: {
-    type: String,
-    required: true,
-  },
-  tags: {
-    type: [String],
-  },
-  createdAt: {
-    type: Date,
-    require: true,
-  },
-});
+// movies model schema
+const moviesModel = new Schema(
+  {
+    imdbId: { type: String, required: true, unique: true },
+    imdbRating: { type: Number },
+    thambnail: { type: String, required: true },
+    title: { type: String, required: true },
+    releaseYear: { type: Number, required: true },
+    fullReleaseDate: { type: Date, required: true },
+    category: { type: String, required: true },
+    type: { type: String, required: true },
+    language: { type: String, required: true },
+    genre: { type: [String], required: true },
+    watchLink: { type: [String] },
+    multiAudio: { type: Boolean, required: true },
+    videoType: { type: String, required: true },
+    castDetails: { type: [String], required: true },
+    status: {
+      type: String,
+      required: true,
+      enum: ['released', 'coming soon', 'copyright remove'], // specify valid statuses
+    },
+    tags: { type: [String] },
+    createdAt: {
+      type: Date,
+      default: Date.now, // Default value for new documents
+    },
+  }
+);
 
 const Movies = model('Movies', moviesModel);
 

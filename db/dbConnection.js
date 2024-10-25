@@ -1,13 +1,13 @@
 import { connect } from 'mongoose';
 
-const dbConnectionUrl = process.env.DB_CONNECTION_URL;
-const dbConnectionSecondUrl = process.env.DB_CONNECTION_SECOND_URL;
+const mianDbConnectionUrl = process.env.DB_CONNECTION_URL;
+const seconderyDbConnectionUrl = process.env.DB_CONNECTION_SECOND_URL;
 const testDbConnection = process.env.TESRTING_DB_CONNECTION_URL;
 
 const connectToDatabase = async () => {
   try {
     // Try connecting to the primary database
-    const connectionInstance = await connect(dbConnectionUrl, {
+    const connectionInstance = await connect(mianDbConnectionUrl, {
       minPoolSize: 5,            // Minimum of 5 connections maintained in the pool
       maxPoolSize: 30,           // Maximum of 30 concurrent connections
       maxIdleTimeMS: 600000 * 3  // Close idle connections after 30 minutes
@@ -18,7 +18,7 @@ const connectToDatabase = async () => {
 
     // Attempt to connect to the secondary database
     try {
-      const secondaryConnectionInstance = await connect(dbConnectionSecondUrl, {
+      const secondaryConnectionInstance = await connect(seconderyDbConnectionUrl, {
         minPoolSize: 5,            // Minimum of 5 connections maintained in the pool
         maxPoolSize: 30,           // Maximum of 30 concurrent connections
         maxIdleTimeMS: 600000 * 3  // Close idle connections after 30 minutes

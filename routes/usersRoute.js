@@ -186,7 +186,9 @@ router.post('/action/request', async (req, res) => {
         const saveReport = await newRequest.save();
 
         if (saveReport) {
-            return res.status(200).json({ message: 'Request submitted successfully.' });
+            return res.status(200).json({ 
+                message: 'Your request was received! It may take up to 4 to 6 hours for it to be added. Check our recently added or updated list—you might see your content there soon.' 
+            });
         } else {
             return res.status(500).json({ message: 'Request submission failed.' });
         }

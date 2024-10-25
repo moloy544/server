@@ -276,13 +276,30 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             return res.status(400).json({ message: "IMDb ID is invalid" });
         }
 
-        const movieData = await Movies.findOne({ imdbId }).lean();
-
-        if (!movieData) {
+        const dbQueryData = await Movies.aggregate([
+            {
+              $match: { imdbId }  // Find the movie by imdbId
+            },
+            {
+              $lookup: {
+                from: 'downloadlinks',  // Name of the DownloadLinks collection in MongoDB
+                localField: 'imdbId',   // Field from Movies collection
+                foreignField: 'content_id', // Field from DownloadLinks collection
+                as: 'downloadLinks'     // Name of the resulting array field
+              }
+            },
+            {
+              $project: {
+                createdAt: 0  // Exclude the createdAt field
+              }
+            }
+          ]);
+          
+          if (!dbQueryData || dbQueryData.length === 0) {
             return res.status(404).json({ message: "Movie not found" });
-        }
+          };
 
-        let modifiedMovieData = JSON.parse(JSON.stringify(movieData));
+        let modifiedMovieData = JSON.parse(JSON.stringify(dbQueryData[0]));
         const { genre, castDetails, category, watchLink } = modifiedMovieData;
 
         const randomSkip = Math.floor(Math.random() * 50);
