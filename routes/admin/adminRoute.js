@@ -63,7 +63,7 @@ router.get('/movies/one_by_one', async (req, res) => {
         const searchRegex = new RegExp(`https://res.cloudinary.com/moviesbazar/image/upload/`, 'i');
         // Find movies where watchLink array has more than 1 link
         const movie = await Movies.find({
-           thambnail: {$regex: searchRegex}
+            thambnail: { $regex: searchRegex }
         })
             .select("-_id")  // Added watchLink to response for clarity
             .limit(1)
@@ -91,6 +91,23 @@ router.post('/add/downloadlinks', async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: "Content ID is required for link movies to download links" });
         };
+          
+        // check download links already exist or not
+        const findDownloadLinks = await DownloadLinks.findOne({ content_id: id });
+
+        // if download links already exist upadte the download links
+        if (findDownloadLinks) {
+            const updateDownloadLinks = await DownloadLinks.findOneAndUpdate(
+                { content_id: id },
+                { $set: data },
+                { new: true }
+            );
+            if (!updateDownloadLinks) {
+                return res.status(500).json({ message: "Failed to update download links" });
+            }
+
+            return res.status(400).json({ message: `Download links already exists with this ${id} content ID and its update with new data`, updateData: updateDownloadLinks });
+        }
 
         const newDownloadLinks = new DownloadLinks(data);
         const result = await newDownloadLinks.save();

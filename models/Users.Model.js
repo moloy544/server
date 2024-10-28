@@ -24,7 +24,7 @@ const reportsSchema = new Schema({
     default: "Pending",
     enum: ["Pending", "Resolved", "Dismissed"]
   },
-  userLocationDetails:{
+  userLocationDetails: {
     type: Object,
     required: false
   },
@@ -34,7 +34,7 @@ const reportsSchema = new Schema({
   },
 });
 
-const requestSchema = new Schema({ 
+const requestSchema = new Schema({
   user: {
     type: String,
     required: true,
@@ -47,12 +47,12 @@ const requestSchema = new Schema({
     type: String,
     required: true
   },
-  message: {
-    type: String,
+  contentYear: {
+    type: Number,
     required: false
   },
-  userLocationDetails:{
-    type: Object,
+  message: {
+    type: String,
     required: false
   },
   reuestStatus: {
@@ -60,12 +60,12 @@ const requestSchema = new Schema({
     default: "Pending",
     enum: ["Pending", "Resolved", "Dismissed"]
   },
-  content:{
+  content: {
     type: Schema.Types.ObjectId,
     ref: 'Movies',
     required: false,
   },
-  reply:{
+  reply: {
     type: String,
     required: false
   },
