@@ -51,7 +51,15 @@ const requestSchema = new Schema({
     type: Number,
     required: false
   },
+  languageNeed: {
+    type: String,
+    required: true
+  },
   message: {
+    type: String,
+    required: false
+  },
+  userEmail:{
     type: String,
     required: false
   },
