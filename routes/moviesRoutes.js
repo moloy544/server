@@ -278,29 +278,29 @@ router.get('/details_movie/:imdbId', async (req, res) => {
 
         const dbQueryData = await Movies.aggregate([
             {
-              $match: { imdbId }  // Find the movie by imdbId
+                $match: { imdbId }  // Find the movie by imdbId
             },
             {
-              $lookup: {
-                from: 'downloadlinks',  // Name of the DownloadLinks collection in MongoDB
-                localField: 'imdbId',   // Field from Movies collection
-                foreignField: 'content_id', // Field from DownloadLinks collection
-                as: 'downloadLinks'     // Name of the resulting array field
-              }
+                $lookup: {
+                    from: 'downloadlinks',  // Name of the DownloadLinks collection in MongoDB
+                    localField: 'imdbId',   // Field from Movies collection
+                    foreignField: 'content_id', // Field from DownloadLinks collection
+                    as: 'downloadLinks'     // Name of the resulting array field
+                }
             },
             {
-              $project: {
-                createdAt: 0  // Exclude the createdAt field
-              }
+                $project: {
+                    createdAt: 0  // Exclude the createdAt field
+                }
             }
-          ]);
-          
-          if (!dbQueryData || dbQueryData.length === 0) {
+        ]);
+
+        if (!dbQueryData || dbQueryData.length === 0) {
             return res.status(404).json({ message: "Movie not found" });
-          };
+        };
 
         let modifiedMovieData = JSON.parse(JSON.stringify(dbQueryData[0]));
-        const { genre, castDetails, category, watchLink } = modifiedMovieData;
+        const { genre, language, castDetails, category, watchLink } = modifiedMovieData;
 
         const randomSkip = Math.floor(Math.random() * 50);
         let filterGenre = genre.length > 1 && genre.includes("Drama")
@@ -316,7 +316,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             return watchLinks.map((link, index) => ({
                 source: link,
                 label: `Server ${index + 1}`,
-                labelTag: link.includes('.m3u8') ? '(No Ads)' : '(Multi language)',
+                labelTag: link.includes('.m3u8') ? language.replace("hindi dubbed", "hindi") + ' (No Ads)' : '(Multi language)',
             }));
         };
 

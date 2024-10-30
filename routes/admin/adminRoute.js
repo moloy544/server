@@ -60,14 +60,15 @@ router.get('/movies/one_by_one', async (req, res) => {
     try {
 
         // Create a single regex pattern for the entire query
-        const searchRegex = new RegExp(`https://res.cloudinary.com/moviesbazar/image/upload/`, 'i');
-        // Find movies where watchLink array has more than 1 link
+        //const searchRegex = new RegExp(`https://res.cloudinary.com/moviesbazar/image/upload/`, 'i');
         const movie = await Movies.find({
-            thambnail: { $regex: searchRegex }
-        })
+            $expr: { $eq: [{ $size: "$watchLink" }, 1] },
+            videoType: {$exists: false},
+            type: 'movie'
+        })        
             .select("-_id")  // Added watchLink to response for clarity
             .limit(1)
-            .sort({ createdAt: -1 })
+            .sort({ releaseYear: -1, fullReleaseDate: -1 })
 
 
         if (!movie.length) {
@@ -91,7 +92,7 @@ router.post('/add/downloadlinks', async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: "Content ID is required for link movies to download links" });
         };
-          
+
         // check download links already exist or not
         const findDownloadLinks = await DownloadLinks.findOne({ content_id: id });
 
