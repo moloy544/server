@@ -61,7 +61,7 @@ const requestSchema = new Schema({
   },
   userEmail:{
     type: String,
-    required: false
+    required: true
   },
   reuestStatus: {
     type: String,
