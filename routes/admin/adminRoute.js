@@ -107,7 +107,7 @@ router.post('/add/downloadlinks', async (req, res) => {
                 return res.status(500).json({ message: "Failed to update download links" });
             }
 
-            return res.status(400).json({ message: `Download links already exists with this ${id} content ID and its update with new data`, updateData: updateDownloadLinks });
+            return res.status(200).json({ message: `Download links already exists with this ${id} content ID and its update with new data`, updateData: updateDownloadLinks });
         }
 
         const newDownloadLinks = new DownloadLinks(data);

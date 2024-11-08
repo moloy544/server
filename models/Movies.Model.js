@@ -14,8 +14,8 @@ const moviesModel = new Schema(
     language: { type: String, required: true },
     genre: { type: [String], required: true },
     watchLink: { type: [String] },
-    multiAudio: { type: Boolean, required: true },
-    videoType: { type: String, required: true },
+    multiAudio: { type: Boolean, required: false },
+    videoType: { type: String, required: false },
     castDetails: { type: [String], required: true },
     status: {
       type: String,
@@ -25,7 +25,7 @@ const moviesModel = new Schema(
     tags: { type: [String] },
     createdAt: {
       type: Date,
-      default: Date.now, // Default value for new documents
+      require: false,
     },
   }
 );

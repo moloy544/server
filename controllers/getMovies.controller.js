@@ -2,7 +2,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
-const selectValue = "-_id imdbId title thambnail releaseYear type tags";
+const selectValue = "-_id imdbId title thambnail releaseYear type";
 
 // Search handler function
 export async function searchHandler(req, res) {
@@ -52,7 +52,7 @@ export async function searchHandler(req, res) {
             .skip(skip)
             .limit(limit)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
-            .select(selectValue);
+            .select(selectValue+' tags');
 
         const endOfData = searchData.length < limit;
 
