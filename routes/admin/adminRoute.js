@@ -60,11 +60,12 @@ router.get('/movies/one_by_one', async (req, res) => {
     try {
 
         // Create a single regex pattern for the entire query
-        //const searchRegex = new RegExp(`https://res.cloudinary.com/moviesbazar/image/upload/`, 'i');
+        const searchRegex = new RegExp(`https://res.cloudinary.com/dxhafwrgs/image/upload/`, 'i');
         const movie = await Movies.find({
             $expr: { $eq: [{ $size: "$watchLink" }, 1] },
-            videoType: {$exists: false},
-            type: 'movie'
+             thambnail: {$regex: searchRegex},
+            type: 'movie',
+            category: 'south'
         })        
             .select("-_id")  // Added watchLink to response for clarity
             .limit(1)

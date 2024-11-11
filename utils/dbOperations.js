@@ -66,7 +66,7 @@ export const createSortConditions = ({ filterData = {}, query = {} }) => {
     };
 
     // extract the sort values from filter data
-    const { dateSort, ratingSort } = filterData;
+    const { dateSort, ratingSort, createdAt } = filterData;
 
     const sortCondition = {};
 
@@ -76,20 +76,18 @@ export const createSortConditions = ({ filterData = {}, query = {} }) => {
     };
 
     // sort by any dates fields manupulations
-    if (dateSort) {
+    if (typeof dateSort === "number") {
+        sortCondition.releaseYear = dateSort;
+        sortCondition.fullReleaseDate = dateSort;
+    }
 
-        // if date sort is recent added so show recently under 20 days data
-        if (dateSort === "recent added") {
-            sortCondition.createdAt = -1;
-            query.createdAt = {
-                $exists: true,
-                ...getDataBetweenDate({ type: 'days', value: 20 })
-            };
-        } else if (typeof dateSort === "number") {
-            sortCondition.releaseYear = dateSort;
-            sortCondition.fullReleaseDate = dateSort;
-        }
+if (createdAt) {
+    sortCondition.createdAt = -1;
+    query.createdAt = {
+        $exists: true,
+        ...getDataBetweenDate({ type: 'months', value: 2 })
     };
-    return sortCondition;
-
+};
+// return final creat db sort condition
+return sortCondition;
 };
