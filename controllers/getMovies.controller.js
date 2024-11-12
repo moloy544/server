@@ -52,13 +52,12 @@ export async function searchHandler(req, res) {
             .skip(skip)
             .limit(limit)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
-            .select(selectValue+' tags');
+            .select(selectValue + ' tags').lean();
 
         const endOfData = searchData.length < limit;
 
         let searchResponse = searchData;
 
-        // Create bestResult array
         const bestResult = searchData.map(data => {
             // Convert title to lowercase to match with query words and tags
             const cleanLowerTitle = data.title?.trim().toLowerCase();
@@ -66,13 +65,42 @@ export async function searchHandler(req, res) {
 
             const tags = data.tags && data.tags.length > 0 ? data.tags.map(tag => tag.toLowerCase()) : [];
 
-            // Calculate match count for title and tags
+            // Calculate match count for title and tags (separate checks for each condition)
             const matchCount = splitQuery.reduce((count, term) => {
+                let termCount = 0; // Local counter for each term to track conditions met
 
-                if (lowerTitleWords.includes(term) || (tags.length > 0 && tags.includes(term) || tags.includes(cleanedQuery)) || cleanLowerTitle.startsWith(cleanedQuery)) {
-                    return count + 1;
+                // Check if the term exists in title words
+                if (lowerTitleWords.includes(term)) {
+                    termCount += 1;  // Increment for title match
                 }
-                return count;
+
+                // Check if the term is in tags or if tags include the cleaned query
+                if (tags.length > 0 && (tags.includes(term) || tags.includes(cleanedQuery))) {
+                    termCount += 1;  // Increment for tag match
+                }
+
+                // Check if the title starts with the cleaned query
+                if (cleanLowerTitle.startsWith(cleanedQuery)) {
+                    termCount += 1;  // Increment for title starting with cleaned query
+                }
+                // Check if the term is in tags or if tags include the cleaned query
+                if (tags.length > 0 && (tags.includes(term) || tags.includes(cleanedQuery))) {
+                    termCount += 1;  // Increment for tag match
+                };
+
+                // Check if the term starts with any tag (only if tags exist)
+                if (tags && tags.length > 0 && tags.some(tag => tag.startsWith(term))) {
+                    termCount += 1;  // Increment if tag starts with the term
+                }
+
+
+                // increment the count if length is same
+                if (cleanLowerTitle.length === cleanedQuery.length) {
+                    termCount += 1;  // Increment for title starting with cleaned query
+                }
+
+                // Add the term's match count to the overall count
+                return count + termCount;
             }, 0);
 
             // Check if title starts with any of the query words
@@ -106,8 +134,8 @@ export async function searchHandler(req, res) {
         }
 
         // Clean the response data by removing the tags field
-        searchResponse = searchResponse.map(({ _doc }) => {
-            const { tags, ...cleanedData } = _doc;
+        searchResponse = searchResponse.map((data) => {
+            const { tags, ...cleanedData } = data;
             return cleanedData;
         });
 
@@ -239,7 +267,7 @@ export async function getEmbedVideo(req, res) {
             return res.status(404).json({ message: 'Content not found' });
         }
 
-        return res.status(200).json({ source: movie.watchLink, status: movie.status});
+        return res.status(200).json({ source: movie.watchLink, status: movie.status });
 
     } catch (error) {
         console.log(error);
