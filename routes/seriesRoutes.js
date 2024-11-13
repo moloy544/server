@@ -5,7 +5,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 
 const router = Router();
 
-const selectValue = "imdbId title thambnail releaseYear type";
+const selectValue = "imdbId title thambnail releaseYear type category language";
 
 router.post('/', async (req, res) => {
 
@@ -28,7 +28,17 @@ router.post('/', async (req, res) => {
             {
                 $group: {
                     _id: '$category',
-                    seriesData: { $push: { imdbId: '$imdbId', title: '$title', thambnail: '$thambnail', releaseYear: '$releaseYear', type: '$type' } },
+                    seriesData: {
+                        $push: {
+                            imdbId: '$imdbId',
+                            title: '$title',
+                            thambnail: '$thambnail',
+                            releaseYear: '$releaseYear',
+                            type: '$type',
+                            category: '$category',
+                            language: '$language'
+                        }
+                    },
                 },
             },
 
@@ -49,14 +59,14 @@ router.post('/', async (req, res) => {
 
             //netflix
             Movies.find({
-            type: 'series',
-            $or: [
-                { tags: { $in: ['Netflix'] } },
-                { searchKeywords: 'Netflix' },
-            ],
-        }).sort({ releaseYear: -1, fullReleaseDate: -1 })
-            .limit(20).select(selectValue).lean().exec(),
-        
+                type: 'series',
+                $or: [
+                    { tags: { $in: ['Netflix'] } },
+                    { searchKeywords: 'Netflix' },
+                ],
+            }).sort({ releaseYear: -1, fullReleaseDate: -1 })
+                .limit(20).select(selectValue).lean().exec(),
+
             //hotstar
             Movies.find({
                 type: 'series',
@@ -66,8 +76,8 @@ router.post('/', async (req, res) => {
                 ],
             }).sort({ releaseYear: -1, fullReleaseDate: -1 })
                 .limit(20).select(selectValue).lean().exec(),
-            
-    ]);
+
+        ]);
 
         // Include Netflix series in the result
         const sectionOneData = {
@@ -91,7 +101,7 @@ router.post('/', async (req, res) => {
         };
 
         return res.status(200).json({ seriesPageLayout: sectionOneData });
-        
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: 'Internal Server Error' });
@@ -108,33 +118,33 @@ router.post('/:category', async (req, res) => {
         const { limit, page, skip, bodyData } = req.body;
 
         const regex = new RegExp(category, 'i');
-       
+
         // initial db query
         const dbQuery = {
             type: 'series',
             status: 'released',
         };
 
-          // initial filterOption need
-          const filteOptionsNeeded = ['genre'];
+        // initial filterOption need
+        const filteOptionsNeeded = ['genre'];
 
         if (category?.toString().toLocaleLowerCase() !== 'all') {
             dbQuery.$or = [
                 { category: category },
                 { tags: { $in: [regex] } },
                 { searchKeywords: regex }
-              ];
-             
-        }else{
-            
+            ];
+
+        } else {
+
             filteOptionsNeeded.push('industry', 'provider');
         };
 
-         // creat query condition with filter
-         const queryCondition = createQueryConditionFilter({
+        // creat query condition with filter
+        const queryCondition = createQueryConditionFilter({
             query: dbQuery,
             filter: bodyData?.filterData
-         });
+        });
 
         // creat sort data conditions based on user provided filter
         const sortFilterCondition = createSortConditions({
@@ -148,9 +158,9 @@ router.post('/:category', async (req, res) => {
 
         const endOfData = (moviesData.length < limit - 1);
 
-         // creat initial response data add more responses data as needed
-         const response = { moviesData, endOfData: endOfData };
- 
+        // creat initial response data add more responses data as needed
+        const response = { moviesData, endOfData: endOfData };
+
         if (page && page === 1) {
             response.filterOptions = await genarateFilters({
                 query: queryCondition,

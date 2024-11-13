@@ -2,7 +2,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
-const selectValue = "-_id imdbId title thambnail releaseYear type";
+const selectValue = "-_id imdbId title thambnail releaseYear type category language";
 
 // Search handler function
 export async function searchHandler(req, res) {
