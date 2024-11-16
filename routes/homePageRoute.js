@@ -4,7 +4,7 @@ import Actors from "../models/Actors.Model.js";
 
 const router = Router();
 
-const initialSelectValue = "-_id imdbId title thambnail releaseYear type category language";
+const initialSelectValue = "-_id imdbId title thambnail releaseYear type category language videoType";
 
 const initialLimit = 20;
 
