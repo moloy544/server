@@ -264,33 +264,34 @@ router.post('/top-rated', async (req, res) => {
 
 });
 
+// imdbId validating  using regex pattern
+const imdbIdPattern = /^tt\d{7,}$/;
 
 router.get('/details_movie/:imdbId', async (req, res) => {
     try {
         const { imdbId } = req.params;
         const suggestion = req.query.suggestion === 'true';
 
-        const imdbIdPattern = /^tt\d{7,}$/; // Improved regex for IMDb ID validation
-
         if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
             return res.status(400).json({ message: "IMDb ID is invalid" });
         }
 
+        // Get movies data with download links using aggregation
         const dbQueryData = await Movies.aggregate([
             {
-                $match: { imdbId }  // Find the movie by imdbId
+                $match: { imdbId }
             },
             {
                 $lookup: {
-                    from: 'downloadlinks',  // Name of the DownloadLinks collection in MongoDB
-                    localField: 'imdbId',   // Field from Movies collection
-                    foreignField: 'content_id', // Field from DownloadLinks collection
-                    as: 'downloadLinks'     // Name of the resulting array field
+                    from: 'downloadlinks',
+                    localField: 'imdbId',
+                    foreignField: 'content_id',
+                    as: 'downloadLinks'
                 }
             },
             {
                 $project: {
-                    createdAt: 0  // Exclude the createdAt field
+                    createdAt: 0
                 }
             }
         ]);
@@ -299,8 +300,9 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             return res.status(404).json({ message: "Movie not found" });
         };
 
-        let modifiedMovieData = JSON.parse(JSON.stringify(dbQueryData[0]));
-        const { genre, language, castDetails, category, watchLink } = modifiedMovieData;
+        const movieData = dbQueryData[0];
+
+        const { genre, language, castDetails, category, watchLink } = movieData;
 
         const randomSkip = Math.floor(Math.random() * 50);
         let filterGenre = genre.length > 1 && genre.includes("Drama")
@@ -325,35 +327,38 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             if (watchLink.some(link => link.includes('jupiter.com'))) {
                 filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
             }
-            modifiedMovieData.watchLink = reorderWatchLinks(filterLinks);
+            movieData.watchLink = reorderWatchLinks(filterLinks);
         }
 
         if (!suggestion) {
-            return res.status(200).json({ movieData: modifiedMovieData });
+            return res.status(200).json({ movieData });
         }
 
-        const [genreList, castList] = await Promise.all([
-            Movies.find({
-                genre: { $in: filterGenre },
-                category,
-                imdbId: { $ne: imdbId },
-                status: 'released'
-            }).limit(25).skip(randomSkip).lean(),
+        // Combine both queries into one using $facet for parallel execution
+        const suggestionsPipeline = [
+            {
+                $facet: {
+                    genreList: [
+                        { $match: { genre: { $in: filterGenre }, category, imdbId: { $ne: imdbId }, status: 'released' } },
+                        { $limit: 25 },
+                        { $skip: randomSkip }
+                    ],
+                    castList: [
+                        { $match: { castDetails: { $in: castDetails }, imdbId: { $ne: imdbId }, status: 'released' } },
+                        { $limit: 25 }
+                    ]
+                }
+            }
+        ];
 
-            Movies.find({
-                castDetails: { $in: castDetails },
-                imdbId: { $ne: imdbId },
-                status: 'released'
-            }).limit(25).lean(),
-        ]);
+        const suggestions = await Movies.aggregate(suggestionsPipeline);  // Aggregate suggestions in a single pipeline
 
-        return res.status(200).json({ movieData: modifiedMovieData, suggestions: { genreList, castList } });
+        return res.status(200).json({ movieData, suggestions: suggestions[0] });
 
     } catch (error) {
-        console.error(error); // Use console.error for logging errors
+        console.error(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
 
 export default router;
