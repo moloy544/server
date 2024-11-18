@@ -65,7 +65,7 @@ router.get('/movies/one_by_one', async (req, res) => {
             $expr: { $eq: [{ $size: "$watchLink" }, 1] },
              thambnail: {$regex: searchRegex},
             type: 'movie',
-            category: 'bollywood',
+            category: 'south',
             videoType: {$exists: false},
         })        
             .select("-_id")  // Added watchLink to response for clarity

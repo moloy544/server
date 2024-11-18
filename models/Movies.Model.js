@@ -7,6 +7,7 @@ const moviesModel = new Schema(
     imdbRating: { type: Number },
     thambnail: { type: String, required: true },
     title: { type: String, required: true },
+    dispayTitle: { type: String, required: false },
     releaseYear: { type: Number, required: true },
     fullReleaseDate: { type: Date, required: true },
     category: { type: String, required: true },
