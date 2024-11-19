@@ -304,11 +304,6 @@ router.get('/details_movie/:imdbId', async (req, res) => {
 
         const { genre, language, castDetails, category, watchLink } = movieData;
 
-        const randomSkip = Math.floor(Math.random() * 50);
-        let filterGenre = genre.length > 1 && genre.includes("Drama")
-            ? genre.filter(g => g !== "Drama")
-            : genre;
-
         const reorderWatchLinks = (watchLinks) => {
             const m3u8Link = watchLinks.find(link => link.includes('.m3u8'));
             if (m3u8Link) {
@@ -332,16 +327,24 @@ router.get('/details_movie/:imdbId', async (req, res) => {
 
         if (!suggestion) {
             return res.status(200).json({ movieData });
-        }
+        };
 
-        // Combine both queries into one using $facet for parallel execution
+        const filterGenre = genre.length > 1 && genre.includes("Drama")
+            ? genre.filter(g => g !== "Drama")
+            : genre;
+
+        // Adjust skipMultiplyValue dynamically to vary the number of results skipped
+        const skipMultiplyValue = filterGenre.length * 10 + Math.floor(Math.random() * 10);
+        const randomSkip = Math.random() < 0.2 ? 0 : Math.floor(Math.random() * skipMultiplyValue);  // 20% chance to skip 0 results
+
+        // Pipeline to suggest movies from both genre and castDetails
         const suggestionsPipeline = [
             {
                 $facet: {
                     genreList: [
                         { $match: { genre: { $in: filterGenre }, category, imdbId: { $ne: imdbId }, status: 'released' } },
-                        { $limit: 25 },
-                        { $skip: randomSkip }
+                        { $skip: randomSkip },
+                        { $limit: Math.random() < 0.5 ? 20 : 25 }  // Randomize limit between 20 and 25
                     ],
                     castList: [
                         { $match: { castDetails: { $in: castDetails }, imdbId: { $ne: imdbId }, status: 'released' } },
@@ -351,7 +354,7 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             }
         ];
 
-        const suggestions = await Movies.aggregate(suggestionsPipeline);  // Aggregate suggestions in a single pipeline
+        const suggestions = await Movies.aggregate(suggestionsPipeline);
 
         return res.status(200).json({ movieData, suggestions: suggestions[0] });
 
