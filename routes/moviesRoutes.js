@@ -334,17 +334,16 @@ router.get('/details_movie/:imdbId', async (req, res) => {
             : genre;
 
         // Adjust skipMultiplyValue dynamically to vary the number of results skipped
-        const skipMultiplyValue = filterGenre.length * 10 + Math.floor(Math.random() * 10);
-        const randomSkip = Math.random() < 0.2 ? 0 : Math.floor(Math.random() * skipMultiplyValue);  // 20% chance to skip 0 results
-
+        const skipMultiplyValue = filterGenre.length * 10;
+    
         // Pipeline to suggest movies from both genre and castDetails
         const suggestionsPipeline = [
             {
                 $facet: {
                     genreList: [
                         { $match: { genre: { $in: filterGenre }, category, imdbId: { $ne: imdbId }, status: 'released' } },
-                        { $skip: randomSkip },
-                        { $limit: Math.random() < 0.5 ? 20 : 25 }  // Randomize limit between 20 and 25
+                        { $skip: skipMultiplyValue },
+                        { $limit: 25 }
                     ],
                     castList: [
                         { $match: { castDetails: { $in: castDetails }, imdbId: { $ne: imdbId }, status: 'released' } },
