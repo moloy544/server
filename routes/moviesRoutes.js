@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { getLatestReleaseMovie, getRecentlyAddedContents, searchHandler } from "../controllers/getMovies.controller.js";
+import { getLatestReleaseMovie, getMovieFullDetails, getRecentlyAddedContents, searchHandler } from "../controllers/getMovies.controller.js";
 import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
@@ -264,103 +264,7 @@ router.post('/top-rated', async (req, res) => {
 
 });
 
-// imdbId validating  using regex pattern
-const imdbIdPattern = /^tt\d{7,}$/;
-
-router.get('/details_movie/:imdbId', async (req, res) => {
-    try {
-        const { imdbId } = req.params;
-        const suggestion = req.query.suggestion === 'true';
-
-        if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
-            return res.status(400).json({ message: "IMDb ID is invalid" });
-        }
-
-        // Get movies data with download links using aggregation
-        const dbQueryData = await Movies.aggregate([
-            {
-                $match: { imdbId }
-            },
-            {
-                $lookup: {
-                    from: 'downloadlinks',
-                    localField: 'imdbId',
-                    foreignField: 'content_id',
-                    as: 'downloadLinks'
-                }
-            },
-            {
-                $project: {
-                    createdAt: 0
-                }
-            }
-        ]);
-
-        if (!dbQueryData || dbQueryData.length === 0) {
-            return res.status(404).json({ message: "Movie not found" });
-        };
-
-        const movieData = dbQueryData[0];
-
-        const { genre, language, castDetails, category, watchLink } = movieData;
-
-        const reorderWatchLinks = (watchLinks) => {
-            const m3u8Link = watchLinks.find(link => link.includes('.m3u8'));
-            if (m3u8Link) {
-                watchLinks = watchLinks.filter(link => link !== m3u8Link);
-                watchLinks.unshift(m3u8Link);
-            }
-            return watchLinks.map((link, index) => ({
-                source: link,
-                label: `Server ${index + 1}`,
-                labelTag: link.includes('.m3u8') ? language.replace("hindi dubbed", "hindi") + ' (No Ads)' : '(Multi language)',
-            }));
-        };
-
-        if (Array.isArray(watchLink) && watchLink.length > 1) {
-            let filterLinks = watchLink;
-            if (watchLink.some(link => link.includes('jupiter.com'))) {
-                filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
-            }
-            movieData.watchLink = reorderWatchLinks(filterLinks);
-        }
-
-        if (!suggestion) {
-            return res.status(200).json({ movieData });
-        };
-
-        const filterGenre = genre.length > 1 && genre.includes("Drama")
-            ? genre.filter(g => g !== "Drama")
-            : genre;
-
-        // Adjust skipMultiplyValue dynamically to vary the number of results skipped
-        const skipMultiplyValue = filterGenre.length * 10;
-    
-        // Pipeline to suggest movies from both genre and castDetails
-        const suggestionsPipeline = [
-            {
-                $facet: {
-                    genreList: [
-                        { $match: { genre: { $in: filterGenre }, category, imdbId: { $ne: imdbId }, status: 'released' } },
-                        { $skip: skipMultiplyValue },
-                        { $limit: 25 }
-                    ],
-                    castList: [
-                        { $match: { castDetails: { $in: castDetails }, imdbId: { $ne: imdbId }, status: 'released' } },
-                        { $limit: 25 }
-                    ]
-                }
-            }
-        ];
-
-        const suggestions = await Movies.aggregate(suggestionsPipeline);
-
-        return res.status(200).json({ movieData, suggestions: suggestions[0] });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-});
+// GET Single Movie Full Details Route
+router.get('/details_movie/:imdbId', getMovieFullDetails);
 
 export default router;

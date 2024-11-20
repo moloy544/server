@@ -4,7 +4,7 @@ import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } 
 
 const selectValue = "-_id imdbId title dispayTitle thambnail releaseYear type category language videoType";
 
-// Search handler function
+//************* Movies Search Handler Function Controller *************//
 export async function searchHandler(req, res) {
 
     try {
@@ -147,8 +147,7 @@ export async function searchHandler(req, res) {
     }
 };
 
-
-//Get latest release movies 
+//************* Get Latest Release Movies Controller  *************//
 export async function getLatestReleaseMovie(req, res) {
 
     try {
@@ -203,7 +202,7 @@ export async function getLatestReleaseMovie(req, res) {
 
 };
 
-//Get Recently Added Movies or Series Controller 
+//************* Get Recently Added Movies or Series Controller  *************//
 export async function getRecentlyAddedContents(req, res) {
 
     try {
@@ -257,6 +256,120 @@ export async function getRecentlyAddedContents(req, res) {
     };
 };
 
+
+//************* Get Movie Full Details Controller *************//
+
+// imdbId validating  using regex pattern
+const imdbIdPattern = /^tt\d{7,}$/;
+
+export async function getMovieFullDetails(req, res) {
+    try {
+        const { imdbId } = req.params;
+        const suggestion = req.query.suggestion === 'true';
+
+        if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
+            return res.status(400).json({ message: "IMDb ID is invalid" });
+        }
+
+        // Get movies data with download links using aggregation
+        const dbQueryData = await Movies.aggregate([
+            {
+                $match: { imdbId }
+            },
+            {
+                $lookup: {
+                    from: 'downloadlinks',
+                    localField: 'imdbId',
+                    foreignField: 'content_id',
+                    as: 'downloadLinks'
+                }
+            },
+            {
+                $project: {
+                    createdAt: 0
+                }
+            }
+        ]);
+
+        if (!dbQueryData || dbQueryData.length === 0) {
+            return res.status(404).json({ message: "Movie not found" });
+        };
+
+        const movieData = dbQueryData[0];
+
+        const { genre, language, castDetails, category, watchLink } = movieData;
+
+        const reorderWatchLinks = (watchLinks) => {
+            const m3u8Link = watchLinks.find(link => link.includes('.m3u8'));
+            if (m3u8Link) {
+                watchLinks = watchLinks.filter(link => link !== m3u8Link);
+                watchLinks.unshift(m3u8Link);
+            }
+            return watchLinks.map((link, index) => ({
+                source: link,
+                label: `Server ${index + 1}`,
+                labelTag: link.includes('.m3u8') ? language.replace("hindi dubbed", "hindi") + ' (No Ads)' : '(Multi language)',
+            }));
+        };
+
+        if (Array.isArray(watchLink) && watchLink.length > 1) {
+            let filterLinks = watchLink;
+            if (watchLink.some(link => link.includes('jupiter.com'))) {
+                filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
+            }
+            movieData.watchLink = reorderWatchLinks(filterLinks);
+        }
+
+        if (!suggestion) {
+            return res.status(200).json({ movieData });
+        };
+
+        const filterGenre = genre.length > 1 && genre.includes("Drama")
+            ? genre.filter(g => g !== "Drama")
+            : genre;
+
+        // Adjust skipMultiplyValue dynamically to vary the number of results skipped
+        const skipMultiplyValue = filterGenre.length * 10 + Math.floor(Math.random() * 10);
+        const randomSkip = Math.random() < 0.2 ? 0 : Math.floor(Math.random() * skipMultiplyValue);  // 20% chance to skip 0 results
+
+        // Pipeline to suggest movies from both genre and castDetails
+        const suggestionsPipeline = [
+            {
+                $facet: {
+                    genreList: [
+                        { $match: { genre: { $in: filterGenre }, category, imdbId: { $ne: imdbId }, status: 'released' } },
+                        { $skip: randomSkip },
+                        { $limit: Math.random() < 0.5 ? 20 : 25 }  // Randomize limit between 20 and 25
+                    ],
+                    castList: [
+                        { $match: { castDetails: { $in: castDetails }, imdbId: { $ne: imdbId }, status: 'released' } },
+                        { $limit: 25 }
+                    ]
+                }
+            }
+        ];
+
+        const suggestions = await Movies.aggregate(suggestionsPipeline);
+
+        // Movies hls source provide domain 
+        const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN
+
+        return res.status(200).json({
+            movieData: {
+                ...movieData,
+                hlsSourceDomain
+            },
+            suggestions: suggestions[0]
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+
+//************* Get Movies Embedded Source Controller **************//
 export async function getEmbedVideo(req, res) {
     try {
         const { contentId } = req.body;
