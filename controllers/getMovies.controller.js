@@ -2,150 +2,126 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
-const selectValue = "-_id imdbId title dispayTitle thambnail releaseYear type category language videoType";
+const selectFields = "-_id imdbId title dispayTitle thambnail releaseYear type category language videoType";
 
 //************* Movies Search Handler Function Controller *************//
 export async function searchHandler(req, res) {
-
     try {
-
         const { q } = req.query;
-
         const { limit = 30, skip = 0, bodyData } = req.body;
 
         if (!q) {
             return res.status(400).json({ message: "Invalid search query" });
         }
 
-        // Remove extra spaces and convert to lowercase
+        // Clean query and generate regex
         const cleanedQuery = q.trim().toLowerCase();
-
-        // Create an array of regex patterns for each word in the query for title search
         const splitQuery = cleanedQuery.split(' ');
 
-        // Create a single regex pattern for the entire query
-        const searchRegex = new RegExp(cleanedQuery, 'i');
+        // Regular expression for full query (case-insensitive)
+        const fullQueryRegex = new RegExp(cleanedQuery, 'i');
 
-        // Construct a regex pattern for fuzzy search
-        const fuzzyRegex = splitQuery?.map(term => `(?=.*${term})`).join('');
+        // Fuzzy search regex (match each term in the query string)
+        const fuzzyQueryRegex = new RegExp(splitQuery?.map(term => `(?=.*${term})`).join(''), 'i');
 
-        const searchArryRegex = new RegExp(fuzzyRegex, 'i');
-
-        // Create query condition with filter
-        const queryCondition = createQueryConditionFilter({
+        // Step 1: Create a simple query condition
+        let queryCondition = createQueryConditionFilter({
             query: {
                 $or: [
-                    { title: { $regex: searchRegex } },
-                    { title: { $in: searchArryRegex } }, // Fuzzy search for title
-                    { tags: { $in: searchRegex } },
-                    { castDetails: { $in: searchRegex } },
-                    { searchKeywords: { $regex: searchRegex } },
-                    { genre: { $in: searchRegex } },
-                    { imdbId: cleanedQuery },
-                    { releaseYear: parseInt(q, 10) || 0 },
+                    { title: q },
+                    { tags: { $in: q } },
                 ],
             },
-            filter: bodyData?.filterData
+            filter: bodyData?.filterData,
         });
 
-        const searchData = await Movies.find(queryCondition)
+        // Step 2: Attempt the initial search
+        let searchData = await Movies.find(queryCondition)
+            .collation({ locale: 'en', strength: 2 })  // Ensure case-insensitive search
             .skip(skip)
             .limit(limit)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
-            .select(selectValue + ' tags').lean();
+            .select(selectFields + ' tags')
+            .lean();
 
-        const endOfData = searchData.length < limit;
+        // Step 3: Retry with complex search if no result
+        if (searchData.length === 0) {
+            queryCondition = createQueryConditionFilter({
+                query: {
+                    $or: [
+                        { title: { $regex: fullQueryRegex } },
+                        { title: { $in: fuzzyQueryRegex } },  // Fuzzy search for title
+                        { tags: { $in: fullQueryRegex } },
+                        { castDetails: { $in: fullQueryRegex } },
+                        { searchKeywords: { $regex: fullQueryRegex } },
+                        { genre: { $in: fullQueryRegex } },
+                        { imdbId: cleanedQuery },
+                        { releaseYear: parseInt(q, 10) || 0 },
+                    ],
+                },
+                filter: bodyData?.filterData,
+            });
 
-        let searchResponse = searchData;
+            searchData = await Movies.find(queryCondition)
+                .skip(skip)
+                .limit(limit)
+                .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
+                .select(selectFields + ' tags')
+                .lean();
+        }
 
-        const bestResult = searchData.map(data => {
-            // Convert title to lowercase to match with query words and tags
-            const cleanLowerTitle = data.title?.trim().toLowerCase();
-            const lowerTitleWords = cleanLowerTitle.split(' ');
+        // Step 4: Rank search results based on matches
+        if (searchData.length > 0) {
+            const rankedResults = searchData.map(data => {
+                const lowerTitle = data.title?.trim().toLowerCase();
+                const lowerTitleWords = lowerTitle.split(' ');
+                const tags = data.tags?.map(tag => tag.toLowerCase()) || [];
 
-            const tags = data.tags && data.tags.length > 0 ? data.tags.map(tag => tag.toLowerCase()) : [];
+                // Count how many times the search terms match the title or tags
+                const matchCount = splitQuery.reduce((count, term) => {
+                    let termCount = 0;
 
-            // Calculate match count for title and tags (separate checks for each condition)
-            const matchCount = splitQuery.reduce((count, term) => {
-                let termCount = 0; // Local counter for each term to track conditions met
+                    if (lowerTitleWords.includes(term)) termCount += 1;
+                    if (tags.includes(term) || tags.includes(cleanedQuery)) termCount += 1;
+                    if (lowerTitle.startsWith(cleanedQuery)) termCount += 1;
+                    if (tags.some(tag => tag.startsWith(term))) termCount += 1;
+                    if (lowerTitle.length === cleanedQuery.length) termCount += 1;
 
-                // Check if the term exists in title words
-                if (lowerTitleWords.includes(term)) {
-                    termCount += 1;  // Increment for title match
-                }
+                    return count + termCount;
+                }, 0);
 
-                // Check if the term is in tags or if tags include the cleaned query
-                if (tags.length > 0 && (tags.includes(term) || tags.includes(cleanedQuery))) {
-                    termCount += 1;  // Increment for tag match
-                }
+                // Check if the query or title starts with the other
+                const startsWithCount = splitQuery.reduce((count, term) => {
+                    if (cleanedQuery.startsWith(lowerTitle) || lowerTitle.startsWith(term)) return count + 1;
+                    return count;
+                }, 0);
 
-                // Check if the title starts with the cleaned query
-                if (cleanLowerTitle.startsWith(cleanedQuery)) {
-                    termCount += 1;  // Increment for title starting with cleaned query
-                }
-                // Check if the term is in tags or if tags include the cleaned query
-                if (tags.length > 0 && (tags.includes(term) || tags.includes(cleanedQuery))) {
-                    termCount += 1;  // Increment for tag match
-                };
+                return { data, matchCount, startsWithCount };
+            });
 
-                // Check if the term starts with any tag (only if tags exist)
-                if (tags && tags.length > 0 && tags.some(tag => tag.startsWith(term))) {
-                    termCount += 1;  // Increment if tag starts with the term
-                }
-
-
-                // increment the count if length is same
-                if (cleanLowerTitle.length === cleanedQuery.length) {
-                    termCount += 1;  // Increment for title starting with cleaned query
-                }
-
-                // Add the term's match count to the overall count
-                return count + termCount;
-            }, 0);
-
-            // Check if title starts with any of the query words
-            const startsWithCount = splitQuery.reduce((count, term) => {
-                if (cleanedQuery.startsWith(cleanLowerTitle) || cleanLowerTitle.startsWith(term)) {
-                    return count + 1;
-                }
-                return count;
-            }, 0);
-
-            return { data, matchCount, startsWithCount };
-        });
-
-        if (bestResult.length > 0) {
-            // Sort bestResult by startsWithCount first, then by matchCount in descending order
-            bestResult.sort((a, b) => {
+            // Sort the results by startsWithCount first, then matchCount
+            rankedResults.sort((a, b) => {
                 if (b.startsWithCount !== a.startsWithCount) {
                     return b.startsWithCount - a.startsWithCount;
                 }
                 return b.matchCount - a.matchCount;
             });
 
-            // Extract the best results' data
-            const bestResultData = bestResult.map(result => result.data);
-
-            // If there are any entries in bestResult, remove these entries from searchData to form similarMatch
-            const bestResultIds = new Set(bestResultData.map(data => data.imdbId.toString()));
+            const bestResultIds = new Set(rankedResults.map(result => result.data.imdbId.toString()));
             const similarMatch = searchData.filter(data => !bestResultIds.has(data.imdbId.toString()));
 
-            searchResponse = [...bestResultData, ...similarMatch];
+            searchData = [...rankedResults.map(result => result.data), ...similarMatch];
         }
 
-        // Clean the response data by removing the tags field
-        searchResponse = searchResponse.map((data) => {
-            const { tags, ...cleanedData } = data;
-            return cleanedData;
-        });
+        // Step 5: Clean response data (remove tags)
+        searchData = searchData.map(({ tags, ...cleanedData }) => cleanedData);
 
-        return res.status(200).json({ moviesData: searchResponse, endOfData });
-
+        return res.status(200).json({ moviesData: searchData, endOfData: searchData.length < limit });
     } catch (error) {
-        console.error(error);
+        console.error("Error in searchHandler: ", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
-};
+}
 
 //************* Get Latest Release Movies Controller  *************//
 export async function getLatestReleaseMovie(req, res) {
@@ -156,7 +132,7 @@ export async function getLatestReleaseMovie(req, res) {
 
         const { limit, page, skip, bodyData } = req.body;
 
-        // creat query condition with filter
+        // Creat query condition with filter
         const queryCondition = createQueryConditionFilter({
             query: {
                 category: querySlug,
@@ -175,7 +151,7 @@ export async function getLatestReleaseMovie(req, res) {
 
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
-            .select(selectValue)
+            .select(selectFields)
             .sort({ ...sortFilterCondition, _id: 1 }).lean();
 
         const endOfData = (moviesData.length < limit - 1);
@@ -230,7 +206,7 @@ export async function getRecentlyAddedContents(req, res) {
 
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
-            .select(selectValue)
+            .select(selectFields)
             .sort({ ...sortFilterCondition, createdAt: -1, _id: 1 }).lean();
 
         const endOfData = (moviesData.length < limit - 1);
