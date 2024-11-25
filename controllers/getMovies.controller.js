@@ -16,7 +16,12 @@ export async function searchHandler(req, res) {
 
         // Clean query and generate regex
         const cleanedQuery = q.trim().toLowerCase();
+
+        // Split query into individual words for fuzzy search
         const splitQuery = cleanedQuery.split(' ');
+
+        // Regular expression for "starts with" the full query (case-insensitive)
+        const startsWithQueryRegex = new RegExp(`^${cleanedQuery}`, 'i');
 
         // Regular expression for full query (case-insensitive)
         const fullQueryRegex = new RegExp(cleanedQuery, 'i');
@@ -24,12 +29,13 @@ export async function searchHandler(req, res) {
         // Fuzzy search regex (match each term in the query string)
         const fuzzyQueryRegex = new RegExp(splitQuery?.map(term => `(?=.*${term})`).join(''), 'i');
 
-        // Step 1: Create a simple query condition
+        // Step 1: Create a smaller or operator query condition
         let queryCondition = createQueryConditionFilter({
             query: {
                 $or: [
-                    { title: q },
-                    { tags: { $in: q } },
+                    { title: startsWithQueryRegex },
+                    { title: { $regex: startsWithQueryRegex } },
+                    { tags: { $in: startsWithQueryRegex } },
                 ],
             },
             filter: bodyData?.filterData,
@@ -46,6 +52,7 @@ export async function searchHandler(req, res) {
 
         // Step 3: Retry with complex search if no result
         if (searchData.length === 0) {
+
             queryCondition = createQueryConditionFilter({
                 query: {
                     $or: [
@@ -107,8 +114,8 @@ export async function searchHandler(req, res) {
                 return b.matchCount - a.matchCount;
             });
 
-            const bestResultIds = new Set(rankedResults.map(result => result.data.imdbId.toString()));
-            const similarMatch = searchData.filter(data => !bestResultIds.has(data.imdbId.toString()));
+            const bestResultIds = new Set(rankedResults.map(result => result.data.imdbId?.toString()));
+            const similarMatch = searchData.filter(data => !bestResultIds.has(data.imdbId?.toString()));
 
             searchData = [...rankedResults.map(result => result.data), ...similarMatch];
         }
