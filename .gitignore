@@ -9,10 +9,12 @@ dist/
 
 # Environment variables
 .env
-
-# Logs
+# Logs, backup, testing directories, and development directories
 logs/
 *.log
+test/
+backup/
+dev/
 
 # macOS
 .DS_Store

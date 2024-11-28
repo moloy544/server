@@ -57,3 +57,39 @@ export const parseCookies = (request) => {
   });
   return list;
 };
+
+// function for generating pagination
+export function generatePaginationRange(currentPage, totalPages) {
+  const rangeSize = 5; // Display 5 pages at once
+  const pageNumbers = [];
+
+  // If totalPages is less than rangeSize, just return the totalPages
+  if (totalPages <= rangeSize) {
+      for (let i = 1; i <= totalPages; i++) {
+          pageNumbers.push(i);
+      }
+      pageNumbers.push(totalPages);
+  } else {
+      // Show first 5 pages or so
+      let startPage = Math.max(currentPage - Math.floor(rangeSize / 2), 1);
+      let endPage = startPage + rangeSize - 1;
+
+      if (endPage > totalPages) {
+          endPage = totalPages;
+          startPage = Math.max(endPage - rangeSize + 1, 1);
+      }
+
+      // Add the page numbers in the range
+      for (let i = startPage; i <= endPage; i++) {
+          pageNumbers.push(i);
+      }
+
+      // Ensure the last page number is always included
+      if (pageNumbers[pageNumbers.length - 1] !== totalPages) {
+          pageNumbers.push(totalPages);
+      }
+  }
+
+  return pageNumbers;
+}
+

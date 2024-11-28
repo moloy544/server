@@ -252,33 +252,43 @@ export async function getMovieFullDetails(req, res) {
 
         if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
             return res.status(400).json({ message: "IMDb ID is invalid" });
-        }
-
-        // Get movies data with download links using aggregation
-        const dbQueryData = await Movies.aggregate([
-            {
-                $match: { imdbId }
-            },
-            {
-                $lookup: {
-                    from: 'downloadlinks',
-                    localField: 'imdbId',
-                    foreignField: 'content_id',
-                    as: 'downloadLinks'
-                }
-            },
-            {
-                $project: {
-                    createdAt: 0
-                }
-            }
-        ]);
-
-        if (!dbQueryData || dbQueryData.length === 0) {
-            return res.status(404).json({ message: "Movie not found" });
         };
 
-        const movieData = dbQueryData[0];
+        let dbQueryData;
+
+        if (suggestion) {
+            // Get movies data with download links using aggregation
+            dbQueryData = await Movies.aggregate([
+                {
+                    $match: { imdbId }
+                },
+                {
+                    $lookup: {
+                        from: 'downloadlinks',
+                        localField: 'imdbId',
+                        foreignField: 'content_id',
+                        as: 'downloadLinks'
+                    }
+                },
+                {
+                    $project: {
+                        createdAt: 0
+                    }
+                }
+            ]);
+        } else {
+            // Get movies data only for SEO Metadata
+            dbQueryData = await Movies.findOne({
+                imdbId
+            }).select('-_id -createdAt -multiAudio -videoType -dispayTitle -watchLink -imdbRating -fullReleaseDate');
+        };
+
+        const movieData = suggestion ? dbQueryData[0] : dbQueryData;
+
+        // cehck if no suggestions need return only movie details
+        if (!suggestion) {
+            return res.status(200).json({ movieData });
+        };
 
         const { genre, language, castDetails, category, watchLink } = movieData;
 
@@ -295,16 +305,12 @@ export async function getMovieFullDetails(req, res) {
             }));
         };
 
-        if (Array.isArray(watchLink) && watchLink.length > 1) {
+        if (watchLink && Array.isArray(watchLink) && watchLink.length > 1) {
             let filterLinks = watchLink;
             if (watchLink.some(link => link.includes('jupiter.com'))) {
                 filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
             }
             movieData.watchLink = reorderWatchLinks(filterLinks);
-        }
-
-        if (!suggestion) {
-            return res.status(200).json({ movieData });
         };
 
         const filterGenre = genre.length > 1 && genre.includes("Drama")
