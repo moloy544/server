@@ -69,7 +69,7 @@ export async function addNewActor(req, res) {
         const uploadCloudinary = await uploadOnCloudinary({
             image: avatar,
             publicId: newActor._id,
-            folderPath: "moviesbazaar/actress_avatar"
+            folderPath: "actor_avatar"
         });
 
         if (!uploadCloudinary.secure_url) {
@@ -107,5 +107,79 @@ export async function getActorData(req, res) {
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Create a regex pattern for matching Cloudinary URLs
+const searchRegex = new RegExp('https://res.cloudinary.com/dxhafwrgs/image/upload/', 'i');
+
+// Controller function to update 20 actor thumbnails at a time and track success
+export async function updateAllActorsAvatar(req, res) {
+    try {
+        const { batchLimit = 20 } = req.body;
+        
+        // Query 20 movies with thumbnails that match the regex, one batch per request
+        const actors = await Actors.find({
+            avatar: { $regex: searchRegex }
+        })
+            .select("avatar")  // Only select the thumbnail field
+            .limit(batchLimit)  // Fetch only batchLimit images
+            .lean();  // Return plain JS objects
+
+        if (actors.length === 0) {
+            return res.status(404).json({ message: "No actors found for update." });
+        }
+
+        let successCount = 0;  // Counter for successfully updated actors
+
+        // Process each actors thumbnail
+        const uploadPromises = actors.map(async (actor) => {
+            try {
+                const oldAvatar = actor.avatar;
+
+                // Upload the old thumbnail to the new Cloudinary account
+                const uploadResponse = await uploadOnCloudinary({
+                    image: oldAvatar,
+                    publicId: actor._id,  // Use actor ID as public ID in Cloudinary
+                    folderPath: "actor_avatar"  // Destination folder in the new Cloudinary account
+                });
+
+                // Only update if the Cloudinary upload was successful (i.e., secure_url is returned)
+                if (uploadResponse && uploadResponse.secure_url) {
+                    const newAvatarUrl = uploadResponse.secure_url;
+
+                    // First, update the movie record in MongoDB
+                    const updateResult = await Actors.updateOne(
+                        { _id: actor._id },
+                        { $set: { avatar: newAvatarUrl } }
+                    );
+
+                    // Check if the MongoDB update was successful before adding the delete task to the queue
+                    if (updateResult.modifiedCount > 0) {
+                        successCount++;  // Increment success count for each successful update
+                    } else {
+                        // MongoDB update failed, do not delete the old image
+                        console.error(`Failed to update MongoDB for actor ${movie._id}, skipping Cloudinary deletion.`);
+                    }
+
+                } else {
+                    console.error(`No secure_url returned for actor ${movie._id}. Skipping update.`);
+                }
+            } catch (uploadError) {
+                console.error(`Failed to upload avatar for actor ${movie._id}:`, uploadError);
+            }
+        });
+
+        // Wait for all uploads to complete
+        await Promise.all(uploadPromises);
+
+        console.log(`Batch of ${batchLimit} processed. ${successCount} actor avatar updated successfully.`);
+        return res.status(200).json({
+            message: `Batch of ${batchLimit} processed. ${successCount} actor avatar updated successfully.`
+        });
+
+    } catch (error) {
+        console.error('Error during the update process:', error);
+        return res.status(500).json({ message: 'Internal server error during the update process.' });
     }
 }

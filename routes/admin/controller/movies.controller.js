@@ -37,12 +37,6 @@ export async function addNewMovie(req, res) {
                     folderPath: "movies/thumbnails"
                 });
 
-                // delete image from backup cloudinary account before deleting thumbnail its check if is backup account image then delete
-                deleteBackupAccountImage({
-                    imageLink: findMovie.thambnail,
-                    id: findMovie._id
-                });
-
                 if (!uploadCloudinary.secure_url) {
                     return res.status(500).json({ message: "Error while update thumbnail" });
                 };
