@@ -1,36 +1,51 @@
 import { connect } from 'mongoose';
 
-// testing database connection
 const testDbConnection = process.env.TESRTING_DB_CONNECTION_URL;
-// main database connection
 const mainDbConnectionUrl = process.env.DB_CONNECTION_URL;
-// secondary database connection
 const seconderyDbConnectionUrl = process.env.DB_CONNECTION_SECOND_URL;
+
+// Configuration options for connections
+const dbOptions = {
+  minPoolSize: 3,            // Maintain at least 3 connections
+  maxPoolSize: 30,           // Increase to 30 concurrent connections for scalability
+  maxIdleTimeMS: 600000,      // Close idle connections after 10 minutes to prevent connection overload
+  connectTimeoutMS: 10000,    // Timeout for the initial connection attempt
+  serverSelectionTimeoutMS: 5000, // Timeout before retrying other servers
+  retryWrites: true,          // Enable retryable writes
+  waitQueueTimeoutMS: 5000,   // Wait for 5 seconds in the queue if no connections available
+};
 
 const connectToDatabase = async () => {
   try {
-    
-    // Try connecting to the primary database
-    const connectionInstance = await connect(mainDbConnectionUrl, {
-      minPoolSize: 5,            // Minimum of 5 connections maintained in the pool
-      maxPoolSize: 30,           // Maximum of 30 concurrent connections
-      maxIdleTimeMS: 600000 * 3  // Close idle connections after 30 minutes
-    });
+    // Attempt to connect to the main database
+    const connectionInstance = await connect(mainDbConnectionUrl, dbOptions);
     console.log(`MongoDB is connected to the main DB host: ${connectionInstance.connection.host}`);
   } catch (error) {
     console.error('Error connecting to main MongoDB:', error);
 
-    // Attempt to connect to the secondary database
-    try {
-      const secondaryConnectionInstance = await connect(seconderyDbConnectionUrl, {
-        minPoolSize: 5,            // Minimum of 5 connections maintained in the pool
-        maxPoolSize: 30,           // Maximum of 30 concurrent connections
-        maxIdleTimeMS: 600000 * 3  // Close idle connections after 30 minutes
-      });
-      console.log(`MongoDB is connected to the secondary DB host: ${secondaryConnectionInstance.connection.host}`);
-    } catch (secondaryError) {
-      console.error('Error connecting to first and secondary MongoDB:', secondaryError);
-    }
+    // Retry logic for secondary DB
+    let retries = 0;
+    const maxRetries = 2;
+    const retryDelay = (retryCount) => 1000 * Math.pow(2, retryCount); // Exponential backoff
+
+    const retryConnection = async () => {
+      while (retries < maxRetries) {
+        try {
+          retries++;
+          const secondaryConnectionInstance = await connect(seconderyDbConnectionUrl, dbOptions);
+          console.log(`MongoDB is connected to the secondary DB host: ${secondaryConnectionInstance.connection.host}`);
+          return;
+        } catch (secondaryError) {
+          console.error(`Retry ${retries}: Failed to connect to secondary DB`, secondaryError);
+          if (retries < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, retryDelay(retries)));
+          }
+        }
+      }
+      console.error('Failed to connect to both main and secondary databases after retries.');
+    };
+
+    retryConnection();
   }
 };
 
