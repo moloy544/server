@@ -285,6 +285,10 @@ export async function getMovieFullDetails(req, res) {
 
         const movieData = suggestion ? dbQueryData[0] : dbQueryData;
 
+        if (!movieData) {
+            return res.status(404).json({ message: "Movie not found" });
+        };
+
         // cehck if no suggestions need return only movie details
         if (!suggestion) {
             return res.status(200).json({ movieData });

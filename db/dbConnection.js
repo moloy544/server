@@ -6,13 +6,14 @@ const seconderyDbConnectionUrl = process.env.DB_CONNECTION_SECOND_URL;
 
 // Configuration options for connections
 const dbOptions = {
-  minPoolSize: 3,            // Maintain at least 3 connections
-  maxPoolSize: 30,           // Increase to 30 concurrent connections for scalability
-  maxIdleTimeMS: 600000,      // Close idle connections after 10 minutes to prevent connection overload
-  connectTimeoutMS: 10000,    // Timeout for the initial connection attempt
-  serverSelectionTimeoutMS: 5000, // Timeout before retrying other servers
+  minPoolSize: 5,            // Maintain at least 5 connections
+  maxPoolSize: 40,           // Allow up to 40 concurrent connections
+  maxIdleTimeMS: 600000,      // Close idle connections after 10 minutes
+  serverSelectionTimeoutMS: 15000,  // Wait up to 15 seconds for server selection
+  connectTimeoutMS: 15000,  // Allow 15 seconds for connection setup
   retryWrites: true,          // Enable retryable writes
-  waitQueueTimeoutMS: 5000,   // Wait for 5 seconds in the queue if no connections available
+  retryReads: true,          // Enable retryable reads
+  waitQueueTimeoutMS: 15000,   // Wait for 15 seconds if no connections are available
 };
 
 const connectToDatabase = async () => {
