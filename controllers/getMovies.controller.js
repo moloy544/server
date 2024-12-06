@@ -4,12 +4,12 @@ import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } 
 
 const selectFields = "-_id imdbId title dispayTitle thambnail releaseYear type category language videoType";
 
-//************* Movies Search Handler Function Controller *************//
 // Function to escape special regex characters in the query string
 function escapeRegexSpecialChars(str) {
     return str?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape all special characters
-}
+};
 
+//************* Movies Search Handler Function Controller *************//
 export async function searchHandler(req, res) {
     try {
         const { q } = req.query;
