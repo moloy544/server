@@ -5,44 +5,44 @@ import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } 
 const selectFields = "-_id imdbId title dispayTitle thambnail releaseYear type category language videoType";
 
 //************* Movies Search Handler Function Controller *************//
+// Function to escape special regex characters in the query string
+function escapeRegexSpecialChars(str) {
+    return str?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape all special characters
+}
+
 export async function searchHandler(req, res) {
     try {
         const { q } = req.query;
-        const { limit = 30, skip = 0, bodyData } = req.body;
+        const { limit = 30, skip = 0 } = req.body;
 
         if (!q) {
             return res.status(400).json({ message: "Invalid search query" });
         }
 
-        // Clean query and generate regex
+        // Clean query and escape special regex characters
         const cleanedQuery = q.trim().toLowerCase();
+        const escapedQuery = escapeRegexSpecialChars(cleanedQuery); // Escape special characters
 
         // Split query into individual words for fuzzy search
         const splitQuery = cleanedQuery.split(' ');
 
         // Regular expression for "starts with" the full query (case-insensitive)
-        const startsWithQueryRegex = new RegExp(`^${cleanedQuery}`, 'i');
+        const startsWithQueryRegex = new RegExp(`^${escapedQuery}`, 'i');
 
         // Regular expression for full query (case-insensitive)
-        const fullQueryRegex = new RegExp(cleanedQuery, 'i');
+        const fullQueryRegex = new RegExp(escapedQuery, 'i');
 
         // Fuzzy search regex (match each term in the query string)
-        const fuzzyQueryRegex = new RegExp(splitQuery?.map(term => `(?=.*${term})`).join(''), 'i');
+        const fuzzyQueryRegex = new RegExp(splitQuery?.map(term => `(?=.*${escapeRegexSpecialChars(term)})`).join(''), 'i');
 
-        // Step 1: Create a smaller or operator query condition
-        let queryCondition = createQueryConditionFilter({
-            query: {
-                $or: [
-                    { title: startsWithQueryRegex },
-                    { title: { $regex: startsWithQueryRegex } },
-                    { tags: { $in: startsWithQueryRegex } },
-                ],
-            },
-            filter: bodyData?.filterData,
-        });
-
-        // Step 2: Attempt the initial search
-        let searchData = await Movies.find(queryCondition)
+        // Step 1: Attempt the initial search
+        let searchData = await Movies.find({
+            $or: [
+                { title: startsWithQueryRegex },
+                { title: { $regex: startsWithQueryRegex } },
+                { tags: { $in: startsWithQueryRegex } },
+            ],
+        })
             .collation({ locale: 'en', strength: 2 })  // Ensure case-insensitive search
             .skip(skip)
             .limit(limit)
@@ -53,23 +53,18 @@ export async function searchHandler(req, res) {
         // Step 3: Retry with complex search if no result
         if (searchData.length === 0) {
 
-            queryCondition = createQueryConditionFilter({
-                query: {
-                    $or: [
-                        { title: { $regex: fullQueryRegex } },
-                        { title: { $in: fuzzyQueryRegex } },  // Fuzzy search for title
-                        { tags: { $in: fullQueryRegex } },
-                        { castDetails: { $in: fullQueryRegex } },
-                        { searchKeywords: { $regex: fullQueryRegex } },
-                        { genre: { $in: fullQueryRegex } },
-                        { imdbId: cleanedQuery },
-                        { releaseYear: parseInt(q, 10) || 0 },
-                    ],
-                },
-                filter: bodyData?.filterData,
-            });
-
-            searchData = await Movies.find(queryCondition)
+            searchData = await Movies.find({
+                $or: [
+                    { title: { $regex: fullQueryRegex } },
+                    { title: { $in: fuzzyQueryRegex } },  // Fuzzy search for title
+                    { tags: { $in: fullQueryRegex } },
+                    { castDetails: { $in: fullQueryRegex } },
+                    { searchKeywords: { $regex: fullQueryRegex } },
+                    { genre: { $in: fullQueryRegex } },
+                    { imdbId: cleanedQuery },
+                    { releaseYear: parseInt(q, 10) || 0 },
+                ],
+            })
                 .skip(skip)
                 .limit(limit)
                 .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
@@ -82,37 +77,28 @@ export async function searchHandler(req, res) {
             const rankedResults = searchData.map(data => {
                 const lowerTitle = data.title?.trim().toLowerCase();
                 const lowerTitleWords = lowerTitle.split(' ');
-                const tags = data.tags?.map(tag => tag.toLowerCase()) || [];
-
+            
+                // Get tags from the current movie data
+                const tags = data.tags || []; // Ensure tags is an empty array if undefined
+            
                 // Count how many times the search terms match the title or tags
                 const matchCount = splitQuery.reduce((count, term) => {
                     let termCount = 0;
-
+            
                     if (lowerTitleWords.includes(term)) termCount += 1;
-                    if (tags.includes(term) || tags.includes(cleanedQuery)) termCount += 1;
+                    if (tags && tags.includes(term) || tags.includes(cleanedQuery)) termCount += 1;
                     if (lowerTitle.startsWith(cleanedQuery)) termCount += 1;
-                    if (tags.some(tag => tag.startsWith(term))) termCount += 1;
+                    if (tags && tags.some(tag => tag.startsWith(term))) termCount += 1;
                     if (lowerTitle.length === cleanedQuery.length) termCount += 1;
-
+            
                     return count + termCount;
                 }, 0);
-
-                // Check if the query or title starts with the other
-                const startsWithCount = splitQuery.reduce((count, term) => {
-                    if (cleanedQuery.startsWith(lowerTitle) || lowerTitle.startsWith(term)) return count + 1;
-                    return count;
-                }, 0);
-
-                return { data, matchCount, startsWithCount };
+            
+                return { data, matchCount };
             });
 
-            // Sort the results by startsWithCount first, then matchCount
-            rankedResults.sort((a, b) => {
-                if (b.startsWithCount !== a.startsWithCount) {
-                    return b.startsWithCount - a.startsWithCount;
-                }
-                return b.matchCount - a.matchCount;
-            });
+            // Sort the results by matchCount
+            rankedResults.sort((a, b) => b.matchCount - a.matchCount);
 
             const bestResultIds = new Set(rankedResults.map(result => result.data.imdbId?.toString()));
             const similarMatch = searchData.filter(data => !bestResultIds.has(data.imdbId?.toString()));
@@ -128,7 +114,7 @@ export async function searchHandler(req, res) {
         console.error("Error in searchHandler: ", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
-}
+};
 
 //************* Get Latest Release Movies Controller  *************//
 export async function getLatestReleaseMovie(req, res) {
