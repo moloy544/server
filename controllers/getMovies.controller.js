@@ -130,7 +130,6 @@ export async function getLatestReleaseMovie(req, res) {
             query: {
                 category: querySlug,
                 fullReleaseDate: getDataBetweenDate({ type: 'months', value: 10 }),
-                type: 'movie',
                 status: 'released'
             },
             filter: bodyData?.filterData

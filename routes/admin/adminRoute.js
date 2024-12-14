@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { addNewActor, getActorData, updateAllActorsAvatar } from "./controller/actors.controller.js";
-import { addNewMovie, deleteMovie, updateVideoSource } from "./controller/movies.controller.js";
+import { addNewMovie, deleteMovie, updateAllMoviesThumbnails, updateVideoSource } from "./controller/movies.controller.js";
 import Movies from "../../models/Movies.Model.js";
 import { multerUpload } from "../../utils/multer.js";
 import { newAppUpdateRelease } from "./controller/app.controller.js";
@@ -124,7 +124,10 @@ router.post('/add/downloadlinks', async (req, res) => {
     }
 });
 
-// update actors cloudinary avatar
-router.post('/update/actors/cloudinary_avatar', updateAllActorsAvatar)
+// update all actors cloudinary avatar
+router.post('/update/actors/cloudinary_avatar', updateAllActorsAvatar);
+
+// update all movies cloudinary thumbnail
+router.post('/update/movies/thumbnails', updateAllMoviesThumbnails)
 
 export default router;

@@ -111,7 +111,7 @@ export async function getActorData(req, res) {
 };
 
 // Create a regex pattern for matching Cloudinary URLs
-const searchRegex = new RegExp('https://res.cloudinary.com/dxhafwrgs/image/upload/', 'i');
+const searchRegex = new RegExp('https://res.cloudinary.com/moviesbazar/image/upload/', 'i');
 
 // Controller function to update 20 actor thumbnails at a time and track success
 export async function updateAllActorsAvatar(req, res) {

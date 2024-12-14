@@ -214,4 +214,78 @@ export async function updateVideoSource(req, res) {
         console.error('Error while updating Video Source', error);
         return res.status(500).json({ message: 'Internal server error while updating Video Source' });
     }
+};
+
+// Create a regex pattern for matching Cloudinary URLs
+const searchRegex = new RegExp('https://res.cloudinary.com/moviesbazar/image/upload/', 'i');
+
+// Controller function to update 20 movies thumbnails at a time and track success
+export async function updateAllMoviesThumbnails(req, res) {
+    try {
+        const { batchLimit = 20 } = req.body;
+        
+        // Query 20 movies with thumbnails that match the regex, one batch per request
+        const movies = await Movies.find({
+            thambnail: { $regex: searchRegex }
+        })
+            .select("thambnail")  // Only select the thumbnail field
+            .limit(batchLimit)  // Fetch only batchLimit images
+            .lean();  // Return plain JS objects
+
+        if (!movies || movies.length === 0) {
+            return res.status(404).json({ message: "No movies found for update." });
+        }
+
+        let successCount = 0;  // Counter for successfully updated actors
+
+        // Process each actors thumbnail
+        const uploadPromises = movies.map(async (movie) => {
+            try {
+                const oldThumbnail = movie.thambnail;
+
+                // Upload the old thumbnail to the new Cloudinary account
+                const uploadResponse = await uploadOnCloudinary({
+                    image: oldThumbnail,
+                    publicId: movie._id,  // Use actor ID as public ID in Cloudinary
+                    folderPath: "movies/thumbnails"  // Destination folder in the new Cloudinary account
+                });
+
+                // Only update if the Cloudinary upload was successful (i.e., secure_url is returned)
+                if (uploadResponse && uploadResponse.secure_url) {
+                    const newThumbnailUrl = uploadResponse.secure_url;
+
+                    // First, update the movie record in MongoDB
+                    const updateResult = await Movies.updateOne(
+                        { _id: movie._id },
+                        { $set: { thambnail: newThumbnailUrl } }
+                    );
+
+                    // Check if the MongoDB update was successful before adding the delete task to the queue
+                    if (updateResult.modifiedCount > 0) {
+                        successCount++;  // Increment success count for each successful update
+                    } else {
+                        // MongoDB update failed, do not delete the old image
+                        console.error(`Failed to update MongoDB for movie ${movie._id}, skipping Cloudinary deletion.`);
+                    }
+
+                } else {
+                    console.error(`No secure_url returned for movie ${movie._id}. Skipping update.`);
+                }
+            } catch (uploadError) {
+                console.error(`Failed to upload avatar for movie ${movie._id}:`, uploadError);
+            }
+        });
+
+        // Wait for all uploads to complete
+        await Promise.all(uploadPromises);
+
+        console.log(`Batch of ${batchLimit} processed. ${successCount} movie thumbnail updated successfully.`);
+        return res.status(200).json({
+            message: `Batch of ${batchLimit} processed. ${successCount} movie thumbnail updated successfully.`
+        });
+
+    } catch (error) {
+        console.error('Error during the update process:', error);
+        return res.status(500).json({ message: 'Internal server error during the update process.' });
+    }
 }

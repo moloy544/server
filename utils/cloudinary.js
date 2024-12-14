@@ -20,7 +20,7 @@ const uploadOnCloudinary = async ({ image, publicId, folderPath }) => {
     try {
 
         // Set configuration to cloudinary_config_2 for upload 
-        cloudinary.config(cloudinary_config_2);
+        cloudinary.config(cloudinary_config_1);
 
         if (!image && !publicId && !folderPath) {
             return { status: 404, message: "Some fields are missing" };
