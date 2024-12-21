@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
         latestInCategoryListing('hollywood'),
 
         // Bollywood latest release movies
-        latestInCategoryListing('bollywood', 'bengali'),
+        latestInCategoryListing('bollywood'),
 
         // South latest release movies
         latestInCategoryListing('south'),

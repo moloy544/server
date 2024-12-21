@@ -225,7 +225,27 @@ export async function getRecentlyAddedContents(req, res) {
 };
 
 
-//************* Get Movie Full Details Controller *************//
+
+
+
+//************* Get Movies Embedded Source Controller **************//
+export async function getEmbedVideo(req, res) {
+    try {
+        const { contentId } = req.body;
+
+        const movie = await Movies.findOne({ imdbId: contentId }).select('-_id watchLink status').lean();
+
+        if (!movie) {
+            return res.status(404).json({ message: 'Content not found' });
+        }
+
+        return res.status(200).json({ source: movie.watchLink, status: movie.status });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}//************* Get Movie Full Details Controller *************//
 
 // imdbId validating  using regex pattern
 const imdbIdPattern = /^tt\d{7,}$/;
@@ -233,7 +253,7 @@ const imdbIdPattern = /^tt\d{7,}$/;
 export async function getMovieFullDetails(req, res) {
     try {
         const { imdbId } = req.params;
-        const suggestion = req.query.suggestion === 'true';
+        const suggestion = req.query.suggestion === 'true'; // This works if the query parameter is 'suggestion'
 
         if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
             return res.status(400).json({ message: "IMDb ID is invalid" });
@@ -290,7 +310,7 @@ export async function getMovieFullDetails(req, res) {
             return watchLinks.map((link, index) => ({
                 source: link,
                 label: `Server ${index + 1}`,
-                labelTag: link.includes('.m3u8') || link.includes('.mkv') ? language.replace("hindi dubbed", "hindi") + ' (No Ads)' : '(Multi language)',
+                labelTag: link.includes('.m3u8') || link.includes('.mkv') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : '(Multi language)',
             }));
         };
 
@@ -342,26 +362,6 @@ export async function getMovieFullDetails(req, res) {
 
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-}
-
-
-//************* Get Movies Embedded Source Controller **************//
-export async function getEmbedVideo(req, res) {
-    try {
-        const { contentId } = req.body;
-
-        const movie = await Movies.findOne({ imdbId: contentId }).select('-_id watchLink status').lean();
-
-        if (!movie) {
-            return res.status(404).json({ message: 'Content not found' });
-        }
-
-        return res.status(200).json({ source: movie.watchLink, status: movie.status });
-
-    } catch (error) {
-        console.log(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }
