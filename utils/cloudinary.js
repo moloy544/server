@@ -48,17 +48,15 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
             return { status: 404, message: "Missing value found!" };
         }
 
-        let public_id;
+        const public_id = `movies/thumbnails/${id}`;
         let config;
         const match = imageLink.match(/https:\/\/res.cloudinary.com\/([^\/]+)\//);
         const extractedValue = match ? match[1] : null;
 
         if (extractedValue === cloudName1) {
             config = cloudinary_config_1
-            public_id = `moviesbazaar/thambnails/${id}`;
         } else if (extractedValue === cloudName2) {
             config = cloudinary_config_2;
-            public_id = `movies/thumbnails/${id}`;
         } else {
             return { status: 400, message: "Unknown Cloudinary account" };
             
