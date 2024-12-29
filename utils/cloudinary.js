@@ -49,9 +49,11 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
         }
 
         const public_id = `movies/thumbnails/${id}`;
-        let config;
+
         const match = imageLink.match(/https:\/\/res.cloudinary.com\/([^\/]+)\//);
         const extractedValue = match ? match[1] : null;
+
+        let config;
 
         if (extractedValue === cloudName1) {
             config = cloudinary_config_1
@@ -59,7 +61,7 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
             config = cloudinary_config_2;
         } else {
             return { status: 400, message: "Unknown Cloudinary account" };
-            
+
         };
 
         // configure the cloudinary account
@@ -76,14 +78,14 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
     }
 };
 
-// function for delete for first cloudinary account image 
+// Function to delete the first image from the Cloudinary account
 const deleteBackupAccountImage = async ({ id, imageLink }) => {
     try {
         if (!id || !imageLink) {
 
             return { status: 404, message: "Missing value found!" };
         }
-
+        
         const public_id = `movies/thumbnails/${id}`;
         const match = imageLink.match(/https:\/\/res.cloudinary.com\/([^\/]+)\//);
         const extractedValue = match ? match[1] : null;
@@ -102,7 +104,6 @@ const deleteBackupAccountImage = async ({ id, imageLink }) => {
         return { status: 500, message: "Error while deleting image from Cloudinary" };
     }
 };
-
 
 export {
     uploadOnCloudinary,
