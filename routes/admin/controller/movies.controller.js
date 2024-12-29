@@ -217,7 +217,7 @@ export async function updateVideoSource(req, res) {
 };
 
 // Create a regex pattern for matching Cloudinary URLs
-const searchRegex = new RegExp('https://res.cloudinary.com/moviesbazar/image/upload/', 'i');
+const searchRegex = new RegExp('https://res.cloudinary.com/ddvep5ney/image/upload/', 'i');
 
 // Controller function to update 20 movies thumbnails at a time and track success
 export async function updateAllMoviesThumbnails(req, res) {

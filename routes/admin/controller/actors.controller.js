@@ -111,7 +111,7 @@ export async function getActorData(req, res) {
 };
 
 // Create a regex pattern for matching Cloudinary URLs
-const searchRegex = new RegExp('https://res.cloudinary.com/moviesbazar/image/upload/', 'i');
+const searchRegex = new RegExp('https://res.cloudinary.com/ddvep5ney/image/upload/', 'i');
 
 // Controller function to update 20 actor thumbnails at a time and track success
 export async function updateAllActorsAvatar(req, res) {
@@ -159,14 +159,14 @@ export async function updateAllActorsAvatar(req, res) {
                         successCount++;  // Increment success count for each successful update
                     } else {
                         // MongoDB update failed, do not delete the old image
-                        console.error(`Failed to update MongoDB for actor ${movie._id}, skipping Cloudinary deletion.`);
+                        console.error(`Failed to update MongoDB for actor ${actor._id}, skipping Cloudinary deletion.`);
                     }
 
                 } else {
-                    console.error(`No secure_url returned for actor ${movie._id}. Skipping update.`);
+                    console.error(`No secure_url returned for actor ${actor._id}. Skipping update.`);
                 }
             } catch (uploadError) {
-                console.error(`Failed to upload avatar for actor ${movie._id}:`, uploadError);
+                console.error(`Failed to upload avatar for actor ${actor._id}:`, uploadError);
             }
         });
 
