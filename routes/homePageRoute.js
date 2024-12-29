@@ -6,7 +6,7 @@ const router = Router();
 
 const initialSelectValue = "-_id imdbId title dispayTitle thambnail releaseYear type category language videoType";
 
-const initialLimit = 20;
+const initialLimit = 22;
 
 const latestInCategoryListing = async (category, notInLanguage) => {
   try {
