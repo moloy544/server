@@ -49,6 +49,7 @@ const deleteImageFromCloudinary = async ({ id, imageLink }) => {
         }
 
         const public_id = `movies/thumbnails/${id}`;
+
         const match = imageLink.match(/https:\/\/res.cloudinary.com\/([^\/]+)\//);
         const extractedValue = match ? match[1] : null;
 
@@ -103,7 +104,6 @@ const deleteBackupAccountImage = async ({ id, imageLink }) => {
         return { status: 500, message: "Error while deleting image from Cloudinary" };
     }
 };
-
 
 export {
     uploadOnCloudinary,
