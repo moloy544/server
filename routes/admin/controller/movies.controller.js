@@ -180,13 +180,16 @@ export async function makeDocumentsStringToArray(field) {
 export async function updateVideoSource(req, res) {
 
     try {
-        const { domainToFind, newDomain } = req.body;
+        const { domainToFind, newDomain, batchLimit } = req.body;
 
         if (!domainToFind || !newDomain) {
             return res.status(400).json({ message: 'Missing required fields: domainToFind, newDomain' });
         }
         // Find all documents that have watchLink matching the specified pattern
-        const movies = await Movies.find({ watchLink: { $elemMatch: { $regex: `${domainToFind}` } } });
+        const movies = await Movies.find({ watchLink: { $elemMatch: { $regex: `${domainToFind}` } } }).limit(batchLimit);
+        if (!movies || movies.length === 0){
+            return res.status(404).json({ message: 'No movies found matching the specified pattern.' });
+        };
 
         // Create an array of promises for updating each document
         const updatePromises = movies.map(async (doc) => {
