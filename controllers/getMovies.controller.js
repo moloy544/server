@@ -242,9 +242,9 @@ export async function getEmbedVideo(req, res) {
         // Get user IP address from the 'x-forwarded-for' header
         const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || "76.76.21.22";
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             userIp,
-            source: movie.watchLink, 
+            source: movie.watchLink,
             status: movie.status
         });
 
@@ -266,8 +266,14 @@ export async function getMovieFullDetails(req, res) {
             return res.status(400).json({ message: "IMDb ID is invalid" });
         };
 
+        const FALLBACK_IP_ADDRESS = '76.76.21.123';
+        let ip = FALLBACK_IP_ADDRESS
+
         // Get user IP address from the 'x-forwarded-for' header
-        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || "76.76.21.22";
+
+        if (process.env.NODE_ENV === "production") {
+            ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || FALLBACK_IP_ADDRESS;
+        };
 
         let dbQueryData;
 
