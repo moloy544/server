@@ -77,23 +77,23 @@ export async function searchHandler(req, res) {
             const rankedResults = searchData.map(data => {
                 const lowerTitle = data.title?.trim().toLowerCase();
                 const lowerTitleWords = lowerTitle.split(' ');
-            
+
                 // Get tags from the current movie data
                 const tags = data.tags || []; // Ensure tags is an empty array if undefined
-            
+
                 // Count how many times the search terms match the title or tags
                 const matchCount = splitQuery.reduce((count, term) => {
                     let termCount = 0;
-            
+
                     if (lowerTitleWords.includes(term)) termCount += 1;
                     if (tags && tags.includes(term) || tags.includes(cleanedQuery)) termCount += 1;
                     if (lowerTitle.startsWith(cleanedQuery)) termCount += 1;
                     if (tags && tags.some(tag => tag.startsWith(term))) termCount += 1;
                     if (lowerTitle.length === cleanedQuery.length) termCount += 1;
-            
+
                     return count + termCount;
                 }, 0);
-            
+
                 return { data, matchCount };
             });
 
@@ -237,9 +237,16 @@ export async function getEmbedVideo(req, res) {
 
         if (!movie) {
             return res.status(404).json({ message: 'Content not found' });
-        }
+        };
 
-        return res.status(200).json({ source: movie.watchLink, status: movie.status });
+        // Get user IP address from the 'x-forwarded-for' header
+        const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || "76.76.21.22";
+
+        return res.status(200).json({ 
+            userIp,
+            source: movie.watchLink, 
+            status: movie.status
+        });
 
     } catch (error) {
         console.log(error);
@@ -258,6 +265,9 @@ export async function getMovieFullDetails(req, res) {
         if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
             return res.status(400).json({ message: "IMDb ID is invalid" });
         };
+
+        // Get user IP address from the 'x-forwarded-for' header
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || "76.76.21.22";
 
         let dbQueryData;
 
@@ -353,6 +363,7 @@ export async function getMovieFullDetails(req, res) {
         const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN
 
         return res.status(200).json({
+            userIp: ip,
             movieData: {
                 ...movieData,
                 hlsSourceDomain
