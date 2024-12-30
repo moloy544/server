@@ -10,12 +10,6 @@ const app = express();
 //Server PORT
 const PORT = process.env.SERVER_PORT || 4000;
 
-//Allow Cors Origin for only selected domains
-app.use(cors({
-  origin: process.env.ALLOW_ORIGIN,
-  credentials: true
-}));
-
 // Use cookie-parser middleware
 app.use(cookieParser());
 
@@ -38,7 +32,7 @@ connectToDatabase()
 
   //App All Routes In This Route
   app.use(appAllRoutes);
-  app.get('/', (req, res) => {
+  app.get('/ip', (req, res) => {
     // Get user IP address from the 'x-forwarded-for' header
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     res.json({
