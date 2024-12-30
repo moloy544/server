@@ -10,9 +10,23 @@ const app = express();
 //Server PORT
 const PORT = process.env.SERVER_PORT || 4000;
 
+// Define the allowed origins as an array (you can set it from your environment variables as a comma-separated string)
+const allowedOrigins = process.env.ALLOW_ORIGIN.split(',');
+console.log(allowedOrigins)
+
 //Allow Cors Origin for only selected domains
 app.use(cors({
-  origin: process.env.ALLOW_ORIGIN,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in the allowedOrigins array
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);  // Allow the request
+    } else {
+      callback(new Error('Not allowed by CORS'));  // Reject the request
+    }
+  },
   credentials: true
 }));
 
