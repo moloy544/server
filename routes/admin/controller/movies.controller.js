@@ -1,6 +1,6 @@
 import { isValidObjectId } from "mongoose";
 import Movies from "../../../models/Movies.Model.js";
-import { deleteBackupAccountImage, deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
+import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
 import { bufferToDataUri } from "../../../utils/index.js";
 
 //add movie controller
@@ -42,16 +42,16 @@ export async function addNewMovie(req, res) {
                 };
 
                 // Update movieData with new thumbnail URL
-                newData.thambnail = uploadCloudinary.secure_url
-            } else if (extranalImage_uri && extranalImage_uri !== findMovie.thambnail) {
-                const isCloudinaryImage = findMovie.thambnail.includes('res.cloudinary.com');
+                newData.thumbnail = uploadCloudinary.secure_url
+            } else if (extranalImage_uri && extranalImage_uri !== findMovie.thumbnail) {
+                const isCloudinaryImage = findMovie.thumbnail.includes('res.cloudinary.com');
                 if (isCloudinaryImage) {
                     deleteImageFromCloudinary({
                         id: findMovie._id,
-                        imageLink: findMovie.thambnail
+                        imageLink: findMovie.thumbnail
                     })
                 };
-                newData.thambnail = extranalImage_uri;
+                newData.thumbnail = extranalImage_uri;
             };
 
             if (createdDateUpdate && createdDateUpdate === "yes") {
@@ -90,9 +90,9 @@ export async function addNewMovie(req, res) {
             };
 
             // add thumbnail to mongoose Model object
-            movie.thambnail = uploadCloudinary.secure_url;
+            movie.thumbnail = uploadCloudinary.secure_url;
         } else if (extranalImage_uri) {
-            movie.thambnail = extranalImage_uri
+            movie.thumbnail = extranalImage_uri
         } else {
             return res.status(400).json({ message: "Please provide a movie thumbnail" });
         }
@@ -104,7 +104,7 @@ export async function addNewMovie(req, res) {
         if (!saveMovie && file) {
             deleteImageFromCloudinary({
                 id: movie.id,
-                imageLink: movie.thambnail
+                imageLink: movie.thumbnail
             })
             return res.status(500).json({ message: "Error while adding movie to the database" });
         };
@@ -135,7 +135,7 @@ export async function deleteMovie(req, res) {
             return res.status(404).send({ message: "Movie not found" });
         }
 
-        const imageLink = movie.thambnail; // Assuming imageLink is stored in the movie document
+        const imageLink = movie.thumbnail; // Assuming imageLink is stored in the movie document
 
         const deleteMovie = await Movies.deleteOne({ _id: id });
 
@@ -219,19 +219,24 @@ export async function updateVideoSource(req, res) {
     }
 };
 
-// Create a regex pattern for matching Cloudinary URLs
-const searchRegex = new RegExp('https://res.cloudinary.com/ddvep5ney/image/upload/', 'i');
-
 // Controller function to update 20 movies thumbnails at a time and track success
 export async function updateAllMoviesThumbnails(req, res) {
     try {
-        const { batchLimit = 20 } = req.body;
+        const { cloudName, batchLimit = 20 } = req.body;
+
+         // Check if cloudinary cloud name is provided
+         if (!cloudName) {
+            return res.status(400).json({ message: "Cloudinary cloud name is required" });
+        };
+
+        // Create a regex pattern for matching Cloudinary URLs
+        const searchRegex = new RegExp(`https://res.cloudinary.com/${cloudName}/image/upload/`, 'i');
         
         // Query 20 movies with thumbnails that match the regex, one batch per request
         const movies = await Movies.find({
-            thambnail: { $regex: searchRegex }
+            thumbnail: { $regex: searchRegex }
         })
-            .select("thambnail")  // Only select the thumbnail field
+            .select("thumbnail")  // Only select the thumbnail field
             .limit(batchLimit)  // Fetch only batchLimit images
             .lean();  // Return plain JS objects
 
@@ -244,7 +249,7 @@ export async function updateAllMoviesThumbnails(req, res) {
         // Process each actors thumbnail
         const uploadPromises = movies.map(async (movie) => {
             try {
-                const oldThumbnail = movie.thambnail;
+                const oldThumbnail = movie.thumbnail;
 
                 // Upload the old thumbnail to the new Cloudinary account
                 const uploadResponse = await uploadOnCloudinary({
@@ -260,7 +265,7 @@ export async function updateAllMoviesThumbnails(req, res) {
                     // First, update the movie record in MongoDB
                     const updateResult = await Movies.updateOne(
                         { _id: movie._id },
-                        { $set: { thambnail: newThumbnailUrl } }
+                        { $set: { thumbnail: newThumbnailUrl } }
                     );
 
                     // Check if the MongoDB update was successful before adding the delete task to the queue

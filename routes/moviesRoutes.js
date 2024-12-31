@@ -7,7 +7,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 
 const router = Router();
 
-const selectValue = "-_id imdbId title dispayTitle thambnail releaseYear type category language videoType";
+const selectValue = "-_id imdbId title dispayTitle thumbnail releaseYear type category language videoType";
 
 router.get('/generate-sitemap', async (req, res) => {
     try {

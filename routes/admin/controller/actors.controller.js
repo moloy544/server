@@ -110,14 +110,20 @@ export async function getActorData(req, res) {
     }
 };
 
-// Create a regex pattern for matching Cloudinary URLs
-const searchRegex = new RegExp('https://res.cloudinary.com/ddvep5ney/image/upload/', 'i');
-
 // Controller function to update 20 actor thumbnails at a time and track success
 export async function updateAllActorsAvatar(req, res) {
     try {
-        const { batchLimit = 20 } = req.body;
-        
+
+        const { cloudName, batchLimit = 20 } = req.body;
+
+        // Check if cloudinary cloud name is provided
+        if (!cloudName) {
+            return res.status(400).json({ message: "Cloudinary cloud name is required" });
+        };
+
+        // Create a regex pattern for matching Cloudinary URLs
+        const searchRegex = new RegExp(`https://res.cloudinary.com/${cloudName}/image/upload/`, 'i');
+
         // Query 20 movies with thumbnails that match the regex, one batch per request
         const actors = await Actors.find({
             avatar: { $regex: searchRegex }

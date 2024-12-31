@@ -5,7 +5,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 
 const router = Router();
 
-const selectValue = "imdbId title dispayTitle thambnail releaseYear type category language videoType";
+const selectValue = "imdbId title dispayTitle thumbnail releaseYear type category language videoType";
 
 router.post('/', async (req, res) => {
 
@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
                         $push: {
                             imdbId: '$imdbId',
                             title: '$title',
-                            thambnail: '$thambnail',
+                            thumbnail: '$thumbnail',
                             releaseYear: '$releaseYear',
                             type: '$type',
                             category: '$category',

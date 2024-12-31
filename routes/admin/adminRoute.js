@@ -63,7 +63,7 @@ router.get('/movies/one_by_one', async (req, res) => {
         const searchRegex = new RegExp(`https://res.cloudinary.com/dxhafwrgs/image/upload/`, 'i');
         const movie = await Movies.find({
             $expr: { $eq: [{ $size: "$watchLink" }, 1] },
-             thambnail: {$regex: searchRegex},
+             thumbnail: {$regex: searchRegex},
             type: 'movie',
             category: 'south',
             videoType: {$exists: false},

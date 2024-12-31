@@ -5,7 +5,7 @@ const moviesModel = new Schema(
   {
     imdbId: { type: String, required: true, unique: true },
     imdbRating: { type: Number, default: 0 },
-    thambnail: { type: String, required: true },
+    thumbnail: { type: String, required: true },
     title: { type: String, required: true },
     dispayTitle: { type: String, required: false },
     releaseYear: { type: Number, required: true },

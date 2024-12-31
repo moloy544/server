@@ -2,7 +2,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
-const selectFields = "-_id imdbId title dispayTitle thambnail releaseYear type category language videoType";
+const selectFields = "-_id imdbId title dispayTitle thumbnail releaseYear type category language videoType";
 
 // Function to escape special regex characters in the query string
 function escapeRegexSpecialChars(str) {
