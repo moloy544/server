@@ -35,7 +35,6 @@ router.get('/generate-sitemap', async (req, res) => {
     }
 });
 
-
 //Route For Client Category Listing /listing/category/:query
 router.post('/category/:category', async (req, res) => {
 
