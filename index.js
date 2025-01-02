@@ -2,7 +2,7 @@ import 'dotenv/config.js';
 import express, { json } from 'express';
 import cors from 'cors';
 import appAllRoutes from './routes/index.js';
-import connectToDatabase from './db/dbConnection.js';
+import connectToDatabase from './db/mongoConnection.js';
 import cookieParser from 'cookie-parser';
 
 const app = express();
