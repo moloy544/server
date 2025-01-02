@@ -19,7 +19,7 @@ const dbOptions = {
 const connectToDatabase = async () => {
   try {
     // Attempt to connect to the main database
-    const connectionInstance = await connect(testDbConnection, dbOptions);
+    const connectionInstance = await connect(mainDbConnectionUrl, dbOptions);
     console.log(`MongoDB is connected to the main DB host: ${connectionInstance.connection.host}`);
   } catch (error) {
     console.error('Error connecting to main MongoDB:', error);
