@@ -13,7 +13,7 @@ const latestInCategoryListing = async (category, notInLanguage) => {
 
     const queryCondition = {
       category,
-      releaseYear: [2024, 2023],
+      releaseYear: [2025, 2024],
       tags: { $nin: ['Cartoons'] },
       status: 'released'
     }

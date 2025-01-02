@@ -4,10 +4,9 @@ const testDbConnection = process.env.TESRTING_DB_CONNECTION_URL;
 const mainDbConnectionUrl = process.env.DB_CONNECTION_URL;
 const seconderyDbConnectionUrl = process.env.DB_CONNECTION_SECOND_URL;
 
-// Configuration options for connections
 const dbOptions = {
   minPoolSize: 20,            // Start with 20 connections for steady traffic without over-allocating resources
-  maxPoolSize: 450,           // Allow up to 450 connections, reserving 50 for administrative tasks
+  maxPoolSize: 100,           // Allow up to 100 connections, reserving 50 for administrative tasks
   maxIdleTimeMS: 600000,      // Close idle connections after 10 minutes to avoid resource wastage
   serverSelectionTimeoutMS: 30000,  // Wait up to 30 seconds to find an available server before erroring out
   connectTimeoutMS: 30000,    // Allow up to 30 seconds to establish a new connection
@@ -17,12 +16,10 @@ const dbOptions = {
   waitQueueTimeoutMS: 30000,  // Wait up to 30 seconds in the connection queue if no connections are available
 };
 
-
-
 const connectToDatabase = async () => {
   try {
     // Attempt to connect to the main database
-    const connectionInstance = await connect(mainDbConnectionUrl, dbOptions);
+    const connectionInstance = await connect(testDbConnection, dbOptions);
     console.log(`MongoDB is connected to the main DB host: ${connectionInstance.connection.host}`);
   } catch (error) {
     console.error('Error connecting to main MongoDB:', error);

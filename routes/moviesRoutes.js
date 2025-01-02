@@ -46,11 +46,7 @@ router.post('/category/:category', async (req, res) => {
         const { limit, page, skip, bodyData } = req.body;
 
         function filterQuery() {
-            const date = new Date();
-            const currentYear = date.getFullYear();
             switch (queryData) {
-                case 'new release':
-                    return currentYear;
                 case 'movies':
                     return 'movie';
                 default:
@@ -59,20 +55,29 @@ router.post('/category/:category', async (req, res) => {
         };
 
         const filterQueryValue = filterQuery();
+     
+        let dbQuery = {
+
+            $or: [
+                { category: filterQueryValue },
+                { type: filterQueryValue },
+                { language: filterQueryValue },
+                {
+                    releaseYear: parseInt(filterQueryValue) || 0
+                },
+                { status: filterQueryValue }
+            ]
+        };
+
+        if (filterQueryValue === 'new release') {
+            dbQuery = {
+                fullReleaseDate: getDataBetweenDate({ type: 'months', value: 8 })
+            };
+        };
 
         // creat query condition with filter
         const queryCondition = createQueryConditionFilter({
-            query: {
-                $or: [
-                    { category: filterQueryValue },
-                    { type: filterQueryValue },
-                    { language: filterQueryValue },
-                    {
-                        releaseYear: parseInt(filterQueryValue) || 0
-                    },
-                    { status: filterQueryValue }
-                ]
-            },
+            query: dbQuery,
             filter: bodyData?.filterData
         });
 
@@ -82,16 +87,12 @@ router.post('/category/:category', async (req, res) => {
             queryCondition.status = { $ne: 'coming soon' };
         };
 
-        if (queryData === "new release") {
-            queryCondition.fullReleaseDate = getDataBetweenDate({ type: 'months', value: 8 });
-        };
-
         // creat sort data conditions based on user provided filter
         const sortFilterCondition = createSortConditions({
             filterData: bodyData?.filterData,
             query: queryCondition
         });
-
+      
         const moviesData = await Movies.find(queryCondition)
             .skip(skip).limit(limit)
             .select(selectValue)

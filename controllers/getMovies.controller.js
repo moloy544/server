@@ -225,9 +225,6 @@ export async function getRecentlyAddedContents(req, res) {
 };
 
 
-
-
-
 //************* Get Movies Embedded Source Controller **************//
 export async function getEmbedVideo(req, res) {
     try {

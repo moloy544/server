@@ -12,7 +12,6 @@ const PORT = process.env.SERVER_PORT || 4000;
 
 // Define the allowed origins as an array (you can set it from your environment variables as a comma-separated string)
 const allowedOrigins = process.env.ALLOW_ORIGIN.split(',');
-console.log(allowedOrigins)
 
 //Allow Cors Origin for only selected domains
 app.use(cors({
