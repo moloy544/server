@@ -6,7 +6,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 
 const router = Router();
 
-const selectValue = "-_id imdbId title thumbnail releaseYear type";
+const selectValue = "-_id imdbId title dispayTitle thumbnail releaseYear type category language videoType";
 
 router.post('/industry', async (req, res) => {
     try {
@@ -92,11 +92,11 @@ router.post('/collaction', async (req, res) => {
             .skip(skip)
             .limit(limit)
             .sort({ ...sortFilterCondition, _id: 1 })
-            .select(selectValue + ' castDetails');
+            .select(selectValue+ ' castDetails');
 
         if (!moviesData.length) {
             return res.status(404).json({ message: "Movies not found for this actor" });
-        }
+        };
 
         // Filter movies to include only those where cast names match exactly or start with the actor name
         const filteredMovies = moviesData.filter((data) => {
