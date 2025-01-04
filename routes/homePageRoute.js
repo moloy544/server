@@ -123,7 +123,8 @@ router.post('/', async (req, res) => {
         "Kriti Sanon", "Kiara Advani", "Shahid Kapoor",
         "Katrina Kaif", "Shraddha Kapoor", "Deepika Padukone", "Kartik Aaryan",
         "Ranveer Singh", "Anushka Sharma", "Akshay Kumar", "Varun Dhawan", "Vicky Kaushal",
-        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar"].map(name => name.toLowerCase());
+        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar", 
+        "vikrant massey", "janhvi kapoor"].map(name => name.toLowerCase());
 
       const [
         comingSoonMovies,
@@ -133,10 +134,10 @@ router.post('/', async (req, res) => {
         seriesList,
         romanceMovies,
       ] = await Promise.all([
-         //Coming soon movies
-         Movies.find({ status: 'coming soon' })
-         .sort({ releaseYear: 1, fullReleaseDate: 1 })
-         .limit(initialLimit).select(initialSelectValue).lean(),
+        //Coming soon movies
+        Movies.find({ status: 'coming soon' })
+          .sort({ releaseYear: 1, fullReleaseDate: 1 })
+          .limit(initialLimit).select(initialSelectValue).lean(),
 
         // bollywood hindi actors
         Actors.find({ industry: 'bollywood', name: { $in: selectedActress } })
