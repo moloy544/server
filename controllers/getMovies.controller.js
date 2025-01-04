@@ -2,7 +2,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 
-const selectFields = "-_id imdbId title dispayTitle thumbnail releaseYear type category language videoType";
+const selectFields = "-_id imdbId title displayTitle thumbnail releaseYear type category language videoType";
 
 // Function to escape special regex characters in the query string
 function escapeRegexSpecialChars(str) {
@@ -304,7 +304,7 @@ export async function getMovieFullDetails(req, res) {
             // Get movies data only for SEO Metadata
             dbQueryData = await Movies.findOne({
                 imdbId
-            }).select('-_id -createdAt -multiAudio -videoType -dispayTitle -watchLink -imdbRating -fullReleaseDate');
+            }).select('-_id -createdAt -multiAudio -videoType -displayTitle -watchLink -imdbRating -fullReleaseDate');
         };
 
         const movieData = suggestion ? dbQueryData[0] : dbQueryData;

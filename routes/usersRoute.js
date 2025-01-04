@@ -5,7 +5,7 @@ import { parseCookies } from "../utils/index.js";
 import { getUserLocationDetails } from "../service/service.js";
 
 const router = Router();
-const selectValue = "-_id imdbId title dispayTitle thumbnail releaseYear type category language videoType status";
+const selectValue = "-_id imdbId title displayTitle thumbnail releaseYear type category language videoType status";
 
 // Function to generate a random alphanumeric string of a specified length
 function generateRandomID(length) {
