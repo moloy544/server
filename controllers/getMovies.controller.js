@@ -318,18 +318,28 @@ export async function getMovieFullDetails(req, res) {
             return res.status(200).json({ movieData });
         };
 
-        const { genre, language, castDetails, category, watchLink } = movieData;
+        const { genre, language, castDetails, category, watchLink, multiAudio } = movieData;
 
         const reorderWatchLinks = (watchLinks) => {
             const m3u8Link = watchLinks.find(link => link.includes('.m3u8') || link.includes('.mkv'));
             if (m3u8Link) {
                 watchLinks = watchLinks.filter(link => link !== m3u8Link);
                 watchLinks.unshift(m3u8Link);
-            }
+            };
+
+            let defaultLabel;
+
+            if (multiAudio && typeof multiAudio === "boolean" || (watchLink.length >1 && watchLink.includes('.m3u8') || watchLink.includes('.mkv'))) {
+                defaultLabel = '(Multi language)';
+                
+            }else {
+                defaultLabel = language.replace('hindi dubbed', 'hindi')
+            };
+            
             return watchLinks.map((link, index) => ({
                 source: link,
                 label: `Server ${index + 1}`,
-                labelTag: link.includes('.m3u8') || link.includes('.mkv') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : '(Multi language)',
+                labelTag: link.includes('.m3u8') || link.includes('.mkv') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : defaultLabel
             }));
         };
 
@@ -339,6 +349,8 @@ export async function getMovieFullDetails(req, res) {
                 filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
             }
             movieData.watchLink = reorderWatchLinks(filterLinks);
+        }else{
+            movieData.watchLink = reorderWatchLinks(movieData.watchLink);
         };
 
         const filterGenre = genre.length > 1 && genre.includes("Drama")

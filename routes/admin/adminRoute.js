@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { addNewActor, getActorData, updateAllActorsAvatar } from "./controller/actors.controller.js";
-import { addNewMovie, deleteMovie, updateAllMoviesThumbnails, updateVideoSource } from "./controller/movies.controller.js";
+import { addNewMovie, deleteMovie, updateAllMoviesThumbnails, updateDownloadLinks, updateVideoSource } from "./controller/movies.controller.js";
 import Movies from "../../models/Movies.Model.js";
 import { multerUpload } from "../../utils/multer.js";
 import { newAppUpdateRelease } from "./controller/app.controller.js";
@@ -53,6 +53,9 @@ router.post('/actor/get', getActorData);
 //update video source url link route
 router.put('/update/videosource', updateVideoSource);
 
+// update download links route
+router.put('/update/downloadlinks', updateDownloadLinks);
+
 // app new update release route
 router.post('/release_new_update', newAppUpdateRelease);
 
@@ -60,17 +63,19 @@ router.get('/movies/one_by_one', async (req, res) => {
     try {
 
         // Create a single regex pattern for the entire query
-        const searchRegex = new RegExp(`https://res.cloudinary.com/dxhafwrgs/image/upload/`, 'i');
+        const searchRegex = new RegExp(`snowant327arh.com.*\\.m3u8`, 'i'); // Match domain and .m3u8 in a single string
+
         const movie = await Movies.find({
-            $expr: { $eq: [{ $size: "$watchLink" }, 1] },
-             thumbnail: {$regex: searchRegex},
-            type: 'movie',
-            category: 'south',
-            videoType: {$exists: false},
-        })        
-            .select("-_id")  // Added watchLink to response for clarity
-            .limit(1)
-            .sort({ releaseYear: -1, fullReleaseDate: -1 })
+          watchLink: {
+            $elemMatch: { $regex: searchRegex } // Match elements with the domain and .m3u8
+          },
+          $expr: { $eq: [{ $size: "$watchLink" }, 1] } // Ensure the array has exactly one element
+        })
+        .select("-_id")  // Exclude _id from the response
+        .limit(1)        // Limit to 1 result
+        .sort({ releaseYear: 1, fullReleaseDate: 1 }); // Sort by releaseYear and fullReleaseDate
+        
+
 
 
         if (!movie.length) {

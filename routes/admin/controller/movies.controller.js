@@ -2,6 +2,7 @@ import { isValidObjectId } from "mongoose";
 import Movies from "../../../models/Movies.Model.js";
 import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
 import { bufferToDataUri } from "../../../utils/index.js";
+import DownloadLinks from "../../../models/DownloadLinks.Model.js";
 
 //add movie controller
 export async function addNewMovie(req, res) {
@@ -177,6 +178,7 @@ export async function makeDocumentsStringToArray(field) {
 
 }
 
+// Function controller for update hls video source
 export async function updateVideoSource(req, res) {
 
     try {
@@ -216,6 +218,57 @@ export async function updateVideoSource(req, res) {
     } catch (error) {
         console.error('Error while updating Video Source', error);
         return res.status(500).json({ message: 'Internal server error while updating Video Source' });
+    }
+};
+
+// Function controller for update download links
+export async function updateDownloadLinks(req, res) {
+
+    try {
+        const { valueToFind, newValue, batchLimit } = req.body;
+
+        if (!valueToFind || !newValue) {
+            return res.status(400).json({ message: 'Missing required fields: valueToFind, newValue' });
+        }
+        
+        // Find all documents that have links and in links have urls matching the specified pattern
+        const downloadLinks = await DownloadLinks.find({
+            'links.url': { $regex: valueToFind }
+        }).limit(batchLimit);
+
+        if (!downloadLinks || downloadLinks.length === 0) {
+            return res.status(404).json({ message: 'No Download links found matching the specified pattern.' });
+        }
+
+        // Create an array of promises for updating each document
+        const updatePromises = downloadLinks.map(async (doc) => {
+            // Update each `links.url` that matches the specified pattern
+            const updatedLinks = doc.links.map(link => {
+                if (link.url?.includes(valueToFind)) {
+                    // Update the `url` field in the link object
+                    return {
+                        ...link, // Keep other fields (quality, size) unchanged
+                        url: link.url.replace(valueToFind, newValue)
+                    };
+                }
+                return link; // If no match, return the link unchanged
+            });
+
+            // Update the document with the modified links array
+            await DownloadLinks.updateOne(
+                { _id: doc._id },
+                { $set: { links: updatedLinks } }
+            );
+        });
+
+        // Wait for all update operations to complete
+        await Promise.all(updatePromises);
+
+        return res.status(200).json({ message: 'Download links updated successfully.' });
+
+    } catch (error) {
+        console.error('Error while updating Download links', error);
+        return res.status(500).json({ message: 'Internal server error while updating Download links' });
     }
 };
 
