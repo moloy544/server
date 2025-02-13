@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import Movies from "../../../models/Movies.Model.js";
 import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
 import { bufferToDataUri } from "../../../utils/index.js";
-import DownloadLinks from "../../../models/DownloadLinks.Model.js";
+import DownloadSource from "../../../models/downloadSource.Model.js";
 
 //add movie controller
 export async function addNewMovie(req, res) {
@@ -232,7 +232,7 @@ export async function updateDownloadLinks(req, res) {
         }
         
         // Find all documents that have links and in links have urls matching the specified pattern
-        const downloadLinks = await DownloadLinks.find({
+        const downloadLinks = await DownloadSource.find({
             'links.url': { $regex: valueToFind }
         }).limit(batchLimit);
 

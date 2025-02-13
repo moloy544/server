@@ -1,6 +1,10 @@
+import fetch from 'node-fetch';
+import * as cheerio from 'cheerio';  // Use named import in ES modules
 import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
+import DownloadSource from "../models/downloadSource.Model.js";
+
 
 const selectFields = "-_id imdbId title displayTitle thumbnail releaseYear type category language videoType";
 
@@ -230,7 +234,7 @@ export async function getEmbedVideo(req, res) {
     try {
         const { contentId } = req.body;
 
-        const movie = await Movies.findOne({ imdbId: contentId }).select('-_id watchLink status').lean();
+        const movie = await Movies.findOne({ imdbId: contentId }).select('-_id watchLink status').lean()
 
         if (!movie) {
             return res.status(404).json({ message: 'Content not found' });
@@ -288,7 +292,7 @@ export async function getMovieFullDetails(req, res) {
                 },
                 {
                     $lookup: {
-                        from: 'downloadlinks',
+                        from: 'download_sources',
                         localField: 'imdbId',
                         foreignField: 'content_id',
                         as: 'downloadLinks'
@@ -329,13 +333,13 @@ export async function getMovieFullDetails(req, res) {
 
             let defaultLabel;
 
-            if (multiAudio && typeof multiAudio === "boolean" || (watchLink.length >1 && watchLink.includes('.m3u8') || watchLink.includes('.mkv'))) {
+            if (multiAudio && typeof multiAudio === "boolean" || (watchLink.length > 1 && watchLink.includes('.m3u8') || watchLink.includes('.mkv'))) {
                 defaultLabel = '(Multi language)';
-                
-            }else {
+
+            } else {
                 defaultLabel = language.replace('hindi dubbed', 'hindi')
             };
-            
+
             return watchLinks.map((link, index) => ({
                 source: link,
                 label: `Server ${index + 1}`,
@@ -349,7 +353,7 @@ export async function getMovieFullDetails(req, res) {
                 filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
             }
             movieData.watchLink = reorderWatchLinks(filterLinks);
-        }else{
+        } else {
             movieData.watchLink = reorderWatchLinks(movieData.watchLink);
         };
 
@@ -394,6 +398,61 @@ export async function getMovieFullDetails(req, res) {
 
     } catch (error) {
         console.error(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+//************* Get Movies Embedded Source Controller **************//
+export async function getDownloadOptionsUrls(req, res) {
+    try {
+        const { imdbId } = req.params || {};
+
+        const fullImdbId = "tt" + imdbId;
+
+        const { sourceIndex = 0 } = req.query || {};  // Default sourceIndex is 0
+
+        // Validate IMDb ID
+        if (!fullImdbId || !imdbIdPattern.test(fullImdbId.trim())) {
+            return res.status(400).json({ message: "Invalid IMDb ID provided" });
+        }
+
+        // Fetch download source from the database
+        const downloadSource = await DownloadSource.findOne({ content_id: fullImdbId })
+            .select('links')
+            .lean();
+
+        // Handle if no download source is found
+        if (!downloadSource || !downloadSource.links || downloadSource.links.length === 0) {
+            return res.status(404).json({ message: "No download links available for this IMDb ID" });
+        }
+
+        // Ensure the sourceIndex is valid and within bounds
+        const index = parseInt(sourceIndex, 10);
+        if (isNaN(index) || index < 0 || index >= downloadSource.links.length) {
+            return res.status(400).json({ message: "Invalid source index" });
+        }
+
+        // Fetch the HTML content from the selected source link
+        const sourceUrl = downloadSource.links?.[sourceIndex].url;
+
+        const response = await fetch(sourceUrl);
+        const htmlContent = await response.text();
+
+        // Parse the HTML and extract <a> tags using cheerio
+        const $ = cheerio.load(htmlContent);
+        const links = $('a').map((i, el) => $(el).attr('href')).get();
+
+        if (links.length === 0) {
+            return res.status(404).json({ message: "No download links found in the source" });
+        };
+
+        const extractFirstUrl = links[0]
+
+        // Return the first link as a download URL (or customize to return multiple)
+        return res.status(200).json({ downloadUrl: extractFirstUrl });
+
+    } catch (error) {
+        console.error("Error in getDownloadOptionsUrls:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }

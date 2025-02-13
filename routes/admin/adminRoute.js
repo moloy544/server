@@ -4,7 +4,7 @@ import { addNewMovie, deleteMovie, updateAllMoviesThumbnails, updateDownloadLink
 import Movies from "../../models/Movies.Model.js";
 import { multerUpload } from "../../utils/multer.js";
 import { newAppUpdateRelease } from "./controller/app.controller.js";
-import DownloadLinks from "../../models/DownloadLinks.Model.js";
+import DownloadSource from "../../models/downloadSource.Model.js";
 
 const router = Router();
 
@@ -76,8 +76,6 @@ router.get('/movies/one_by_one', async (req, res) => {
         .sort({ releaseYear: 1, fullReleaseDate: 1 }); // Sort by releaseYear and fullReleaseDate
         
 
-
-
         if (!movie.length) {
             return res.status(404).json({ message: "No movies found with more than 1 watch link" });
         }
@@ -101,11 +99,11 @@ router.post('/add/downloadlinks', async (req, res) => {
         };
 
         // check download links already exist or not
-        const findDownloadLinks = await DownloadLinks.findOne({ content_id: id });
+        const findDownloadLinks = await DownloadSource.findOne({ content_id: id });
 
         // if download links already exist upadte the download links
         if (findDownloadLinks) {
-            const updateDownloadLinks = await DownloadLinks.findOneAndUpdate(
+            const updateDownloadLinks = await DownloadSource.findOneAndUpdate(
                 { content_id: id },
                 { $set: data },
                 { new: true }
@@ -117,7 +115,7 @@ router.post('/add/downloadlinks', async (req, res) => {
             return res.status(200).json({ message: `Download links already exists with this ${id} content ID and its update with new data`, updateData: updateDownloadLinks });
         }
 
-        const newDownloadLinks = new DownloadLinks(data);
+        const newDownloadLinks = new DownloadSource(data);
         const result = await newDownloadLinks.save();
         if (!result) {
             return res.status(500).json({ message: "Failed to add download links" });

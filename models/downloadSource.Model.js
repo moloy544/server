@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const downloadLinkSchema = new Schema({
+const downloadSourceSchema = new Schema({
     content_id: {
         type: String,
         required: true
@@ -23,6 +23,6 @@ const downloadLinkSchema = new Schema({
     ]
 });
 
-const DownloadLinks = model('DownloadLinks', downloadLinkSchema);
+const DownloadSource = model('download_sources', downloadSourceSchema);
 
-export default DownloadLinks;
+export default DownloadSource;
