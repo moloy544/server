@@ -445,11 +445,15 @@ export async function getDownloadOptionsUrls(req, res) {
         if (links.length === 0) {
             return res.status(404).json({ message: "No download links found in the source" });
         };
-
-        const extractFirstUrl = links[0]
-
+        let sendUrl;
+        const filterUrls = links.filter((link) => link.startsWith('https://pub'));
+        if (filterUrls.length > 0) {
+            sendUrl = filterUrls[0];
+        } else {
+            sendUrl = links[0];
+        }
         // Return the first link as a download URL (or customize to return multiple)
-        return res.status(200).json({ downloadUrl: extractFirstUrl });
+        return res.status(200).json({ downloadUrl: sendUrl });
 
     } catch (error) {
         console.error("Error in getDownloadOptionsUrls:", error);
