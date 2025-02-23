@@ -78,10 +78,10 @@ router.post('/action/report', async (req, res) => {
             setupUserCookies(res, userId);
         }
 
-        const { movie, selectedReports, writtenReport } = reportData;
+        const { content_id,content_title, selectedReports, writtenReport } = reportData;
 
         // Find existing pending report
-        let findReport = await Reports.findOne({ user: userId, movie, reportStatus: 'Pending' });
+        let findReport = await Reports.findOne({ user: userId, content_id, reportStatus: 'Pending' });
 
         if (findReport) {
             // Check for new report options
@@ -114,19 +114,6 @@ router.post('/action/report', async (req, res) => {
                 user: userId
             };
 
-            // get user location details 
-            const userLocationDetails = await getUserLocationDetails();
-            // add user location details to request document if available
-            if (userLocationDetails && typeof userLocationDetails === "object") {
-
-                const { country_name, region, city } = userLocationDetails;
-                // add user location details to mongo documet
-                documentData.userLocationDetails = {
-                    country: country_name,
-                    region,
-                    city,
-                }
-            };
             // Create a new report
             const newReport = new Reports(documentData);
 

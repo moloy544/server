@@ -413,7 +413,7 @@ export async function getDownloadOptionsUrls(req, res) {
 
         // Validate IMDb ID
         if (!fullImdbId || !imdbIdPattern.test(fullImdbId.trim())) {
-            return res.status(400).json({ message: "Invalid IMDb ID provided" });
+            return res.status(400).json({ message: "Invalid Contnet ID provided" });
         }
 
         // Fetch download source from the database
@@ -423,7 +423,7 @@ export async function getDownloadOptionsUrls(req, res) {
 
         // Handle if no download source is found
         if (!downloadSource || !downloadSource.links || downloadSource.links.length === 0) {
-            return res.status(404).json({ message: "No download links available for this IMDb ID" });
+            return res.status(404).json({ message: "No download links available for this content" });
         }
 
         // Ensure the sourceIndex is valid and within bounds

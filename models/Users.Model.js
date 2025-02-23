@@ -2,9 +2,13 @@ import { Schema, model } from "mongoose";
 
 const reportsSchema = new Schema({
 
-  movie: {
+  content_id: {
     type: Schema.Types.ObjectId,
     ref: 'Movies',
+    required: true,
+  },
+  content_title:{
+    type: String,
     required: true,
   },
   user: {
@@ -23,10 +27,6 @@ const reportsSchema = new Schema({
     type: String,
     default: "Pending",
     enum: ["Pending", "Resolved", "Dismissed"]
-  },
-  userLocationDetails: {
-    type: Object,
-    required: false
   },
   reportedAt: {
     type: Date,
