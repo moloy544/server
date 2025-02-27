@@ -259,7 +259,74 @@ export async function getEmbedVideo(req, res) {
         console.log(error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
-}//************* Get Movie Full Details Controller *************//
+};
+
+export async function updateMoviesVideoSource() {
+    try {
+        // Find all documents that have watchLink
+        const movies = await Movies.find({});
+        if (!movies || movies.length === 0) {
+            console.log('No movies found.');
+            return;
+        }
+
+        // Create an array of promises for updating each document
+        const updatePromises = movies.map(async (doc) => {
+            // Map through each watchLink, checking if it's a string or an object, and updating its structure
+            const updatedWatchLink = (doc.watchLink || []).map((link, index) => {
+                let updateLink;
+
+                if (typeof link === 'string') {
+                    // If the watchLink entry is a string, treat it as the source and create an object with the 'source' key
+                    updateLink = {
+                        source: link,  // The original string becomes the source
+                        label: `Server ${index + 1}`  // Assign default label
+                    };
+
+                    // Add extra information to the label if needed
+                    if (link && (link.includes('.m3u8') || link.includes('.mkv'))) {
+                        updateLink.label = `Server ${index + 1} - ${doc.language ? doc.language.replace("hindi dubbed", "Hindi") : ''} (No Ads)`;
+                    } else if (doc.multiAudio) {
+                        updateLink.label = `Server ${index + 1} - (Multi Language)`;
+                    }
+                } else if (link && typeof link === 'object' && link.source) {
+                    // If the watchLink entry is already an object, handle it accordingly
+                    updateLink = {
+                        source: link.source,  // Assuming it already has a 'source' field
+                        label: `Server ${index + 1}`
+                    };
+
+                    // Add extra information to the label if needed
+                    if (link.source.includes('.m3u8') || link.source.includes('.mkv')) {
+                        updateLink.label = `Server ${index + 1} - ${doc.language ? doc.language.replace("hindi dubbed", "Hindi") : ''} (No Ads)`;
+                    } else if (doc.multiAudio) {
+                        updateLink.label = `Server ${index + 1} - (Multi Language)`;
+                    }
+                } else {
+                    console.warn(`Invalid watchLink entry found for movie ID ${doc._id}:`, link);
+                    return null; // Skip invalid entries
+                }
+
+                return updateLink;
+            }).filter(Boolean); // Filter out any null values from invalid entries
+
+            // Update the document with the modified watchLink array, adding it to the new 'video_source' field
+            await Movies.updateOne(
+                { _id: doc._id },
+                { $set: { video_source: updatedWatchLink } }
+            );
+        });
+
+        // Wait for all update operations to complete
+        await Promise.all(updatePromises);
+
+        console.log('Movies updated successfully.');
+    } catch (error) {
+        console.error('Error while updating video source:', error);
+    }
+};
+
+//************* Get Movie Full Details Controller *************//
 
 // imdbId validating  using regex pattern
 const imdbIdPattern = /^tt\d{7,}$/;
@@ -272,7 +339,7 @@ export async function getMovieFullDetails(req, res) {
         if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
             return res.status(400).json({ message: "IMDb ID is invalid" });
         };
-
+    
         const FALLBACK_IP_ADDRESS = '76.76.21.123';
         let ip = FALLBACK_IP_ADDRESS
 
@@ -337,7 +404,7 @@ export async function getMovieFullDetails(req, res) {
                 defaultLabel = '(Multi language)';
 
             } else {
-                defaultLabel = language.replace('hindi dubbed', 'hindi')
+                defaultLabel = null
             };
 
             return watchLinks.map((link, index) => ({

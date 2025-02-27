@@ -255,7 +255,7 @@ export async function updateDownloadLinks(req, res) {
             });
 
             // Update the document with the modified links array
-            await DownloadLinks.updateOne(
+            await DownloadSource.updateOne(
                 { _id: doc._id },
                 { $set: { links: updatedLinks } }
             );
