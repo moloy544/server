@@ -392,7 +392,7 @@ export async function getMovieFullDetails(req, res) {
         const { genre, language, castDetails, category, watchLink, multiAudio } = movieData;
 
         const reorderWatchLinks = (watchLinks) => {
-            const m3u8Link = watchLinks.find(link => link.includes('.m3u8') || link.includes('.mkv'));
+            const m3u8Link = watchLinks.find(link => link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt'));
             if (m3u8Link) {
                 watchLinks = watchLinks.filter(link => link !== m3u8Link);
                 watchLinks.unshift(m3u8Link);
@@ -400,7 +400,7 @@ export async function getMovieFullDetails(req, res) {
 
             let defaultLabel;
 
-            if (multiAudio && typeof multiAudio === "boolean" || (watchLink.length > 1 && watchLink.includes('.m3u8') || watchLink.includes('.mkv'))) {
+            if (multiAudio && typeof multiAudio === "boolean" || (watchLink.length > 1 && watchLink.includes('.m3u8') || watchLink.includes('.mkv') || watchLink.includes('.txt'))) {
                 defaultLabel = '(Multi language)';
 
             } else {
@@ -410,14 +410,14 @@ export async function getMovieFullDetails(req, res) {
             return watchLinks.map((link, index) => ({
                 source: link,
                 label: `Server ${index + 1}`,
-                labelTag: link.includes('.m3u8') || link.includes('.mkv') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : defaultLabel
+                labelTag: link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : defaultLabel
             }));
         };
 
         if (watchLink && Array.isArray(watchLink) && watchLink.length > 1) {
             let filterLinks = watchLink;
             if (watchLink.some(link => link.includes('jupiter.com'))) {
-                filterLinks = watchLink.filter(link => !link.includes('ooat310wind.com/stream2'));
+                filterLinks = watchLink.filter(link => !link.includes('snowant327arh.com/stream2'));
             }
             movieData.watchLink = reorderWatchLinks(filterLinks);
         } else {
