@@ -375,7 +375,7 @@ export async function getMovieFullDetails(req, res) {
             // Get movies data only for SEO Metadata
             dbQueryData = await Movies.findOne({
                 imdbId
-            }).select('-_id -createdAt -multiAudio -videoType -displayTitle -watchLink -imdbRating -fullReleaseDate');
+            }).select('-_id -createdAt -videoType -displayTitle -watchLink -imdbRating -fullReleaseDate');
         };
 
         const movieData = suggestion ? dbQueryData[0] : dbQueryData;
