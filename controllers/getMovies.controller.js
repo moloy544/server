@@ -4,7 +4,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import DownloadSource from "../models/downloadSource.Model.js";
-
+import { generateTokenizeSource } from '../helper/helper.js';
 
 const selectFields = "-_id imdbId title displayTitle thumbnail releaseYear type category language videoType";
 
@@ -408,7 +408,7 @@ export async function getMovieFullDetails(req, res) {
             };
 
             return watchLinks.map((link, index) => ({
-                source: link,
+                source: generateTokenizeSource(link, ip),
                 label: `Server ${index + 1}`,
                 labelTag: link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : defaultLabel
             }));

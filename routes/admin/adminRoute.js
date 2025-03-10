@@ -5,6 +5,7 @@ import Movies from "../../models/Movies.Model.js";
 import { multerUpload } from "../../utils/multer.js";
 import { newAppUpdateRelease } from "./controller/app.controller.js";
 import DownloadSource from "../../models/downloadSource.Model.js";
+import { updateMoviesIMDBRating } from "./operations/updateMovies.operation.js";
 
 const router = Router();
 
@@ -131,6 +132,9 @@ router.post('/add/downloadlinks', async (req, res) => {
 router.post('/update/actors/cloudinary_avatar', updateAllActorsAvatar);
 
 // update all movies cloudinary thumbnail
-router.post('/update/movies/thumbnails', updateAllMoviesThumbnails)
+router.post('/update/movies/thumbnails', updateAllMoviesThumbnails);
+
+// Update Or Add Updated IMDB Rating
+router.put('/update/movies/rating/:imdbId', updateMoviesIMDBRating)
 
 export default router;
