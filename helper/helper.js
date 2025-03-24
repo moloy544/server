@@ -38,4 +38,29 @@ export function generateTokenizeSource(source, ip) {
 
   // Return the updated source URL string with the token appended
   return url.toString();
+};
+
+export function adjustSeriesHlsSource(array, language, multiAudio) {
+
+  const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN;
+  const secondHlsSourceDomain = process.env.SECOND_HLS_VIDEO_SOURCE_DOMAIN;
+
+  // Create new URL with the second HLS domain
+  const isMatch = array[0]?.includes(hlsSourceDomain);
+
+  let newArray = [...array];
+
+  if (isMatch) {
+    // Replace part of the domain and keep the rest of the URL the same
+    const updatedSource = array[0].replace(hlsSourceDomain, secondHlsSourceDomain);
+    newArray.push(updatedSource);
+  }
+
+ newArray = newArray.map((link, index) => ({
+    source: link,
+    label: `Server ${index + 1}`,
+    labelTag: multiAudio ? language.replace('hindi dubbed', 'hindi') + ' + (Multi)' : null
+  }));
+  return newArray;
 }
+

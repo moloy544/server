@@ -19,10 +19,12 @@ const dbOptions = {
 const connectToDatabase = async () => {
   try {
     // Attempt to connect to the main database
-    const connectionInstance = await connect(process.env.NODE_ENV === "production" ? mainDbConnectionUrl : developmentDbConnection, dbOptions);
+    const connectionInstance = await connect(process.env.NODE_ENV === "production" ? mainDbConnectionUrl : seconderyDbConnectionUrl, dbOptions);
     console.log(`MongoDB is connected to the ${process.env.NODE_ENV === "production" ? 'main' : 'development'} DB host: ${connectionInstance.connection.host}`);
   } catch (error) {
     console.error('Error connecting to main MongoDB:', error);
+    
+    if (process.env.NODE_ENV !== "production") return;
 
     // Retry logic for secondary DB
     let retries = 0;

@@ -15,5 +15,5 @@ export async function getUserLocationDetails() {
         console.error('Error fetching country data:', error.message);
         return null;
     }
-  }
+  };
   

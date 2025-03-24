@@ -4,6 +4,7 @@ import { getDownloadOptionsUrls, getLatestReleaseMovie, getMovieFullDetails, get
 import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
+import { getHlsPlaylist } from "../service/externalService.js";
 
 const router = Router();
 
@@ -269,5 +270,8 @@ router.get('/details_movie/:imdbId', getMovieFullDetails);
 
 // GET Single Movie Download Options Urls
 router.get('/download_urls/:imdbId', getDownloadOptionsUrls);
+
+// GET Single Movie Hls Url Form External Service
+router.get('/hls/:imdbId', getHlsPlaylist);
 
 export default router;

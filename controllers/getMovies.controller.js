@@ -339,7 +339,7 @@ export async function getMovieFullDetails(req, res) {
         if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
             return res.status(400).json({ message: "IMDb ID is invalid" });
         };
-    
+
         const FALLBACK_IP_ADDRESS = '76.76.21.123';
         let ip = FALLBACK_IP_ADDRESS
 
@@ -421,7 +421,7 @@ export async function getMovieFullDetails(req, res) {
             }
             movieData.watchLink = reorderWatchLinks(filterLinks);
         } else {
-            movieData.watchLink = reorderWatchLinks(movieData.watchLink);
+            movieData.watchLink = reorderWatchLinks(watchLink);
         };
 
         const filterGenre = genre.length > 1 && genre.includes("Drama")
