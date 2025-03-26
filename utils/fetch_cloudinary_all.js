@@ -26,7 +26,7 @@ export const fetchImagesFromFolder = async (folderPath) => {
         const resources = await cloudinary.api.resources({
             type: 'upload',
             prefix: folderPath, // Specify the folder path
-            max_results: 20, // Limit results (you can paginate if needed)
+            max_results: 20, // Limit results (paginate if needed)
         });
 
         // Log the URLs of the images

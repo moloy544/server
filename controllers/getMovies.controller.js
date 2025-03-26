@@ -432,23 +432,64 @@ export async function getMovieFullDetails(req, res) {
         const skipMultiplyValue = filterGenre.length * 10 + Math.floor(Math.random() * 10);
         const randomSkip = Math.random() < 0.2 ? 0 : Math.floor(Math.random() * skipMultiplyValue);  // 20% chance to skip 0 results
 
-        // Pipeline to suggest movies from both genre and castDetails
         const suggestionsPipeline = [
             {
                 $facet: {
                     genreList: [
-                        { $match: { genre: { $in: filterGenre }, category, imdbId: { $ne: imdbId }, status: 'released' } },
+                        {
+                            $match: {
+                                genre: { $in: filterGenre },
+                                category,
+                                imdbId: { $ne: imdbId },
+                                status: 'released'
+                            }
+                        },
                         { $skip: randomSkip },
-                        { $limit: Math.random() < 0.5 ? 20 : 25 }  // Randomize limit between 20 and 25
+                        { $limit: Math.random() < 0.5 ? 20 : 25 },  // Randomize limit between 20 and 25
+                        {
+                            $project: {  // Select only the required fields
+                                _id: 0,  // Exclude _id
+                                imdbId: 1,
+                                title: 1,
+                                displayTitle: 1,
+                                thumbnail: 1,
+                                releaseYear: 1,
+                                type: 1,
+                                category: 1,
+                                language: 1,
+                                videoType: 1
+                            }
+                        }
                     ],
                     castList: [
-                        { $match: { castDetails: { $in: castDetails }, imdbId: { $ne: imdbId }, status: 'released' } },
-                        { $limit: 25 }
+                        {
+                            $match: {
+                                castDetails: { $in: castDetails },
+                                imdbId: { $ne: imdbId },
+                                status: 'released'
+                            }
+                        },
+                        { $limit: 25 },
+                        {
+                            $project: {  // Select only the required fields
+                                _id: 0,  // Exclude _id
+                                imdbId: 1,
+                                title: 1,
+                                displayTitle: 1,
+                                thumbnail: 1,
+                                releaseYear: 1,
+                                type: 1,
+                                category: 1,
+                                language: 1,
+                                videoType: 1
+                            }
+                        }
                     ]
                 }
             }
         ];
 
+        // Suggestions (You might also like and Explore more from same actor)
         const suggestions = await Movies.aggregate(suggestionsPipeline);
 
         // Movies hls source provide domain 
