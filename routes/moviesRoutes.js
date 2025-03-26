@@ -8,7 +8,7 @@ import { getHlsPlaylist } from "../service/externalService.js";
 
 const router = Router();
 
-const selectValue = "-_id imdbId title displayTitle thumbnail releaseYear type category language videoType";
+const selectValue = "-_id imdbId title displayTitle thumbnail releaseYear type videoType";
 
 router.get('/generate-sitemap', async (req, res) => {
     try {

@@ -5,7 +5,7 @@ import { genarateFilters } from "../utils/genarateFilter.js";
 
 const router = Router();
 
-const selectValue = "imdbId title displayTitle thumbnail releaseYear type category language videoType";
+const selectValue = "imdbId title displayTitle thumbnail releaseYear type videoType";
 
 router.post('/', async (req, res) => {
 

@@ -5,7 +5,7 @@ import { parseCookies } from "../utils/index.js";
 import { getUserLocationDetails } from "../service/service.js";
 
 const router = Router();
-const selectValue = "-_id imdbId title displayTitle thumbnail releaseYear type category language videoType status";
+const selectValue = "-_id imdbId title displayTitle thumbnail releaseYear type videoType status";
 
 // Function to generate a random alphanumeric string of a specified length
 function generateRandomID(length) {
@@ -78,7 +78,7 @@ router.post('/action/report', async (req, res) => {
             setupUserCookies(res, userId);
         }
 
-        const { content_id,content_title, selectedReports, writtenReport } = reportData;
+        const { content_id, selectedReports, writtenReport } = reportData;
 
         // Find existing pending report
         let findReport = await Reports.findOne({ user: userId, content_id, reportStatus: 'Pending' });
