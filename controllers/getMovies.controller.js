@@ -414,13 +414,10 @@ export async function getMovieFullDetails(req, res) {
             }));
         };
 
-        if (watchLink && Array.isArray(watchLink) && watchLink.length > 1) {
-            let filterLinks = watchLink;
-            if (watchLink.some(link => link.includes('jupiter.com'))) {
-                filterLinks = watchLink.filter(link => !link.includes('snowant327arh.com/stream2'));
-            }
-            movieData.watchLink = reorderWatchLinks(filterLinks);
-        } else {
+         // Movies hls source provide domain 
+         const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN
+
+        if (watchLink && Array.isArray(watchLink) && watchLink.length >0) {
             movieData.watchLink = reorderWatchLinks(watchLink);
         };
 
@@ -491,10 +488,7 @@ export async function getMovieFullDetails(req, res) {
 
         // Suggestions (You might also like and Explore more from same actor)
         const suggestions = await Movies.aggregate(suggestionsPipeline);
-
-        // Movies hls source provide domain 
-        const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN
-
+    
         return res.status(200).json({
             userIp: ip,
             movieData: {
