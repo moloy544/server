@@ -207,7 +207,6 @@ router.post('/genre/:genre', async (req, res) => {
 router.post('/search', searchHandler);
 
 //get recently added movies or series
-//Top Rated IMDb ratings movies 
 router.post('/recently-added', getRecentlyAddedContents);
 
 //Latest release movies 

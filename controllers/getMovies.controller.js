@@ -364,11 +364,6 @@ export async function getMovieFullDetails(req, res) {
                         foreignField: 'content_id',
                         as: 'downloadLinks'
                     }
-                },
-                {
-                    $project: {
-                        _id: 0
-                    }
                 }
             ]);
         } else {
