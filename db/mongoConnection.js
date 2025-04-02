@@ -7,7 +7,7 @@ const seconderyDbConnectionUrl2 = process.env.DB_CONNECTION_SECOND_URL2;
 
 const dbOptions = {
   minPoolSize: 20,            // Start with 20 connections for steady traffic without over-allocating resources
-  maxPoolSize: 200,           // Allow up to 200 connections to stay under the 500 connection limit
+  maxPoolSize: 150,           // Allow up to 150 connections to stay under the 500 connection limit
   maxIdleTimeMS: 600000,      // Close idle connections after 10 minutes to avoid resource wastage
   serverSelectionTimeoutMS: 20000,  // Wait up to 20 seconds to find an available server before erroring out
   connectTimeoutMS: 20000,    // Allow up to 20 seconds to establish a new connection
