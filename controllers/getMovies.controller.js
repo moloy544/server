@@ -543,9 +543,12 @@ export async function getDownloadOptionsUrls(req, res) {
             return res.status(404).json({ message: "No download links found in the source" });
         };
         let sendUrl;
-        const filterUrls = links.filter((link) => link.startsWith('https://pub'));
-        if (filterUrls.length > 0) {
-            sendUrl = filterUrls[0];
+        const firstNeedUrl = links.filter(link => link.includes('fdownload.php'));
+        const secondNeedUrl = links.filter((link) => link.startsWith('https://pub'));
+        if (firstNeedUrl.length > 0) {
+            sendUrl = firstNeedUrl[0];
+        }else if (secondNeedUrl.length > 0) {
+            sendUrl = secondNeedUrl[0];
         } else {
             sendUrl = links[0];
         }
