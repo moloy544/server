@@ -384,7 +384,7 @@ export async function getMovieFullDetails(req, res) {
             return res.status(200).json({ movieData });
         };
 
-        const { genre, language, castDetails, category, watchLink, multiAudio } = movieData;
+        const { genre, language, castDetails, category, watchLink, multiAudio, mainVideoSourceLabel=null } = movieData;
 
         const reorderWatchLinks = (watchLinks) => {
             const m3u8Link = watchLinks.find(link => link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt'));
@@ -405,7 +405,7 @@ export async function getMovieFullDetails(req, res) {
             return watchLinks.map((link, index) => ({
                 source: generateTokenizeSource(link, ip),
                 label: `Server ${index + 1}`,
-                labelTag: link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : defaultLabel
+                labelTag: link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : (link.includes(imdbId) && mainVideoSourceLabel) ? mainVideoSourceLabel : defaultLabel
             }));
         };
 
