@@ -384,7 +384,7 @@ export async function getMovieFullDetails(req, res) {
             return res.status(200).json({ movieData });
         };
 
-        const { genre, language, castDetails, category, watchLink, multiAudio, mainVideoSourceLabel=null } = movieData;
+        const { genre, language, castDetails, category, watchLink, multiAudio, mainVideoSourceLabel=null, rpmshareSourceLable=null } = movieData;
 
         const reorderWatchLinks = (watchLinks) => {
             const m3u8Link = watchLinks.find(link => link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt'));
@@ -402,11 +402,36 @@ export async function getMovieFullDetails(req, res) {
                 defaultLabel = null
             };
 
-            return watchLinks.map((link, index) => ({
-                source: generateTokenizeSource(link, ip),
-                label: `Server ${index + 1}`,
-                labelTag: link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt') ? language.replace("hindi dubbed", "Hindi") + ' (No Ads)' : (link.includes(imdbId) && mainVideoSourceLabel) ? mainVideoSourceLabel : defaultLabel
-            }));
+            return watchLinks.map((link, index) => {
+                const isNoAds = link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt');
+                const isMainSource = link.includes(imdbId) && mainVideoSourceLabel;
+                const isRpmSource = link.includes('rpmplay.online');
+            
+                let label;
+            
+                if (isNoAds) {
+                    label = language.replace("hindi dubbed", "Hindi") + ' (No Ads)';
+                } else if (isMainSource) {
+                    label = mainVideoSourceLabel;
+                } else if (isRpmSource) {
+                    if (rpmshareSourceLable) {
+                        label = rpmshareSourceLable;
+                    } else if (typeof multiAudio === "boolean" && multiAudio === false) {
+                        label = language.replace("hindi dubbed", "Hindi");
+                    } else {
+                        label = defaultLabel;
+                    }
+                } else {
+                    label = defaultLabel;
+                }
+            
+                return {
+                    source: generateTokenizeSource(link, ip),
+                    label: `Server ${index + 1}`,
+                    labelTag: label
+                };
+            });
+            
         };
 
          // Movies hls source provide domain 
