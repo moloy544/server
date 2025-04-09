@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import * as cheerio from 'cheerio';  // Use named import in ES modules
+import * as cheerio from 'cheerio';
 import { genarateFilters } from "../utils/genarateFilter.js";
 import Movies from "../models/Movies.Model.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
@@ -384,7 +384,7 @@ export async function getMovieFullDetails(req, res) {
             return res.status(200).json({ movieData });
         };
 
-        const { genre, language, castDetails, category, watchLink, multiAudio, mainVideoSourceLabel=null, rpmshareSourceLable=null } = movieData;
+        const { genre, language, castDetails, category, watchLink, multiAudio, mainVideoSourceLabel = null, rpmshareSourceLable = null } = movieData;
 
         const reorderWatchLinks = (watchLinks) => {
             const m3u8Link = watchLinks.find(link => link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt'));
@@ -406,9 +406,9 @@ export async function getMovieFullDetails(req, res) {
                 const isNoAds = link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt');
                 const isMainSource = link.includes(imdbId) && mainVideoSourceLabel;
                 const isRpmSource = link.includes('rpmplay.online');
-            
+
                 let label;
-            
+
                 if (isNoAds) {
                     label = language.replace("hindi dubbed", "Hindi") + ' (No Ads)';
                 } else if (isMainSource) {
@@ -424,20 +424,20 @@ export async function getMovieFullDetails(req, res) {
                 } else {
                     label = defaultLabel;
                 }
-            
+
                 return {
                     source: generateTokenizeSource(link, ip),
                     label: `Server ${index + 1}`,
                     labelTag: label
                 };
             });
-            
+
         };
 
-         // Movies hls source provide domain 
-         const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN
+        // Movies hls source provide domain 
+        const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN
 
-        if (watchLink && Array.isArray(watchLink) && watchLink.length >0) {
+        if (watchLink && Array.isArray(watchLink) && watchLink.length > 0) {
             movieData.watchLink = reorderWatchLinks(watchLink);
         };
 
@@ -508,7 +508,7 @@ export async function getMovieFullDetails(req, res) {
 
         // Suggestions (You might also like and Explore more from same actor)
         const suggestions = await Movies.aggregate(suggestionsPipeline);
-    
+
         return res.status(200).json({
             userIp: ip,
             movieData: {
@@ -556,6 +556,11 @@ export async function getDownloadOptionsUrls(req, res) {
 
         // Fetch the HTML content from the selected source link
         const sourceUrl = downloadSource.links?.[sourceIndex].url;
+        const isPixeldrainUrl = sourceUrl?.includes('pixeldrain.net');
+
+        if (isPixeldrainUrl) {
+            return res.status(200).json({ downloadUrl: sourceUrl });
+        }
 
         const response = await fetch(sourceUrl);
         const htmlContent = await response.text();
@@ -568,16 +573,17 @@ export async function getDownloadOptionsUrls(req, res) {
             return res.status(404).json({ message: "No download links found in the source" });
         };
         let sendUrl;
+        tt0322259
         const firstNeedUrl = links.filter(link => link.includes('fdownload.php'));
         const secondNeedUrl = links.filter((link) => link.startsWith('https://pub'));
         if (firstNeedUrl.length > 0) {
             sendUrl = firstNeedUrl[0];
-        }else if (secondNeedUrl.length > 0) {
+        } else if (secondNeedUrl.length > 0) {
             sendUrl = secondNeedUrl[0];
         } else {
             sendUrl = links[0];
         }
-        // Return the first link as a download URL (or customize to return multiple)
+        
         return res.status(200).json({ downloadUrl: sendUrl });
 
     } catch (error) {
