@@ -528,14 +528,14 @@ export async function getMovieFullDetails(req, res) {
 export async function getDownloadOptionsUrls(req, res) {
     try {
         const { imdbId } = req.params || {};
-
         const fullImdbId = "tt" + imdbId;
 
-        const { sourceIndex = 0 } = req.query || {};  // Default sourceIndex is 0
+        const { sourceIndex = 0 } = req.query || {}; // Default sourceIndex is 0
 
         // Validate IMDb ID
+        const imdbIdPattern = /^tt\d+$/;
         if (!fullImdbId || !imdbIdPattern.test(fullImdbId.trim())) {
-            return res.status(400).json({ message: "Invalid Contnet ID provided" });
+            return res.status(400).json({ message: "Invalid Content ID provided" });
         }
 
         // Fetch download source from the database
@@ -543,7 +543,6 @@ export async function getDownloadOptionsUrls(req, res) {
             .select('links')
             .lean();
 
-        // Handle if no download source is found
         if (!downloadSource || !downloadSource.links || downloadSource.links.length === 0) {
             return res.status(404).json({ message: "No download links available for this content" });
         }
@@ -554,14 +553,14 @@ export async function getDownloadOptionsUrls(req, res) {
             return res.status(400).json({ message: "Invalid source index" });
         }
 
-        // Fetch the HTML content from the selected source link
-        const sourceUrl = downloadSource.links?.[sourceIndex].url;
+        const sourceUrl = downloadSource.links?.[index].url;
         const isPixeldrainUrl = sourceUrl?.includes('pixeldrain.net');
 
         if (isPixeldrainUrl) {
             return res.status(200).json({ downloadUrl: sourceUrl });
         }
 
+        // Fetch the HTML content from the selected source link
         const response = await fetch(sourceUrl);
         const htmlContent = await response.text();
 
@@ -571,23 +570,19 @@ export async function getDownloadOptionsUrls(req, res) {
 
         if (links.length === 0) {
             return res.status(404).json({ message: "No download links found in the source" });
-        };
-        let sendUrl;
-        tt0322259
-        const firstNeedUrl = links.filter(link => link.includes('fdownload.php'));
-        const secondNeedUrl = links.filter((link) => link.startsWith('https://pub'));
-        if (firstNeedUrl.length > 0) {
-            sendUrl = firstNeedUrl[0];
-        } else if (secondNeedUrl.length > 0) {
-            sendUrl = secondNeedUrl[0];
-        } else {
-            sendUrl = links[0];
         }
-        
+
+        // Filter links to find the most relevant URL
+        const firstNeedUrl = links.find(link => link.includes('fdownload.php'));
+        const secondNeedUrl = links.find(link => link.startsWith('https://pub'));
+        const fallbackUrl = links[0];
+
+        const sendUrl = firstNeedUrl || secondNeedUrl || fallbackUrl;
+
         return res.status(200).json({ downloadUrl: sendUrl });
 
     } catch (error) {
         console.error("Error in getDownloadOptionsUrls:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
+        return res.status(500).json({ message: "An error occurred while fetching download URLs" });
     }
 }
