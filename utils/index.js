@@ -91,5 +91,23 @@ export function generatePaginationRange(currentPage, totalPages) {
   }
 
   return pageNumbers;
-}
+};
+
+
+export const logger = {
+  log: (...args) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(...args);
+    }
+  },
+  warn: (...args) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(...args);
+    }
+  },
+  error: (...args) => {
+    console.error(...args); // Errors chhodo nahi, prod mein bhi dikhna chahiye
+  }
+};
+
 

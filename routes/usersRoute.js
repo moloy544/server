@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Reports, Requests } from "../models/Users.Model.js";
 import Movies from "../models/Movies.Model.js";
 import { parseCookies } from "../utils/index.js";
+import geoIPLite from "geoip-lite";
 import { getUserLocationDetails } from "../service/service.js";
 
 const router = Router();
@@ -235,16 +236,64 @@ router.post('/requests_data', async (req, res) => {
     }
 });
 
-// get user request contents 
-router.post('/check-ip', async (req, res) => {
+
+// Get user Geo details (Next-Level Version 🚀)
+router.post('/get_geo', async (req, res) => {
     try {
-        const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
-          res.status(200).json({ ip });
+        // Step 1: Extract IP
+        let ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                 req.socket?.remoteAddress?.trim() ||
+                 '0.0.0.0';
+
+        // Step 2: Clean IP (IPv6 & localhost handling)
+        if (ip.includes('::ffff:')) ip = ip.split('::ffff:')[1];
+        if (ip === '::1' || ip === '127.0.0.1') ip = '0.0.0.0'; // Localhost fallback
+
+        // Step 3: Inline validate IP (both v4 and v6 option future safe)
+        const ipv4Regex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
+        if (!ipv4Regex.test(ip)) {
+            return res.status(400).json({ success: false, message: "Invalid IP address detected" });
+        }
+
+        // Step 4: Geo Lookup
+        const userGeoDetails = geoIPLite.lookup(ip);
+
+        // Step 5: Validate geo result
+        if (!userGeoDetails) {
+            console.warn(`Geo lookup failed for IP: ${ip}`);
+            return res.status(200).json({
+                success: true,
+                message: "Geo lookup failed, defaulting to unrestricted",
+                geoDetails: null,
+                isRestricted: false
+            });
+        }
+
+        // Step 6: Define restricted countries
+        const restrictedCountries = ['IN'];
+
+        // Step 7: Check restriction
+        const isRestricted = restrictedCountries.includes(userGeoDetails.country);
+
+        // Step 8: Respond success
+        return res.status(200).json({
+            success: true,
+            geoDetails: userGeoDetails,
+            isRestricted
+        });
 
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: "Internal Server Error while getting user ip" });
+        console.error('Geo detection error:', error);
+
+        // Step 9: Fail-safe response
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error while getting user IP and location",
+            isRestricted: false, // safe default
+            geoDetails: null
+        });
     }
 });
+
 
 export default router;
