@@ -235,4 +235,16 @@ router.post('/requests_data', async (req, res) => {
     }
 });
 
+// get user request contents 
+router.post('/check-ip', async (req, res) => {
+    try {
+        const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+          res.status(200).json({ ip });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal Server Error while getting user ip" });
+    }
+});
+
 export default router;
