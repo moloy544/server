@@ -267,8 +267,7 @@ router.post('/get_geo', async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            geoDetails: userGeoDetails,
-            isRestricted
+            isRestricted: isRestricted
         });
 
     } catch (error) {
