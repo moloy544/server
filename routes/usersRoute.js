@@ -257,7 +257,51 @@ router.post('/get_geo', async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: "Geo lookup failed, defaulting to unrestricted",
-                geoDetails: null,
+                isRestricted: false
+            });
+        }
+
+        const restrictedCountries = ['IN'];
+        const isRestricted = restrictedCountries.includes(userGeoDetails.country);
+
+        return res.status(200).json({
+            success: true,
+            isRestricted: isRestricted
+        });
+
+    } catch (error) {
+        console.error('Geo detection error:', error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error while getting user IP and location",
+            isRestricted: false,
+            geoDetails: null
+        });
+    }
+});
+
+// User GEO Restrictions Check Route
+router.post('/restrictionsCheck', async (req, res) => {
+    try {
+        let ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || '0.0.0.0';
+
+        if (ip.includes('::ffff:')) ip = ip.split('::ffff:')[1];
+        if (ip === '::1' || ip === '127.0.0.1') ip = '0.0.0.0'; // Localhost fallback
+
+        const ipv4Regex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
+        const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::1)$/;
+
+        if (!ipv4Regex.test(ip) && !ipv6Regex.test(ip)) {
+            return res.status(400).json({ success: false, message: "Invalid IP address detected" });
+        }
+
+        const userGeoDetails = geoIPLite.lookup(ip);
+
+        if (!userGeoDetails) {
+            return res.status(200).json({
+                success: true,
+                message: "Geo lookup failed, defaulting to unrestricted",
                 isRestricted: false
             });
         }
