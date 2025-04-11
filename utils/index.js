@@ -111,3 +111,31 @@ export const logger = {
 };
 
 
+// User Ip Handler 
+export const handleUserIp = (req)=>{
+  try {
+    if (!req) {
+      return null;
+      
+    };
+    
+    let ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || '0.0.0.0';
+
+    if (ip.includes('::ffff:')) ip = ip.split('::ffff:')[1];
+    if (ip === '::1' || ip === '127.0.0.1') ip = '0.0.0.0'; // Localhost fallback
+
+    const ipv4Regex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
+    const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::1)$/;
+
+    if (!ipv4Regex.test(ip) && !ipv6Regex.test(ip)) {
+        return null;
+    };
+
+  return ip;
+
+  } catch (error) {
+    return null
+  }
+}
+
+

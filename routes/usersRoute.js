@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Reports, Requests } from "../models/Users.Model.js";
 import Movies from "../models/Movies.Model.js";
-import { parseCookies } from "../utils/index.js";
+import { handleUserIp, parseCookies } from "../utils/index.js";
 import geoIPLite from "geoip-lite";
 import { getUserLocationDetails } from "../service/service.js";
 
@@ -71,6 +71,7 @@ router.post('/action/report', async (req, res) => {
     try {
         const { reportData } = req.body;
         const cookies = parseCookies(req);
+        const ip = handleUserIp(req);
         let userId = cookies['moviesbazar_user'];
 
         // Generate new userId if not found
@@ -100,7 +101,12 @@ router.post('/action/report', async (req, res) => {
 
                 if (findReport.writtenReport !== writtenReport) {
                     findReport.writtenReport = writtenReport;
-                }
+                };
+
+                if (ip && ip !== findReport.ip) {
+                    findReport.ip = ip;
+                };
+                
 
                 // Update status and timestamp
                 findReport.reportedAt = Date.now();
@@ -112,8 +118,12 @@ router.post('/action/report', async (req, res) => {
 
             const documentData = {
                 ...reportData,
-                user: userId
+                user: userId,
             };
+
+            if (ip) {
+                documentData.ip = ip;
+            }
 
             // Create a new report
             const newReport = new Reports(documentData);
@@ -174,9 +184,9 @@ router.post('/action/request', async (req, res) => {
         const saveReport = await newRequest.save();
 
         if (saveReport) {
-            return res.status(200).json({ 
-                message: 'Your request was received! It may take up to 24 to 48 hours for it to be added. Check our recently added or updated list—you might see your content there soon. also check your provided email box.' 
-            }); 
+            return res.status(200).json({
+                message: 'Your request was received! It may take up to 24 to 48 hours for it to be added. Check our recently added or updated list—you might see your content there soon. also check your provided email box.'
+            });
         } else {
             return res.status(500).json({ message: 'Request submission failed.' });
         }
@@ -239,17 +249,12 @@ router.post('/requests_data', async (req, res) => {
 // get user request contents 
 router.post('/get_geo', async (req, res) => {
     try {
-        let ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || '0.0.0.0';
 
-        if (ip.includes('::ffff:')) ip = ip.split('::ffff:')[1];
-        if (ip === '::1' || ip === '127.0.0.1') ip = '0.0.0.0'; // Localhost fallback
+        const ip = handleUserIp(req);
 
-        const ipv4Regex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
-        const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::1)$/;
-
-        if (!ipv4Regex.test(ip) && !ipv6Regex.test(ip)) {
+        if (!ip) {
             return res.status(400).json({ success: false, message: "Invalid IP address detected" });
-        }
+        };
 
         const userGeoDetails = geoIPLite.lookup(ip);
 

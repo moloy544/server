@@ -19,6 +19,10 @@ const reportsSchema = new Schema({
     type: [String],
     required: true,
   },
+  ip:{
+    type: String,
+    require: false
+  },
 
   writtenReport: {
     type: String,
