@@ -262,7 +262,8 @@ router.post('/get_geo', async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: "Geo lookup failed, defaulting to unrestricted",
-                isRestricted: false
+                isRestricted: false,
+                geo: ip,
             });
         }
 
@@ -307,7 +308,8 @@ router.post('/restrictionsCheck', async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: "Geo lookup failed, defaulting to unrestricted",
-                isRestricted: false
+                isRestricted: false,
+                geo: '152.58.178.78'
             });
         }
 
@@ -316,7 +318,8 @@ router.post('/restrictionsCheck', async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            isRestricted: isRestricted
+            isRestricted: isRestricted,
+            geo: ip
         });
 
     } catch (error) {
