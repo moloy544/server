@@ -524,7 +524,7 @@ export async function getMovieFullDetails(req, res) {
     }
 };
 
-//************* Get Movies Embedded Source Controller **************//
+//************* Get Movies Download Source Controller (V1) **************//
 export async function getDownloadOptionsUrls(req, res) {
     try {
         const { imdbId } = req.params || {};
@@ -575,10 +575,77 @@ export async function getDownloadOptionsUrls(req, res) {
         // Filter links to find the most relevant URL
         const firstNeedUrl = links.find(link => link.includes('fdownload.php'));
         const secondNeedUrl = links.find(link => link.startsWith('https://pub'));
-        const fallbackUrl = links[0];
+       
+        const sendUrl = firstNeedUrl || secondNeedUrl || null;
 
-        const sendUrl = firstNeedUrl || secondNeedUrl || fallbackUrl;
+        return res.status(200).json({ downloadUrl: sendUrl });
 
+    } catch (error) {
+        console.error("Error in getDownloadOptionsUrls:", error);
+        return res.status(500).json({ message: "An error occurred while fetching download URLs" });
+    }
+};
+
+//************* Get Movies Download Source Controller (V2) **************//
+export async function getDownloadOptionsUrlsV2(req, res) {
+    try {
+        const { imdbId } = req.params || {};
+        const fullImdbId = "tt" + imdbId;
+
+        const { sourceIndex = 0 } = req.query || {}; // Default sourceIndex is 0
+
+        // Validate IMDb ID
+        const imdbIdPattern = /^tt\d+$/;
+        if (!fullImdbId || !imdbIdPattern.test(fullImdbId.trim())) {
+            return res.status(400).json({ message: "Invalid Content ID provided" });
+        }
+
+        // Fetch download source from the database
+        const downloadSource = await DownloadSource.findOne({ content_id: fullImdbId })
+            .select('links')
+            .lean();
+
+        if (!downloadSource || !downloadSource.links || downloadSource.links.length === 0) {
+            return res.status(404).json({ message: "No download links available for this content" });
+        }
+
+        // Ensure the sourceIndex is valid and within bounds
+        const index = parseInt(sourceIndex, 10);
+        if (isNaN(index) || index < 0 || index >= downloadSource.links.length) {
+            return res.status(400).json({ message: "Invalid source index" });
+        }
+
+        const sourceUrl = downloadSource.links?.[index].url;
+        const isPixeldrainUrl = sourceUrl?.includes('pixeldrain.net');
+
+        if (isPixeldrainUrl) {
+            return res.status(200).json({ downloadUrl: sourceUrl });
+        }
+
+        // Fetch the HTML content from the selected source link
+        const response = await fetch(sourceUrl);
+        const htmlContent = await response.text();
+
+        // Parse the HTML and extract <a> tags using cheerio
+        const $ = cheerio.load(htmlContent);
+        const links = $('a').map((i, el) => $(el).attr('href')).get();
+
+        if (links.length === 0) {
+            return res.status(404).json({ message: "No download links found in the source" });
+        }
+
+        const sendUrl = [];
+
+        // Filter links to find the most relevant URL
+        const firstNeedUrl = links.find(link => link.startsWith('https://pub'))
+        const secondNeedUrl = links.find(link => link.includes('fdownload.php'));
+        if (firstNeedUrl) {
+            sendUrl.push(firstNeedUrl);
+        }
+        if (secondNeedUrl) {
+            sendUrl.push(secondNeedUrl);
+        };
+       
         return res.status(200).json({ downloadUrl: sendUrl });
 
     } catch (error) {
