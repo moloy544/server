@@ -619,7 +619,7 @@ export async function getDownloadOptionsUrlsV2(req, res) {
         const isPixeldrainUrl = sourceUrl?.includes('pixeldrain.net');
 
         if (isPixeldrainUrl) {
-            return res.status(200).json({ downloadUrl: sourceUrl });
+            return res.status(200).json({ downloadUrl: [sourceUrl] });
         }
 
         // Fetch the HTML content from the selected source link
