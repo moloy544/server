@@ -32,6 +32,8 @@ router.post('/', async (req, res) => {
                         $push: {
                             imdbId: '$imdbId',
                             title: '$title',
+                            displayTitle: '$displayTitle',
+                            videoType: '$videoType',
                             thumbnail: '$thumbnail',
                             releaseYear: '$releaseYear',
                             type: '$type',
