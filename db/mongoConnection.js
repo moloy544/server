@@ -6,61 +6,77 @@ const seconderyDbConnectionUrl = process.env.DB_CONNECTION_SECOND_URL;
 const seconderyDbConnectionUrl2 = process.env.DB_CONNECTION_SECOND_URL2;
 
 const dbOptions = {
-  minPoolSize: 20,            // Start with 20 connections for steady traffic without over-allocating resources
-  maxPoolSize: 150,           // Allow up to 150 connections to stay under the 500 connection limit
-  maxIdleTimeMS: 600000,      // Close idle connections after 10 minutes to avoid resource wastage
-  serverSelectionTimeoutMS: 20000,  // Wait up to 20 seconds to find an available server before erroring out
-  connectTimeoutMS: 20000,    // Allow up to 20 seconds to establish a new connection
-  socketTimeoutMS: 30000,     // Timeout for socket operations to prevent long delays
-  retryWrites: true,          // Enable retryable writes for resiliency
-  retryReads: true,           // Enable retryable reads to improve read reliability
-  waitQueueTimeoutMS: 20000,  // Wait up to 20 seconds in the connection queue if no connections are available
+  minPoolSize: 20,
+  maxPoolSize: 200,
+  maxIdleTimeMS: 300000,
+  serverSelectionTimeoutMS: 12000,
+  connectTimeoutMS: 12000,
+  socketTimeoutMS: 20000,
+  waitQueueTimeoutMS: 7000,
+  retryWrites: true,
+  retryReads: true,
+  heartbeatFrequencyMS: 10000,
+  appName: "MoviesBazarApp"
+};
+
+const isConnectionAlive = async (connection) => {
+  try {
+    await connection.connection.db.admin().ping();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const retryConnection = async (url, retries, maxRetries, dbLabel) => {
+  const retryDelay = (retryCount) => 1000 * Math.pow(2, retryCount);
+
+  while (retries < maxRetries) {
+    try {
+      const connectionInstance = await connect(url, dbOptions);
+      const alive = await isConnectionAlive(connectionInstance);
+
+      if (!alive) throw new Error('Ping failed after connect');
+
+      console.log(`✅ MongoDB connected to ${dbLabel}`);
+      return connectionInstance;
+    } catch (error) {
+      retries++;
+      console.error(`🔁 Retry ${retries}/${maxRetries} - Failed to connect to ${dbLabel}. Error:`, error.message);
+      if (retries < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, retryDelay(retries)));
+      }
+    }
+  }
+
+  throw new Error(`❌ Failed to connect to ${dbLabel} after ${maxRetries} retries.`);
 };
 
 const connectToDatabase = async () => {
-  const retryConnection = async (url, retries, maxRetries, dbLabel) => {
-    const retryDelay = (retryCount) => 1000 * Math.pow(2, retryCount); // Exponential backoff
-
-    while (retries < maxRetries) {
-      try {
-        const connectionInstance = await connect(url, dbOptions);
-        console.log(`MongoDB is connected to the ${dbLabel} DB host: ${connectionInstance.connection.host}`);
-        return connectionInstance;
-      } catch (error) {
-        retries++;
-        console.error(`Retry ${retries}/${maxRetries}: Failed to connect to ${dbLabel} DB. Error:`, error);
-        if (retries < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, retryDelay(retries)));
-        }
-      }
-    }
-
-    throw new Error(`Failed to connect to ${dbLabel} DB after ${maxRetries} retries.`);
-  };
+  const env = process.env.NODE_ENV;
+  const primaryUrl = env === "production" ? mainDbConnectionUrl : developmentDbConnection;
 
   try {
-    // Attempt to connect to the main database
-    const connectionInstance = await connect(
-      process.env.NODE_ENV === "production" ? mainDbConnectionUrl : developmentDbConnection,
-      dbOptions
-    );
-    console.log(`MongoDB is connected to the ${process.env.NODE_ENV === "production" ? 'main' : 'development'} DB host: ${connectionInstance.connection.host}`);
+    const mainConnection = await retryConnection(primaryUrl, 0, 3, env === "production" ? 'main' : 'development');
+    console.log('✅ Connected to main DB');
+    return mainConnection;
   } catch (mainError) {
-    console.error('Error connecting to main MongoDB:', mainError);
-    
-    if (process.env.NODE_ENV !== "production") return; // Skip retries in development
+    console.error(`❌ Main DB connection failed:`, mainError.message);
 
-    // Retry with secondary DB 1
     try {
-      await retryConnection(seconderyDbConnectionUrl, 0, 3, 'secondary 1');
-    } catch (secondaryError) {
-      console.error('Error connecting to secondary MongoDB:', secondaryError);
+      const secondary1 = await retryConnection(seconderyDbConnectionUrl, 0, 3, 'secondary 1');
+      console.log('✅ Connected to secondary 1 DB');
+      return secondary1;
+    } catch (secondary1Error) {
+      console.error('❌ Error connecting to secondary 1 MongoDB:', secondary1Error.message);
 
-      // Retry with secondary DB 2
       try {
-        await retryConnection(seconderyDbConnectionUrl2, 0, 3, 'secondary 2');
+        const secondary2 = await retryConnection(seconderyDbConnectionUrl2, 0, 3, 'secondary 2');
+        console.log('✅ Connected to secondary 2 DB');
+        return secondary2;
       } catch (secondary2Error) {
-        console.error('Error connecting to secondary 2 MongoDB:', secondary2Error);
+        console.error('❌ Error connecting to secondary 2 MongoDB:', secondary2Error.message);
+        throw new Error("❌ All DB connection attempts failed.");
       }
     }
   }

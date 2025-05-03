@@ -246,47 +246,6 @@ router.post('/requests_data', async (req, res) => {
     }
 });
 
-// get user request contents 
-router.post('/get_geo', async (req, res) => {
-    try {
-
-        const ip = handleUserIp(req);
-
-        if (!ip) {
-            return res.status(400).json({ success: false, message: "Invalid IP address detected" });
-        };
-
-        const userGeoDetails = geoIPLite.lookup(ip);
-
-        if (!userGeoDetails) {
-            return res.status(200).json({
-                success: true,
-                message: "Geo lookup failed, defaulting to unrestricted",
-                isRestricted: false,
-                geo: ip,
-            });
-        }
-
-        const restrictedCountries = ['IN'];
-        const isRestricted = restrictedCountries.includes(userGeoDetails.country);
-
-        return res.status(200).json({
-            success: true,
-            isRestricted: isRestricted
-        });
-
-    } catch (error) {
-        console.error('Geo detection error:', error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Internal Server Error while getting user IP and location",
-            isRestricted: false,
-            geoDetails: null
-        });
-    }
-});
-
 // User GEO Restrictions Check Route
 router.post('/restrictionsCheck', async (req, res) => {
     try {
