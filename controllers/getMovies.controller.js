@@ -30,10 +30,7 @@ export async function searchHandler(req, res) {
         // Split query into individual words for fuzzy search
         const splitQuery = cleanedQuery.split(' ');
 
-        // Regular expression for "starts with" the full query (case-insensitive)
-        const startsWithQueryRegex = new RegExp(`^${escapedQuery}`, 'i');
-
-        // Regular expression for full query (case-insensitive)
+        //Regular expression for full query (case-insensitive)
         const fullQueryRegex = new RegExp(escapedQuery, 'i');
 
         // Fuzzy search regex (match each term in the query string)
@@ -42,9 +39,9 @@ export async function searchHandler(req, res) {
         // Step 1: Attempt the initial search
         let searchData = await Movies.find({
             $or: [
-                { title: startsWithQueryRegex },
-                { title: { $regex: startsWithQueryRegex } },
-                { tags: { $in: startsWithQueryRegex } },
+
+                { title: { $regex: fuzzyQueryRegex } },
+                { tags: { $in: fuzzyQueryRegex } },
             ],
         })
             .collation({ locale: 'en', strength: 2 })  // Ensure case-insensitive search
@@ -59,7 +56,7 @@ export async function searchHandler(req, res) {
 
             searchData = await Movies.find({
                 $or: [
-                    { title: { $regex: fullQueryRegex } },
+
                     { title: { $in: fuzzyQueryRegex } },  // Fuzzy search for title
                     { tags: { $in: fullQueryRegex } },
                     { castDetails: { $in: fullQueryRegex } },
@@ -119,6 +116,7 @@ export async function searchHandler(req, res) {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
 
 //************* Get Latest Release Movies Controller  *************//
 export async function getLatestReleaseMovie(req, res) {
@@ -575,7 +573,7 @@ export async function getDownloadOptionsUrls(req, res) {
         // Filter links to find the most relevant URL
         const firstNeedUrl = links.find(link => link.includes('fdownload.php'));
         const secondNeedUrl = links.find(link => link.startsWith('https://pub'));
-       
+
         const sendUrl = firstNeedUrl || secondNeedUrl || null;
 
         return res.status(200).json({ downloadUrl: sendUrl });
@@ -645,7 +643,7 @@ export async function getDownloadOptionsUrlsV2(req, res) {
         if (secondNeedUrl) {
             sendUrl.push(secondNeedUrl);
         };
-       
+
         return res.status(200).json({ downloadUrl: sendUrl });
 
     } catch (error) {
