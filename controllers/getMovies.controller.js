@@ -180,7 +180,7 @@ export async function getRecentlyAddedContents(req, res) {
         const { limit, page, skip, bodyData } = req.body;
 
         // Get the date range condition
-        const dateRange = getDataBetweenDate({ type: 'months', value: 2 });
+        const dateRange = getDataBetweenDate({ type: 'months', value: 3 });
 
         // creat query condition with filter
         const queryCondition = createQueryConditionFilter({

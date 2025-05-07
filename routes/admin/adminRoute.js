@@ -6,6 +6,7 @@ import { multerUpload } from "../../utils/multer.js";
 import { newAppUpdateRelease } from "./controller/app.controller.js";
 import DownloadSource from "../../models/downloadSource.Model.js";
 import { updateMoviesIMDBRating } from "./operations/updateMovies.operation.js";
+import { AddAndUpdateTrendingMovies } from "./controller/listings.controller.js";
 
 const router = Router();
 
@@ -141,6 +142,11 @@ router.post('/update/actors/cloudinary_avatar', updateAllActorsAvatar);
 router.post('/update/movies/thumbnails', updateAllMoviesThumbnails);
 
 // Update Or Add Updated IMDB Rating
-router.put('/update/movies/rating/:imdbId', updateMoviesIMDBRating)
+router.put('/update/movies/rating/:imdbId', updateMoviesIMDBRating);
+
+// ************************* (Listings Controller Section Routs) ************************* //
+
+// Add or update trending movies route
+router.post('/add_update/trending_content', AddAndUpdateTrendingMovies);
 
 export default router;

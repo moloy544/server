@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
 import Actors from "../models/Actors.Model.js";
+import { TrendingContnet } from "../models/Listings.Modal.js";
 
 const router = Router();
 
@@ -67,6 +68,7 @@ router.post('/', async (req, res) => {
 
       const [
         recentlyAddedMovies,
+        trendingMovies,
         latestHollywoodMovies,
         latestBollywoodMovies,
         latestSouthMovies,
@@ -79,6 +81,42 @@ router.post('/', async (req, res) => {
           tags: { $nin: ['Cartoons'] },
         }).sort({ createdAt: -1 }).limit(initialLimit).select(initialSelectValue).lean(),
 
+        TrendingContnet.aggregate([
+          // Step 1: Join 'TrendingContent' with the 'Movies' collection using $lookup
+          {
+            $lookup: {
+              from: "movies",   // The name of your 'Movies' collection
+              localField: "content_id",  // The field in TrendingContent that references Movies
+              foreignField: "_id",  // The field in Movies collection that is being referenced
+              as: "movieDetails"  // Alias for the joined data
+            }
+          },
+          // Step 2: Unwind the "movieDetails" array to get movie details for each item
+          {
+            $unwind: {
+              path: "$movieDetails",  // Unwind the "movieDetails" array to get a single document
+              preserveNullAndEmptyArrays: true  // Keep the document even if there is no matching movie
+            }
+          },
+          // Step 3: Optionally, you can filter or sort the results here
+          {
+            $sort: { updatedAt: -1 }  // Sort by most recently updated
+          },
+          { $limit: 20 },  // Limit the number of results
+          // Step 4: Project the fields you want to return, flattening 'movieDetails' into top-level fields
+          {
+            $project: {
+              imdbId: "$movieDetails.imdbId",
+              title: "$movieDetails.title",
+              displayTitle: "$movieDetails.displayTitle",
+              thumbnail: "$movieDetails.thumbnail",
+              releaseYear: "$movieDetails.releaseYear",
+              type: "$movieDetails.type",
+              videoType: "$movieDetails.videoType"
+            }
+          }
+        ]),
+        
         // Hollywood release movies
         latestInCategoryListing('hollywood'),
 
@@ -111,6 +149,11 @@ router.post('/', async (req, res) => {
           linkUrl: '/browse/latest/south',
           movies: latestSouthMovies
         },
+        {
+          title: 'Top Trending Content',
+          linkUrl: trendingMovies?.length >= 20 ? '/browse/listings/trending-content' : null,
+          movies: trendingMovies
+        },
       ];
 
       return res.status(200).json({ sliderMovies, dataIsEnd });
@@ -123,7 +166,7 @@ router.post('/', async (req, res) => {
         "Kriti Sanon", "Kiara Advani", "Shahid Kapoor",
         "Katrina Kaif", "Shraddha Kapoor", "Deepika Padukone", "Kartik Aaryan",
         "Ranveer Singh", "Anushka Sharma", "Akshay Kumar", "Varun Dhawan", "Vicky Kaushal",
-        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar", 
+        "Aamir Khan", "Salman Khan", "Ajay Devgn", "Madhuri Dixit", "Bhumi Pednekar",
         "vikrant massey", "janhvi kapoor"].map(name => name.toLowerCase());
 
       const [

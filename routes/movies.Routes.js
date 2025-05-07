@@ -5,6 +5,7 @@ import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
 import { getHlsPlaylist } from "../service/externalService.js";
+import { TrendingContnet } from "../models/Listings.Modal.js";
 
 const router = Router();
 
@@ -36,105 +37,157 @@ router.get('/generate-sitemap', async (req, res) => {
     }
 });
 
-//Route For Client Category Listing /listing/category/:query
+// Route For Client Category Listing: /listing/category/:query
 router.post('/category/:category', async (req, res) => {
-
     try {
-
-        const queryData = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
-
-        const { limit, page, skip, bodyData } = req.body;
-
-        function filterQuery() {
-            switch (queryData) {
-                case 'movies':
-                    return 'movie';
-                default:
-                    return queryData;
-            };
-        };
-
-        const filterQueryValue = filterQuery();
-     
-        let dbQuery = {
-
-            $or: [
-                { category: filterQueryValue },
-                { type: filterQueryValue },
-                { language: filterQueryValue },
-                {
-                    releaseYear: parseInt(filterQueryValue) || 0
-                },
-                { status: filterQueryValue }
-            ]
-        };
-
-        if (filterQueryValue === 'new release') {
-            dbQuery = {
-                fullReleaseDate: getDataBetweenDate({ type: 'months', value: 8 })
-            };
-        };
-
-        // creat query condition with filter
+      const queryData = req.params?.category.toLowerCase().replace(/[-]/g, ' ');
+      const { limit, page, skip, bodyData } = req.body;
+  
+      function filterQuery() {
+        switch (queryData) {
+          case 'movies':
+            return 'movie';
+          default:
+            return queryData;
+        }
+      }
+  
+      const filterQueryValue = filterQuery();
+  
+      let dbQuery = {
+        $or: [
+          { category: filterQueryValue },
+          { type: filterQueryValue },
+          { language: filterQueryValue },
+          {
+            releaseYear: parseInt(filterQueryValue) || 0
+          },
+          { status: filterQueryValue }
+        ]
+      };
+  
+      // Handle Trending Content Separately
+      if (filterQueryValue === 'trending') {
+        const baseQuery = {};
         const queryCondition = createQueryConditionFilter({
-            query: dbQuery,
-            filter: bodyData?.filterData
+          query: baseQuery,
+          filter: bodyData?.filterData,
         });
-
+  
         if (queryData === 'coming soon') {
-            queryCondition.status = 'coming soon';
+          queryCondition['movieDetails.status'] = 'coming soon';
         } else {
-            queryCondition.status = { $ne: 'coming soon' };
-        };
-
-        // creat sort data conditions based on user provided filter
+          queryCondition['movieDetails.status'] = { $ne: 'coming soon' };
+        }
+  
         const sortFilterCondition = createSortConditions({
-            filterData: bodyData?.filterData,
-            query: queryCondition
+          filterData: bodyData?.filterData,
+          query: queryCondition,
         });
-      
-        const moviesData = await Movies.find(queryCondition)
-            .skip(skip).limit(limit)
-            .select(selectValue)
-            .sort({ ...sortFilterCondition, _id: 1 }).lean();
-
-        if (!moviesData.length) {
-            return res.status(404).json({ message: "No movies found in this category" });
+  
+        const trendingData = await TrendingContnet.aggregate([
+          {
+            $lookup: {
+              from: 'movies',
+              localField: 'content_id',
+              foreignField: '_id',
+              as: 'movieDetails',
+            },
+          },
+          { $unwind: '$movieDetails' },
+          { $match: queryCondition },
+          { $sort: { ...sortFilterCondition, updatedAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              imdbId: '$movieDetails.imdbId',
+              title: '$movieDetails.title',
+              displayTitle: '$movieDetails.displayTitle',
+              thumbnail: '$movieDetails.thumbnail',
+              releaseYear: '$movieDetails.releaseYear',
+              type: '$movieDetails.type',
+              videoType: '$movieDetails.videoType',
+            },
+          },
+        ]);
+  
+        const endOfData = trendingData.length < limit;
+  
+        const response = {
+          moviesData: trendingData,
+          endOfData,
         };
-
-        const endOfData = (moviesData.length < limit - 1);
-
-        // creat initial response data add more responses data as needed
-        const response = { moviesData, endOfData: endOfData };
-
-        // initial filterOption need
-        const filteOptionsNeeded = ['genre', 'type'];
-
-        if (queryData === "new release" || queryData === "movies" && page && page === 1) {
-            // check is query is movies so remove type from filter options
-            if (queryData === "movies") {
-                filteOptionsNeeded.pop()
-            }
-
-            filteOptionsNeeded.push('industry');
-        };
-        // if page is 1 then generate filter options
-        if (page && page === 1) {
-            response.filterOptions = await genarateFilters({
-                query: queryCondition,
-                filterNeed: filteOptionsNeeded
-            })
-        };
-
+  
+        if (page === 1) {
+          response.filterOptions = await genarateFilters({
+            query: queryCondition,
+            filterNeed: ['genre', 'type', 'industry'],
+          });
+        }
+  
         return res.status(200).json(response);
-
+      }
+  
+      // Handle New Release Logic
+      if (filterQueryValue === 'new release') {
+        dbQuery = {
+          fullReleaseDate: getDataBetweenDate({ type: 'months', value: 8 })
+        };
+      }
+  
+      // Common Filters for Other Categories
+      const queryCondition = createQueryConditionFilter({
+        query: dbQuery,
+        filter: bodyData?.filterData
+      });
+  
+      if (queryData === 'coming soon') {
+        queryCondition.status = 'coming soon';
+      } else {
+        queryCondition.status = { $ne: 'coming soon' };
+      }
+  
+      const sortFilterCondition = createSortConditions({
+        filterData: bodyData?.filterData,
+        query: queryCondition,
+      });
+  
+      const moviesData = await Movies.find(queryCondition)
+        .skip(skip)
+        .limit(limit)
+        .select(selectValue)
+        .sort({ ...sortFilterCondition, _id: 1 })
+        .lean();
+  
+      if (!moviesData.length) {
+        return res.status(404).json({ message: "No movies found in this category" });
+      }
+  
+      const endOfData = (moviesData.length < limit - 1);
+  
+      const response = { moviesData, endOfData };
+  
+      const filteOptionsNeeded = ['genre', 'type'];
+      if ((queryData === "new release" || queryData === "movies") && page === 1) {
+        if (queryData === "movies") filteOptionsNeeded.pop();
+        filteOptionsNeeded.push('industry');
+      }
+  
+      if (page === 1) {
+        response.filterOptions = await genarateFilters({
+          query: queryCondition,
+          filterNeed: filteOptionsNeeded
+        });
+      }
+  
+      return res.status(200).json(response);
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    };
-});
-
-
+      console.log(error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+  
 //Get movies by genre
 router.post('/genre/:genre', async (req, res) => {
 
