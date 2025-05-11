@@ -53,7 +53,7 @@ router.post('/category/:category', async (req, res) => {
     }
 
     const filterQueryValue = filterQuery();
-    console.log(filterQueryValue);
+  
     let dbQuery = {
       $or: [
         { category: filterQueryValue },
@@ -68,9 +68,7 @@ router.post('/category/:category', async (req, res) => {
 
     if (filterQueryValue === 'documentary') {
       dbQuery.$or.push({ genre: 'Documentary' });
-
-    }
-
+    };
 
     // Handle New Release Logic
     if (filterQueryValue === 'new release') {
