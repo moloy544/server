@@ -45,13 +45,10 @@ export async function addNewMovie(req, res) {
                 // Update movieData with new thumbnail URL
                 newData.thumbnail = uploadCloudinary.secure_url
             } else if (extranalImage_uri && extranalImage_uri !== findMovie.thumbnail) {
-                const isCloudinaryImage = findMovie.thumbnail.includes('res.cloudinary.com');
-                if (isCloudinaryImage) {
-                    deleteImageFromCloudinary({
-                        id: findMovie._id,
-                        imageLink: findMovie.thumbnail
-                    })
-                };
+                //const isCloudinaryImage = findMovie.thumbnail.includes('res.cloudinary.com');
+                /**if (isCloudinaryImage) {
+                    newData.updateNeedAfter= true
+                };**/
                 newData.thumbnail = extranalImage_uri;
             };
 
@@ -188,11 +185,11 @@ export async function updateVideoSource(req, res) {
             return res.status(400).json({ message: 'Missing required fields: domainToFind, newDomain' });
         }
         // Find all documents that have watchLink matching the specified pattern
-        const movies = await Movies.find({ 
+        const movies = await Movies.find({
             watchLink: { $elemMatch: { $regex: `${domainToFind}` } },
-         }).limit(batchLimit).select('_id watchLink');
-        
-        if (!movies || movies.length === 0){
+        }).limit(batchLimit).select('_id watchLink');
+
+        if (!movies || movies.length === 0) {
             return res.status(404).json({ message: 'No movies found matching the specified pattern.' });
         };
 
@@ -235,15 +232,15 @@ export async function addNewVideoSource(req, res) {
         }
 
         // Find all documents that contain domainToFind but do not have the newDomain
-       // Find all documents where watchLink contains domainToFind and does not contain newDomain
-       const movies = await Movies.find({
-        watchLink: {
-            $elemMatch: { $regex: domainToFind },  // watchLink contains domainToFind
-            $not: { $elemMatch: { $regex: newDomain } } // watchLink does not contain newDomain
-        },
-    })
-        .limit(batchLimit) // Set a limit based on the batchLimit
-        .select('_id watchLink imdbId'); // Select relevant fields
+        // Find all documents where watchLink contains domainToFind and does not contain newDomain
+        const movies = await Movies.find({
+            watchLink: {
+                $elemMatch: { $regex: domainToFind },  // watchLink contains domainToFind
+                $not: { $elemMatch: { $regex: newDomain } } // watchLink does not contain newDomain
+            },
+        })
+            .limit(batchLimit) // Set a limit based on the batchLimit
+            .select('_id watchLink imdbId'); // Select relevant fields
 
         if (!movies || movies.length === 0) {
             return res.status(404).json({ message: 'No movies found matching the specified pattern.' });
@@ -252,7 +249,7 @@ export async function addNewVideoSource(req, res) {
         // Create an array of promises for updating each document
         const updatePromises = movies.map(async (doc) => {
             const newUrl = `${newDomain}${doc.imdbId}`;
-            
+
             // Concatenate the new URL and imdbId and add it to the watchLink array
             const updatedWatchLink = [...doc.watchLink, newUrl];
 
@@ -277,69 +274,69 @@ export async function addNewVideoSource(req, res) {
 export async function updateVideoSourceIndexPostion(req, res) {
     try {
         const { domainToFind, preferredIndex, batchLimit, content_type } = req.body;
-    
+
         if (!domainToFind || preferredIndex === undefined) {
-          return res.status(400).json({ message: 'Missing required fields: domainToFind, preferredIndex' });
+            return res.status(400).json({ message: 'Missing required fields: domainToFind, preferredIndex' });
         };
 
-        const initialQuery ={
+        const initialQuery = {
             watchLink: { $elemMatch: { $regex: domainToFind } }
         };
 
         if (content_type) {
             initialQuery.type = content_type;
         }
-    
+
         // Find all documents that have watchLink matching the specified pattern
         const movies = await Movies.find(initialQuery)
-          .limit(batchLimit)
-          .select('_id watchLink');
-    
+            .limit(batchLimit)
+            .select('_id watchLink');
+
         if (!movies || movies.length === 0) {
-          return res.status(404).json({ message: 'No movies found matching the specified pattern.' });
+            return res.status(404).json({ message: 'No movies found matching the specified pattern.' });
         }
-    
+
         // Create an array of promises for updating each document
         const updatePromises = movies.map(async (doc) => {
-          // Find the index of the domainToFind in the watchLink array
-          const currentIndex = doc.watchLink.findIndex((link) => link.includes(`${domainToFind}`));
-    
-          // If domainToFind is not in the array, skip the update
-          if (currentIndex === -1) {
-            return;
-          }
-    
-          // Check if the preferredIndex is greater than the length of the watchLink array
-          if (preferredIndex >= doc.watchLink.length) {
-            return res.status(400).json({
-              message: `Invalid preferredIndex. The preferred index ${preferredIndex} is out of bounds for the array length of ${doc.watchLink.length}.`,
-            });
-          }
-    
-          // Remove the domain from its current index
-          const updatedWatchLink = [...doc.watchLink];
-          const [domain] = updatedWatchLink.splice(currentIndex, 1); // Remove the domainToFind
-    
-          // Insert the domainToFind at the new preferredIndex
-          updatedWatchLink.splice(preferredIndex, 0, domain);
-    
-          // Update the document with the modified watchLink array
-          await Movies.updateOne(
-            { _id: doc._id },
-            { $set: { watchLink: updatedWatchLink } }
-          );
+            // Find the index of the domainToFind in the watchLink array
+            const currentIndex = doc.watchLink.findIndex((link) => link.includes(`${domainToFind}`));
+
+            // If domainToFind is not in the array, skip the update
+            if (currentIndex === -1) {
+                return;
+            }
+
+            // Check if the preferredIndex is greater than the length of the watchLink array
+            if (preferredIndex >= doc.watchLink.length) {
+                return res.status(400).json({
+                    message: `Invalid preferredIndex. The preferred index ${preferredIndex} is out of bounds for the array length of ${doc.watchLink.length}.`,
+                });
+            }
+
+            // Remove the domain from its current index
+            const updatedWatchLink = [...doc.watchLink];
+            const [domain] = updatedWatchLink.splice(currentIndex, 1); // Remove the domainToFind
+
+            // Insert the domainToFind at the new preferredIndex
+            updatedWatchLink.splice(preferredIndex, 0, domain);
+
+            // Update the document with the modified watchLink array
+            await Movies.updateOne(
+                { _id: doc._id },
+                { $set: { watchLink: updatedWatchLink } }
+            );
         });
-    
+
         // Wait for all update operations to complete
         await Promise.all(updatePromises);
-    
+
         return res.status(200).json({ message: 'Video Source moved and updated successfully.' });
-      } catch (error) {
+    } catch (error) {
         console.error('Error while updating and moving Video Source', error);
         return res.status(500).json({ message: 'Internal server error while updating Video Source' });
-      }
-  }
-  
+    }
+}
+
 
 // Function controller for update download links
 export async function updateDownloadLinks(req, res) {
@@ -350,7 +347,7 @@ export async function updateDownloadLinks(req, res) {
         if (!valueToFind || !newValue) {
             return res.status(400).json({ message: 'Missing required fields: valueToFind, newValue' });
         }
-        
+
         // Find all documents that have links and in links have urls matching the specified pattern
         const downloadLinks = await DownloadSource.find({
             'links.url': { $regex: valueToFind }
@@ -397,14 +394,14 @@ export async function updateAllMoviesThumbnails(req, res) {
     try {
         const { cloudName, batchLimit = 20 } = req.body;
 
-         // Check if cloudinary cloud name is provided
-         if (!cloudName) {
+        // Check if cloudinary cloud name is provided
+        if (!cloudName) {
             return res.status(400).json({ message: "Cloudinary cloud name is required" });
         };
 
         // Create a regex pattern for matching Cloudinary URLs
         const searchRegex = new RegExp(`https://res.cloudinary.com/${cloudName}/image/upload/`, 'i');
-        
+
         // Query 20 movies with thumbnails that match the regex, one batch per request
         const movies = await Movies.find({
             thumbnail: { $regex: searchRegex }

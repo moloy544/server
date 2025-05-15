@@ -71,19 +71,16 @@ router.get('/movies/one_by_one', async (req, res) => {
     try {
 
         // Create a single regex pattern for the entire query
-        const searchRegex = new RegExp(`snowant327arh.com.*\\.m3u8`, 'i'); // Match domain and .m3u8 in a single string
+        const searchRegex = new RegExp(`res.cloudinary.com`, 'i'); // Match domain and .m3u8 in a single string
 
         const movie = await Movies.find({
-          watchLink: {
-            $elemMatch: { $regex: searchRegex } // Match elements with the domain and .m3u8
-          },
-          $expr: { $eq: [{ $size: "$watchLink" }, 1] } // Ensure the array has exactly one element
+          thumbnail:  { $regex: searchRegex }, // Match elements with the domain and .m3u8
+        category: 'hollywood'
         })
         .select("-_id")  // Exclude _id from the response
         .limit(1)        // Limit to 1 result
-        .sort({ releaseYear: 1, fullReleaseDate: 1 }); // Sort by releaseYear and fullReleaseDate
+        .sort({ releaseYear: -1, fullReleaseDate: -1 }); // Sort by releaseYear and fullReleaseDate
         
-
         if (!movie.length) {
             return res.status(404).json({ message: "No movies found with more than 1 watch link" });
         }

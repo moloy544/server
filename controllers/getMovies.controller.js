@@ -19,52 +19,60 @@ export async function searchHandler(req, res) {
         const { q } = req.query;
         const { limit = 30, skip = 0 } = req.body;
 
-        if (!q) {
+        if (!q || typeof q !== 'string') {
             return res.status(400).json({ message: "Invalid search query" });
         }
 
-        // Clean query and escape special regex characters
         const cleanedQuery = q.trim().toLowerCase();
-        const escapedQuery = escapeRegexSpecialChars(cleanedQuery); // Escape special characters
+        const escapedQuery = escapeRegexSpecialChars(cleanedQuery);
+        const splitQuery = cleanedQuery.split(/\s+/);
 
-        // Split query into individual words for fuzzy search
-        const splitQuery = cleanedQuery.split(' ');
+        const exactRegex = new RegExp(`^${escapedQuery}$`, 'i');
+        const startsWithRegex = new RegExp(`^${escapedQuery}`, 'i');
+        const fuzzyRegex = new RegExp(splitQuery.map(term => `(?=.*${escapeRegexSpecialChars(term)})`).join(''), 'i');
 
-        //Regular expression for full query (case-insensitive)
-        const fullQueryRegex = new RegExp(escapedQuery, 'i');
+        let searchData = [];
 
-        // Fuzzy search regex (match each term in the query string)
-        const fuzzyQueryRegex = new RegExp(splitQuery?.map(term => `(?=.*${escapeRegexSpecialChars(term)})`).join(''), 'i');
-
-        // Step 1: Attempt the initial search
-        let searchData = await Movies.find({
-            $or: [
-
-                { title: { $regex: fuzzyQueryRegex } },
-                { tags: { $in: fuzzyQueryRegex } },
-            ],
-        })
-            .collation({ locale: 'en', strength: 2 })  // Ensure case-insensitive search
+        // Step 1: Exact match search
+        searchData = await Movies.find({ title: exactRegex })
+            .collation({ locale: 'en', strength: 2 })
             .skip(skip)
             .limit(limit)
             .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
             .select(selectFields + ' tags')
             .lean();
 
-        // Step 3: Retry with complex search if no result
+        // Step 2: StartsWith + tags match if no results
         if (searchData.length === 0) {
+            searchData = await Movies.find({
+                $or: [
+                    { title: startsWithRegex },
+                    { tags: { $in: splitQuery } },
+                    { searchKeywords: { $in: splitQuery } },
+                ]
+            })
+                .collation({ locale: 'en', strength: 2 })
+                .skip(skip)
+                .limit(limit)
+                .sort({ releaseYear: -1, fullReleaseDate: -1, _id: -1 })
+                .select(selectFields + ' tags')
+                .lean();
+        }
+
+        // Step 3: Fuzzy + broad search if still empty
+        if (searchData.length === 0) {
+            const releaseYear = parseInt(q, 10);
 
             searchData = await Movies.find({
                 $or: [
-
-                    { title: { $in: fuzzyQueryRegex } },  // Fuzzy search for title
-                    { tags: { $in: fullQueryRegex } },
-                    { castDetails: { $in: fullQueryRegex } },
-                    { searchKeywords: { $regex: fullQueryRegex } },
-                    { genre: { $in: fullQueryRegex } },
+                    { title: { $regex: fuzzyRegex } },
+                    { tags: { $regex: fuzzyRegex } },
+                    { searchKeywords: { $regex: fuzzyRegex } },
+                    { castDetails: { $regex: fuzzyRegex } },
+                    { genre: { $regex: fuzzyRegex } },
                     { imdbId: cleanedQuery },
-                    { releaseYear: parseInt(q, 10) || 0 },
-                ],
+                    ...(isNaN(releaseYear) ? [] : [{ releaseYear }]),
+                ]
             })
                 .skip(skip)
                 .limit(limit)
@@ -73,50 +81,46 @@ export async function searchHandler(req, res) {
                 .lean();
         }
 
-        // Step 4: Rank search results based on matches
+        // Step 4: Ranking results
         if (searchData.length > 0) {
             const rankedResults = searchData.map(data => {
-                const lowerTitle = data.title?.trim().toLowerCase();
-                const lowerTitleWords = lowerTitle.split(' ');
+                const lowerTitle = data.title?.trim().toLowerCase() || '';
+                const lowerTitleWords = lowerTitle.split(/\s+/);
+                const tags = data.tags || [];
 
-                // Get tags from the current movie data
-                const tags = data.tags || []; // Ensure tags is an empty array if undefined
+                let score = 0;
+                splitQuery.forEach(term => {
+                    if (lowerTitle === cleanedQuery) score += 5;
+                    if (lowerTitle.startsWith(term)) score += 3;
+                    if (lowerTitleWords.includes(term)) score += 2;
+                    if (tags.includes(term)) score += 1;
+                    if (tags.some(tag => tag.startsWith(term))) score += 1;
+                });
 
-                // Count how many times the search terms match the title or tags
-                const matchCount = splitQuery.reduce((count, term) => {
-                    let termCount = 0;
-
-                    if (lowerTitleWords.includes(term)) termCount += 1;
-                    if (tags && tags.includes(term) || tags.includes(cleanedQuery)) termCount += 1;
-                    if (lowerTitle.startsWith(cleanedQuery)) termCount += 1;
-                    if (tags && tags.some(tag => tag.startsWith(term))) termCount += 1;
-                    if (lowerTitle.length === cleanedQuery.length) termCount += 1;
-
-                    return count + termCount;
-                }, 0);
-
-                return { data, matchCount };
+                return { data, score };
             });
 
-            // Sort the results by matchCount
-            rankedResults.sort((a, b) => b.matchCount - a.matchCount);
+            rankedResults.sort((a, b) => b.score - a.score);
 
-            const bestResultIds = new Set(rankedResults.map(result => result.data.imdbId?.toString()));
-            const similarMatch = searchData.filter(data => !bestResultIds.has(data.imdbId?.toString()));
+            const bestResultIds = new Set(rankedResults.map(r => r.data.imdbId?.toString()));
+            const similarMatch = searchData.filter(m => !bestResultIds.has(m.imdbId?.toString()));
 
-            searchData = [...rankedResults.map(result => result.data), ...similarMatch];
+            searchData = [...rankedResults.map(r => r.data), ...similarMatch];
         }
 
-        // Step 5: Clean response data (remove tags)
-        searchData = searchData.map(({ tags, ...cleanedData }) => cleanedData);
+        // Step 5: Remove tags from final response
+        const cleanedResults = searchData.map(({ tags, ...rest }) => rest);
 
-        return res.status(200).json({ moviesData: searchData, endOfData: searchData.length < limit });
+        return res.status(200).json({
+            moviesData: cleanedResults,
+            endOfData: cleanedResults.length < limit,
+        });
+
     } catch (error) {
         console.error("Error in searchHandler: ", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
-};
-
+}
 
 //************* Get Latest Release Movies Controller  *************//
 export async function getLatestReleaseMovie(req, res) {

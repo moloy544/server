@@ -18,6 +18,9 @@ const moviesModel = new Schema(
     multiAudio: { type: Boolean, required: false },
     videoType: { type: String, required: false },
     castDetails: { type: [String], required: true },
+    updateNeedAfter: {
+      type: Boolean, required: false,
+    },
     status: {
       type: String,
       required: true,
