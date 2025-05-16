@@ -67,6 +67,7 @@ export async function searchHandler(req, res) {
         const phase2 = await Movies.find({
             $or: [
                 { title: startsWithRegex },
+                { title: { $regex: fuzzyRegex } },
                 { tags: { $in: splitQuery } },
                 { searchKeywords: { $in: splitQuery } }
             ]
