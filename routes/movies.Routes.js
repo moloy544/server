@@ -1,11 +1,11 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { getDownloadOptionsUrls, getDownloadOptionsUrlsV2, getLatestReleaseMovie, getMovieFullDetails, getRecentlyAddedContents, searchHandler } from "../controllers/getMovies.controller.js";
+import { getDownloadOptionsUrls, getDownloadOptionsUrlsV2, getLatestReleaseMovie, getMovieFullDetails, getRecentlyAddedContents } from "../controllers/getMovies.controller.js";
 import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
 import { getHlsPlaylist } from "../service/externalService.js";
-import { TrendingContnet } from "../models/Listings.Modal.js";
+import { searchHandler } from "../controllers/search.controller.js";
 
 const router = Router();
 
