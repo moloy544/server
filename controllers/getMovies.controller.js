@@ -6,6 +6,8 @@ import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } 
 import DownloadSource from "../models/downloadSource.Model.js";
 import { generateTokenizeSource } from '../helper/helper.js';
 
+const selectFields = "-_id imdbId title displayTitle thumbnail releaseYear type category language videoType";
+
 //************* Get Latest Release Movies Controller  *************//
 export async function getLatestReleaseMovie(req, res) {
 
