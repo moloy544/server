@@ -294,6 +294,7 @@ export async function getMovieFullDetails(req, res) {
                 const isNoAds = link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt');
                 const isMainSource = link.includes(imdbId) && mainVideoSourceLabel;
                 const isRpmSource = link.includes('rpmplay.online');
+                const isStreamP2pSource = link.includes('p2pplay.online');
 
                 let label;
 
@@ -301,7 +302,7 @@ export async function getMovieFullDetails(req, res) {
                     label = language.replace("hindi dubbed", "Hindi") + ' (No Ads)';
                 } else if (isMainSource) {
                     label = mainVideoSourceLabel;
-                } else if (isRpmSource) {
+                } else if (isRpmSource || isStreamP2pSource) {
                     if (rpmshareSourceLable) {
                         label = rpmshareSourceLable;
                     } else if (typeof multiAudio === "boolean" && multiAudio === false) {
