@@ -16,8 +16,9 @@ function calculateScore(data, cleanedQuery, splitQuery) {
 
     splitQuery.forEach(term => {
         if (title === cleanedQuery) score += 5;
-        if (title.startsWith(term)) score += 3;
-        if (titleWords.includes(term)) score += 2;
+        if (title.startsWith(cleanedQuery)) score += 3;
+        if (title.startsWith(term)) score += 2;
+        if (titleWords.includes(term)) score += 1;
         if (tags.includes(term)) score += 1;
         if (tags.some(tag => tag.startsWith(term))) score += 1;
     });
@@ -63,13 +64,17 @@ export async function searchHandler(req, res) {
 
         exactMatches.forEach(m => uniqueMap.set(m.imdbId, m));
 
+        // Phase 1.5: Check for release year
+         const releaseYear = parseInt(q, 10);
+
         // Phase 2: StartsWith, tags, and searchKeywords
         const phase2 = await Movies.find({
             $or: [
                 { title: startsWithRegex },
                 { title: { $regex: fuzzyRegex } },
                 { tags: { $in: splitQuery } },
-                { searchKeywords: { $in: splitQuery } }
+                { searchKeywords: { $in: splitQuery } },
+                ...(isNaN(releaseYear) ? [] : [{ releaseYear }])
             ]
         })
             .collation({ locale: 'en', strength: 2 })
@@ -80,8 +85,7 @@ export async function searchHandler(req, res) {
 
         // Phase 3: Fuzzy/broad match if still insufficient
         if (uniqueMap.size === 0) {
-            const releaseYear = parseInt(q, 10);
-
+           
             const phase3 = await Movies.find({
                 $or: [
                     { title: { $regex: fuzzyRegex } },

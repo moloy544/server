@@ -21,7 +21,7 @@ const connectToDatabase = async () => {
   try {
     // Attempt to connect to the main database
     const connectionInstance = await connect(
-      process.env.NODE_ENV !== 'development' ? mainDbConnectionUrl : developmentDbConnection,
+      (!process.env.NODE_ENV || process.env.NODE_ENV !== 'development') ? mainDbConnectionUrl : developmentDbConnection,
       dbOptions
     );
     console.log(`MongoDB is connected to the main DB host: ${connectionInstance.connection.host}`);
