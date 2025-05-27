@@ -72,7 +72,7 @@ export async function searchHandler(req, res) {
             $or: [
                 { title: startsWithRegex },
                 { title: { $regex: fuzzyRegex } },
-                { tags: { $in: splitQuery } },
+                { tags: { $regex: fuzzyRegex } },
                 { searchKeywords: { $in: splitQuery } },
                 ...(isNaN(releaseYear) ? [] : [{ releaseYear }])
             ]
@@ -89,7 +89,7 @@ export async function searchHandler(req, res) {
             const phase3 = await Movies.find({
                 $or: [
                     { title: { $regex: fuzzyRegex } },
-                    { tags: { $regex: fuzzyRegex } },
+                    { tags: { $in: splitQuery } },
                     { searchKeywords: { $regex: fuzzyRegex } },
                     { castDetails: { $regex: fuzzyRegex } },
                     { genre: { $regex: fuzzyRegex } },
