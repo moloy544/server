@@ -8,7 +8,7 @@ const seconderyDbConnectionUrl2 = process.env.DB_CONNECTION_SECOND_URL2;
 // Configuration options for connections
 const dbOptions = {
   minPoolSize: 5,
-  maxPoolSize: 100,
+  maxPoolSize: 150,
   maxIdleTimeMS: 600000,
   serverSelectionTimeoutMS: 15000,
   connectTimeoutMS: 15000,
