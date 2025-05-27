@@ -5,26 +5,27 @@ const mainDbConnectionUrl = process.env.DB_CONNECTION_URL;
 const seconderyDbConnectionUrl = process.env.DB_CONNECTION_SECOND_URL;
 const seconderyDbConnectionUrl2 = process.env.DB_CONNECTION_SECOND_URL2;
 
-// Configuration options for connections
 const dbOptions = {
-  minPoolSize: 5,
-  maxPoolSize: 80,
-  maxIdleTimeMS: 600000,
-  serverSelectionTimeoutMS: 15000,
-  connectTimeoutMS: 15000,
-  retryWrites: true,
-  retryReads: true,
-  waitQueueTimeoutMS: 15000,
+  minPoolSize: 5,              // Keep a small base of open connections
+  maxPoolSize: 50,             // Safer limit to avoid exhausting cluster connections
+  maxIdleTimeMS: 180000,       // Close idle connections after 3 minutes to free resources
+  serverSelectionTimeoutMS: 10000,  // Fail fast if no suitable server found (10s)
+  connectTimeoutMS: 10000,          // Faster connect timeout (10s)
+  retryWrites: true,           // Enable automatic retry on transient write errors
+  retryReads: true,            // Enable automatic retry on transient read errors
+  waitQueueTimeoutMS: 10000,   // Timeout for waiting to acquire a connection from pool (10s)
 };
+
 
 const connectToDatabase = async () => {
   try {
+    const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
     // Attempt to connect to the main database
     const connectionInstance = await connect(
-      (!process.env.NODE_ENV || process.env.NODE_ENV !== 'development') ? mainDbConnectionUrl : developmentDbConnection,
+      !isDevelopment ? mainDbConnectionUrl : developmentDbConnection,
       dbOptions
     );
-    console.log(`MongoDB is connected to the main DB host: ${connectionInstance.connection.host}`);
+    console.log(`MongoDB is connected to the ${isDevelopment ? "development" : "main"} DB host: ${connectionInstance.connection.host}`);
   } catch (error) {
     console.error('Error connecting to main MongoDB:', error);
 
