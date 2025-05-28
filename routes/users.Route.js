@@ -67,6 +67,7 @@ router.post('/watch_later', async (req, res) => {
 });
 
 //Report movies route
+// Report movies route
 router.post('/action/report', async (req, res) => {
     try {
         const { reportData } = req.body;
@@ -90,8 +91,35 @@ router.post('/action/report', async (req, res) => {
             const existingReports = findReport.selectedReports;
             const newReports = selectedReports.filter(report => !existingReports.includes(report));
 
-            // If no new report options and written report is the same, return early
+            // If no new report options and written report is the same, check report age
             if (newReports.length === 0 && findReport.writtenReport === writtenReport) {
+                const now = new Date();
+                const reportedAt = new Date(findReport.reportedAt);
+                const diffInMs = now - reportedAt;
+                const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+                if (diffInDays > 2) {
+                    // Delete old report
+                    await Reports.deleteOne({ _id: findReport._id });
+
+                    // Create a new report
+                    const documentData = {
+                        ...reportData,
+                        user: userId,
+                    };
+
+                    if (ip) {
+                        documentData.ip = ip;
+                    }
+
+                    const newReport = new Reports(documentData);
+                    await newReport.save();
+
+                    return res.status(200).json({
+                        message: 'Previous report was too old and has been replaced with a new report.'
+                    });
+                }
+
                 return res.status(400).json({
                     message: 'You have already submitted the selected report. Our team is reviewing the issue and will resolve it as quickly as possible. Thank you for your patience.'
                 });
@@ -101,21 +129,19 @@ router.post('/action/report', async (req, res) => {
 
                 if (findReport.writtenReport !== writtenReport) {
                     findReport.writtenReport = writtenReport;
-                };
+                }
 
                 if (ip && ip !== findReport.ip) {
                     findReport.ip = ip;
-                };
-                
+                }
 
-                // Update status and timestamp
+                // Update timestamp
                 findReport.reportedAt = Date.now();
 
                 await findReport.save();
                 return res.status(200).json({ message: 'Report updated with new options.' });
             }
         } else {
-
             const documentData = {
                 ...reportData,
                 user: userId,
