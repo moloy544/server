@@ -1,9 +1,4 @@
-import { connect } from 'mongoose';
-
-const developmentDbConnection = process.env.TESRTING_DB_CONNECTION_URL;
-const mainDbConnectionUrl = process.env.DB_CONNECTION_URL;
-const seconderyDbConnectionUrl = process.env.DB_CONNECTION_SECOND_URL;
-const seconderyDbConnectionUrl2 = process.env.DB_CONNECTION_SECOND_URL2;
+import mongoose, { connect } from 'mongoose';
 
 const dbOptions = {
   minPoolSize: 5,              // Keep a small base of open connections
@@ -16,47 +11,43 @@ const dbOptions = {
   waitQueueTimeoutMS: 10000,   // Timeout for waiting to acquire a connection from pool (10s)
 };
 
+const mainDbConnectionUrl = process.env.DB_CONNECTION_URL;
+const devDbConnectionUrl = process.env.TESRTING_DB_CONNECTION_URL;
+const secondaryUrls = [
+  { url: process.env.DB_CONNECTION_SECOND_URL, label: 'secondary1' },
+  { url: process.env.DB_CONNECTION_SECOND_URL2, label: 'secondary2' },
+];
 
 const connectToDatabase = async () => {
+  const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+  const primaryUrl = isDevelopment ? devDbConnectionUrl : mainDbConnectionUrl;
+
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
+
   try {
-    const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
-    // Attempt to connect to the main database
-    const connectionInstance = await connect(
-      !isDevelopment ? mainDbConnectionUrl : developmentDbConnection,
-      dbOptions
-    );
-    console.log(`MongoDB is connected to the ${isDevelopment ? "development" : "main"} DB host: ${connectionInstance.connection.host}`);
+    await connect(primaryUrl, dbOptions);
+    console.log(`MongoDB connected to ${isDevelopment ? 'development' : 'main'} DB`);
   } catch (error) {
-    console.error('Error connecting to main MongoDB:', error);
-
-    // Retry logic for secondary DBs
+    console.error('Primary connection failed:', error);
     let retries = 0;
-    const retryDelay = (retryCount) => 1000 * Math.pow(2, retryCount); // Exponential backoff
-
-    const attemptSecondaryConnection = async (url, label) => {
-      try {
-        const conn = await connect(url, dbOptions);
-        console.log(`MongoDB is connected to the ${label} DB host: ${conn.connection.host}`);
-        return true;
-      } catch (err) {
-        console.error(`Retry ${retries + 1}: Failed to connect to ${label} DB`, err);
-        await new Promise(resolve => setTimeout(resolve, retryDelay(retries)));
-        return false;
-      }
-    };
-
-    const secondaryUrls = [
-      { url: seconderyDbConnectionUrl, label: 'secondary' },
-      { url: seconderyDbConnectionUrl2, label: 'secondary2' },
-    ];
+    const retryDelay = (n) => 1000 * Math.pow(2, n);
 
     for (const db of secondaryUrls) {
-      retries++;
-      const success = await attemptSecondaryConnection(db.url, db.label);
-      if (success) return;
+      try {
+        await mongoose.disconnect();
+        await new Promise((resolve) => setTimeout(resolve, retryDelay(retries)));
+        await connect(db.url, dbOptions);
+        console.log(`MongoDB connected to ${db.label} DB`);
+        return;
+      } catch (err) {
+        retries++;
+        console.error(`Retry ${retries}: Failed to connect to ${db.label}`, err);
+      }
     }
 
-    console.error('Failed to connect to main and all secondary databases.');
+    console.error('All DB connection attempts failed.');
   }
 };
 
