@@ -136,6 +136,7 @@ router.post('/', async (req, res) => {
         },
         {
           title: 'Hollywood latest release',
+          description: 'Includes international content',
           linkUrl: '/browse/latest/hollywood',
           movies: latestHollywoodMovies
         },
