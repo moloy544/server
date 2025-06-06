@@ -20,6 +20,11 @@ const latestInCategoryListing = async (category, notInLanguage) => {
     }
     if (notInLanguage) {
       queryCondition.language = { $nin: notInLanguage };
+    };
+
+    if (category === 'hollywood') {
+      queryCondition.category = { $in: ['hollywood', 'international'] };
+      
     }
 
     const data = await Movies.find(queryCondition)
