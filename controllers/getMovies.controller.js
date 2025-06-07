@@ -17,13 +17,19 @@ export async function getLatestReleaseMovie(req, res) {
 
         const { limit, page, skip, bodyData } = req.body;
 
+        const query = {
+            category: querySlug,
+            fullReleaseDate: getDataBetweenDate({ type: 'months', value: 10 }),
+            status: 'released'
+        };
+
+        if (querySlug === 'bollywood') {
+            query.category = { $in: ['international'] };
+        };
+
         // Creat query condition with filter
         const queryCondition = createQueryConditionFilter({
-            query: {
-                category: querySlug,
-                fullReleaseDate: getDataBetweenDate({ type: 'months', value: 10 }),
-                status: 'released'
-            },
+            query,
             filter: bodyData?.filterData
         });
 
@@ -413,68 +419,6 @@ export async function getMovieFullDetails(req, res) {
     }
 };
 
-//************* Get Movies Download Source Controller (V1) **************//
-export async function getDownloadOptionsUrls(req, res) {
-    try {
-        const { imdbId } = req.params || {};
-        const fullImdbId = "tt" + imdbId;
-
-        const { sourceIndex = 0 } = req.query || {}; // Default sourceIndex is 0
-
-        // Validate IMDb ID
-        const imdbIdPattern = /^tt\d+$/;
-        if (!fullImdbId || !imdbIdPattern.test(fullImdbId.trim())) {
-            return res.status(400).json({ message: "Invalid Content ID provided" });
-        }
-
-        // Fetch download source from the database
-        const downloadSource = await DownloadSource.findOne({ content_id: fullImdbId })
-            .select('links')
-            .lean();
-
-        if (!downloadSource || !downloadSource.links || downloadSource.links.length === 0) {
-            return res.status(404).json({ message: "No download links available for this content" });
-        }
-
-        // Ensure the sourceIndex is valid and within bounds
-        const index = parseInt(sourceIndex, 10);
-        if (isNaN(index) || index < 0 || index >= downloadSource.links.length) {
-            return res.status(400).json({ message: "Invalid source index" });
-        }
-
-        const sourceUrl = downloadSource.links?.[index].url;
-        const isPixeldrainUrl = sourceUrl?.includes('pixeldrain.net');
-
-        if (isPixeldrainUrl) {
-            return res.status(200).json({ downloadUrl: sourceUrl });
-        }
-
-        // Fetch the HTML content from the selected source link
-        const response = await fetch(sourceUrl);
-        const htmlContent = await response.text();
-
-        // Parse the HTML and extract <a> tags using cheerio
-        const $ = cheerio.load(htmlContent);
-        const links = $('a').map((i, el) => $(el).attr('href')).get();
-
-        if (links.length === 0) {
-            return res.status(404).json({ message: "No download links found in the source" });
-        }
-
-        // Filter links to find the most relevant URL
-        const firstNeedUrl = links.find(link => link.includes('fdownload.php'));
-        const secondNeedUrl = links.find(link => link.startsWith('https://pub'));
-
-        const sendUrl = firstNeedUrl || secondNeedUrl || null;
-
-        return res.status(200).json({ downloadUrl: sendUrl });
-
-    } catch (error) {
-        console.error("Error in getDownloadOptionsUrls:", error);
-        return res.status(500).json({ message: "An error occurred while fetching download URLs" });
-    }
-};
-
 //************* Get Movies Download Source Controller (V2) **************//
 export async function getDownloadOptionsUrlsV2(req, res) {
     try {
@@ -525,17 +469,29 @@ export async function getDownloadOptionsUrlsV2(req, res) {
 
         const sendUrl = [];
 
-        // Filter links to find the most relevant URL
-        const firstNeedUrl = links.find(link => link.startsWith('https://pub'))
-        const secondNeedUrl = links.find(link => link.includes('fdownload.php'));
-        if (firstNeedUrl) {
-            sendUrl.push(firstNeedUrl);
-        }
-        if (secondNeedUrl) {
-            sendUrl.push(secondNeedUrl);
-        };
+        // Filter links by type
+        const fdownloadLinks = links.filter(link => link.includes('fdownload.php'));
+        const pubLinks = links.filter(link =>
+            !link.includes('fdownload.php') && link.startsWith('https://pub')
+        );
+        const botddLinks = links.filter(link =>
+            !link.includes('fdownload.php') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
+        );
 
-        return res.status(200).json({ downloadUrl: sendUrl });
+        // Combine in priority order
+        const reorderedLinks = [
+            ...fdownloadLinks,
+            ...pubLinks,
+            ...botddLinks
+        ];
+
+        // If no links found in those categories, fallback to empty or null
+        if (reorderedLinks.length === 0) {
+            return res.status(404).json({ message: "No suitable download links found in the source" });
+        }
+
+        // Return the reordered array or just first URL if you want
+        return res.status(200).json({ downloadUrl: reorderedLinks });
 
     } catch (error) {
         console.error("Error in getDownloadOptionsUrls:", error);
