@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { addNewActor, getActorData, updateAllActorsAvatar } from "./controller/actors.controller.js";
-import { addNewMovie, addNewVideoSource, deleteMovie, updateAllMoviesThumbnails, updateDownloadLinks, updateVideoSource, updateVideoSourceIndexPostion } from "./controller/movies.controller.js";
+import { addNewMovie, addNewVideoSource, deleteMovie, updateAllMoviesThumbnails, updateDownloadLinks, updateDynamicVideoPath, updateVideoSource, updateVideoSourceIndexPostion } from "./controller/movies.controller.js";
 import Movies from "../../models/Movies.Model.js";
 import { multerUpload } from "../../utils/multer.js";
 import { newAppUpdateRelease } from "./controller/app.controller.js";
@@ -54,6 +54,8 @@ router.post('/actor/get', getActorData);
 
 //update video source url link route
 router.put('/update/videosource', updateVideoSource);
+//update video source url link route
+router.put('/update/videosource/dinamic_part', updateDynamicVideoPath);
 
 // Add new video source in existing document watchlink
 router.put('/add/new_videosource', addNewVideoSource);

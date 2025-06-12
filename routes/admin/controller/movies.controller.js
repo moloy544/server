@@ -270,6 +270,78 @@ export async function addNewVideoSource(req, res) {
     }
 };
 
+// Controller to update dynamic part of video source URLs
+export async function updateDynamicVideoPath(req, res) {
+    try {
+        const { baseSourceToMatch, newDynamicPath, batchLimit } = req.body;
+
+        if (!baseSourceToMatch || !newDynamicPath) {
+            return res.status(400).json({
+                message: 'Missing required fields: baseSourceToMatch, newDynamicPath'
+            });
+        }
+
+        const escapedBase = baseSourceToMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedNewPath = newDynamicPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Regex to find: base path + dynamic segment (not the new one)
+        const matchRegex = `${escapedBase}\\/[^\\/]+\\/`;
+        const excludeRegex = `${escapedBase}${escapedNewPath}`;
+
+        // Find only if it matches the base+any path but NOT already updated to new
+        const movies = await Movies.find({
+            watchLink: {
+                $elemMatch: {
+                    $regex: matchRegex,
+                    $not: { $regex: excludeRegex }
+                }
+            }
+        })
+        .limit(batchLimit)
+        .select('_id watchLink');
+
+        if (!movies || movies.length === 0) {
+            return res.status(200).json({ message: 'No more dynamic video sources available for update.' });
+        }
+
+        let processedCount = 0;
+
+        const updatePromises = movies.map(async (doc) => {
+            let updated = false;
+
+            const updatedLinks = doc.watchLink.map(link => {
+                const pattern = new RegExp(`(${escapedBase}\\/)[^\\/]+(\\/.*)`);
+                if (pattern.test(link) && !link.includes(newDynamicPath)) {
+                    updated = true;
+                    return link.replace(pattern, `$1${newDynamicPath.replace(/\//g, '')}$2`);
+                }
+                return link;
+            });
+
+            if (updated) {
+                processedCount++;
+                return Movies.updateOne(
+                    { _id: doc._id },
+                    { $set: { watchLink: updatedLinks } }
+                );
+            }
+        });
+
+        await Promise.all(updatePromises);
+
+        return res.status(200).json({
+            message: `Video source dynamic path updated successfully.`,
+            updated: processedCount,
+            batchLimit: batchLimit
+        });
+
+    } catch (error) {
+        console.error('Error while updating dynamic path in video source:', error);
+        return res.status(500).json({ message: 'Internal server error while updating video source' });
+    }
+};
+
+
 // Function controller for updating HLS video source and moving it to a specified index
 export async function updateVideoSourceIndexPostion(req, res) {
     try {

@@ -7,7 +7,7 @@ const reportsSchema = new Schema({
     ref: 'Movies',
     required: true,
   },
-  content_title:{
+  content_title: {
     type: String,
     required: true,
   },
@@ -19,11 +19,14 @@ const reportsSchema = new Schema({
     type: [String],
     required: true,
   },
-  ip:{
+  ip: {
     type: String,
     require: false
   },
-
+  userEmail: {
+    type: String,
+    required: false
+  },
   writtenReport: {
     type: String,
   },
@@ -63,9 +66,13 @@ const requestSchema = new Schema({
     type: String,
     required: false
   },
-  userEmail:{
+  userEmail: {
     type: String,
     required: true
+  },
+  ip:{
+    type: String,
+    require: false
   },
   reuestStatus: {
     type: String,

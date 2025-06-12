@@ -173,6 +173,7 @@ router.post('/action/request', async (req, res) => {
     try {
         const data = req.body;
         const cookies = parseCookies(req);
+        const ip = handleUserIp(req);
         let userId = cookies['moviesbazar_user'];
 
         // Generate new userId if not found
@@ -189,6 +190,10 @@ router.post('/action/request', async (req, res) => {
         const documentData = {
             ...data,
             user: userId
+        };
+
+        if (ip) {
+            documentData.ip = ip;
         };
 
         // get user location details 
