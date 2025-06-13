@@ -721,9 +721,7 @@ export async function getDownloadOptionsUrlsV2(req, res) {
 
         if (links.length === 0) {
             return res.status(404).json({ message: "No download links found in the source" });
-        }
-
-        const sendUrl = [];
+        };
 
         // Filter links by type
         const fdownloadLinks = links.filter(link => link.includes('fdownload.php'));
@@ -737,8 +735,8 @@ export async function getDownloadOptionsUrlsV2(req, res) {
         // Combine in priority order
         const reorderedLinks = [
             ...fdownloadLinks,
+            ...botddLinks,
             ...pubLinks,
-            ...botddLinks
         ];
 
         // If no links found in those categories, fallback to empty or null
