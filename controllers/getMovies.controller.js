@@ -558,7 +558,7 @@ export async function getMovieFullDetailsV2(req, res) {
 
         // Adjust skipMultiplyValue dynamically to vary the number of results skipped
         const skipMultiplyValue = filterGenre.length * 10 + Math.floor(Math.random() * 10);
-        const randomSkip = Math.random() < 0.2 ? 0 : Math.floor(Math.random() * skipMultiplyValue);  // 20% chance to skip 0 results
+        const randomSkip = language === "bengali" ? 0 : Math.random() < 0.2 ? 0 : Math.floor(Math.random() * skipMultiplyValue);  // 20% chance to skip 0 results
 
         const suggestionsPipeline = [
             {
