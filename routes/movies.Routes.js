@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { getDownloadOptionsUrlsV2, getLatestReleaseMovie, getMovieFullDetails, getMovieFullDetailsV2, getRecentlyAddedContents } from "../controllers/getMovies.controller.js";
+import { getDownloadOptionsUrlsV2, getLatestReleaseMovie, getMovieFullDetails, getRecentlyAddedContents } from "../controllers/getMovies.controller.js";
 import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
@@ -53,17 +53,25 @@ router.post('/category/:category', async (req, res) => {
     }
 
     const filterQueryValue = filterQuery();
-  
+
     let dbQuery = {
       $or: [
-        { category: filterQueryValue },
         { type: filterQueryValue },
         { language: filterQueryValue },
-        {
-          releaseYear: parseInt(filterQueryValue) || 0
-        },
+        { releaseYear: parseInt(filterQueryValue) || 0 },
         { status: filterQueryValue }
       ]
+    };
+
+    // Add internati category if its hollywood
+    if (filterQueryValue === 'hollywood') {
+      dbQuery.$or.unshift({
+        category: { $in: ['international', 'hollywood'] }
+      });
+    }else{
+      dbQuery.$or.unshift({
+        category: filterQueryValue
+      });
     };
 
     if (filterQueryValue === 'documentary') {
@@ -75,7 +83,7 @@ router.post('/category/:category', async (req, res) => {
       dbQuery = {
         fullReleaseDate: getDataBetweenDate({ type: 'months', value: 8 })
       };
-    }
+    };
 
     // Common Filters for Other Categories
     const queryCondition = createQueryConditionFilter({
@@ -258,11 +266,8 @@ router.post('/top-rated', async (req, res) => {
 
 });
 
-// GET Single Movie Full Details Route (v1)
-router.get('/details_movie/:imdbId', getMovieFullDetails);
-
 // GET Single Movie Full Details Route (v2)
-router.get('/details_movie/v2/:imdbId', getMovieFullDetailsV2);
+router.get('/details_movie/v2/:imdbId', getMovieFullDetails);
 
 // GET Single Movie Download Options Urls (V2)
 router.get('/download_source/:imdbId', getDownloadOptionsUrlsV2);

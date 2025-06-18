@@ -23,8 +23,8 @@ export async function getLatestReleaseMovie(req, res) {
             status: 'released'
         };
 
-        if (querySlug === 'bollywood') {
-            query.category = { $in: ['international'] };
+        if (querySlug === 'hollywood') {
+            query.category = { $in: ['international', 'hollywood'] };
         };
 
         // Creat query condition with filter
@@ -224,7 +224,8 @@ export async function updateMoviesVideoSource() {
 
 // imdbId validatin using regex pattern
 const imdbIdPattern = /^tt\d{7,}$/;
-// V(1) For old visit or curent site users
+
+// V(2) For New Vist site users
 export async function getMovieFullDetails(req, res) {
     try {
         const { imdbId } = req.params;
@@ -258,224 +259,57 @@ export async function getMovieFullDetails(req, res) {
                         foreignField: 'content_id',
                         as: 'downloadLinks'
                     }
-                }
-            ]);
-        } else {
-            // Get movies data only for SEO Metadata
-            dbQueryData = await Movies.findOne({
-                imdbId
-            }).select('-_id -videoType -displayTitle -watchLink -imdbRating -fullReleaseDate');
-        };
-
-        const movieData = suggestion ? dbQueryData[0] : dbQueryData;
-
-        if (!movieData) {
-            return res.status(404).json({ message: "Movie not found" });
-        };
-
-        // cehck if no suggestions need return only movie details
-        if (!suggestion) {
-            return res.status(200).json({ movieData });
-        };
-
-        const { genre, language, castDetails, category, watchLink, multiAudio, mainVideoSourceLabel = null, rpmshareSourceLable = null } = movieData;
-
-        const reorderWatchLinks = (watchLinks) => {
-            const m3u8Link = watchLinks.find(link => link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt'));
-            if (m3u8Link) {
-                watchLinks = watchLinks.filter(link => link !== m3u8Link);
-                watchLinks.unshift(m3u8Link);
-            };
-
-            let defaultLabel;
-
-            if (multiAudio && typeof multiAudio === "boolean" || (watchLink.length > 1 && watchLink.includes('.m3u8') || watchLink.includes('.mkv') || watchLink.includes('.txt'))) {
-                defaultLabel = '(Multi language)';
-
-            } else {
-                defaultLabel = null
-            };
-
-            return watchLinks.map((link, index) => {
-                const isNoAds = link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt');
-                const isMainSource = link.includes(imdbId) && mainVideoSourceLabel;
-                const isRpmSource = link.includes('rpmplay.online');
-                const isStreamP2pSource = link.includes('p2pplay.online');
-
-                let label;
-
-                if (isNoAds) {
-                    label = language.replace("hindi dubbed", "Hindi") + ' (No Ads)';
-                } else if (isMainSource) {
-                    label = mainVideoSourceLabel;
-                } else if (isRpmSource || isStreamP2pSource) {
-                    if (rpmshareSourceLable) {
-                        label = rpmshareSourceLable;
-                    } else if (typeof multiAudio === "boolean" && multiAudio === false) {
-                        label = language.replace("hindi dubbed", "Hindi");
-                    } else {
-                        label = defaultLabel;
-                    }
-                } else {
-                    label = defaultLabel;
-                }
-
-                return {
-                    source: generateTokenizeSource(link, ip),
-                    label: `Server ${index + 1}`,
-                    labelTag: label
-                };
-            });
-
-        };
-
-        // Movies hls source provide domain 
-        const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN
-
-        if (watchLink && Array.isArray(watchLink) && watchLink.length > 0) {
-            movieData.watchLink = reorderWatchLinks(watchLink);
-        };
-
-        const filterGenre = genre.length > 1 && genre.includes("Drama")
-            ? genre.filter(g => g !== "Drama")
-            : genre;
-
-        // Adjust skipMultiplyValue dynamically to vary the number of results skipped
-        const skipMultiplyValue = filterGenre.length * 10 + Math.floor(Math.random() * 10);
-        const randomSkip = Math.random() < 0.2 ? 0 : Math.floor(Math.random() * skipMultiplyValue);  // 20% chance to skip 0 results
-
-        const suggestionsPipeline = [
-            {
-                $facet: {
-                    genreList: [
-                        {
-                            $match: {
-                                genre: { $in: filterGenre },
-                                category,
-                                imdbId: { $ne: imdbId },
-                                status: 'released'
-                            }
-                        },
-                        { $skip: randomSkip },
-                        { $limit: Math.random() < 0.5 ? 20 : 25 },  // Randomize limit between 20 and 25
-                        {
-                            $project: {  // Select only the required fields
-                                _id: 0,  // Exclude _id
-                                imdbId: 1,
-                                title: 1,
-                                displayTitle: 1,
-                                thumbnail: 1,
-                                releaseYear: 1,
-                                type: 1,
-                                category: 1,
-                                language: 1,
-                                videoType: 1
-                            }
-                        }
-                    ],
-                    castList: [
-                        {
-                            $match: {
-                                castDetails: { $in: castDetails },
-                                imdbId: { $ne: imdbId },
-                                status: 'released'
-                            }
-                        },
-                        { $limit: 25 },
-                        {
-                            $project: {  // Select only the required fields
-                                _id: 0,  // Exclude _id
-                                imdbId: 1,
-                                title: 1,
-                                displayTitle: 1,
-                                thumbnail: 1,
-                                releaseYear: 1,
-                                type: 1,
-                                category: 1,
-                                language: 1,
-                                videoType: 1
-                            }
-                        }
-                    ]
-                }
-            }
-        ];
-
-        // Suggestions (You might also like and Explore more from same actor)
-        const suggestions = await Movies.aggregate(suggestionsPipeline);
-
-        if (movieData.downloadLinks && Array.isArray(movieData.downloadLinks)) {
-            movieData.downloadLinks = movieData.downloadLinks.map(dl => {
-                if (dl.links && Array.isArray(dl.links)) {
-                    const updatedLinks = dl.links.map(linkObj => {
-                        if (linkObj.url && typeof linkObj.url === 'string' && linkObj.url.includes('pixeldrain.net')) {
-                            return {
-                                ...linkObj,
-                                url: linkObj.url.replace('pixeldrain.net', 'anony.nl')
-                            };
-                        }
-                        return linkObj;
-                    });
-                    return {
-                        ...dl,
-                        links: updatedLinks
-                    };
-                }
-                return dl;
-            });
-        }
-
-        // Then send the response
-        return res.status(200).json({
-            userIp: ip,
-            movieData: {
-                ...movieData,
-                hlsSourceDomain
-            },
-            suggestions: suggestions[0]
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-};
-
-// V(2) For New Vist site users
-export async function getMovieFullDetailsV2(req, res) {
-    try {
-        const { imdbId } = req.params;
-        const suggestion = req.query.suggestion === 'true'; // This works if the query parameter is 'suggestion'
-
-        if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
-            return res.status(400).json({ message: "IMDb ID is invalid" });
-        };
-
-        const FALLBACK_IP_ADDRESS = '76.76.21.123';
-        let ip = FALLBACK_IP_ADDRESS
-
-        // Get user IP address from the 'x-forwarded-for' header
-
-        if (process.env.NODE_ENV === "production") {
-            ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || FALLBACK_IP_ADDRESS;
-        };
-
-        let dbQueryData;
-
-        if (suggestion) {
-            // Get movies data with download links using aggregation
-            dbQueryData = await Movies.aggregate([
-                {
-                    $match: { imdbId }
                 },
                 {
+                    // Add virtual field `partsOwnerIds`:
+                    $set: {
+                        partsOwnerIds: {
+                            $cond: {
+                                if: { $isArray: "$parts" },
+                                then: "$parts",
+                                else: []
+                            }
+                        }
+                    }
+                },
+                {
+                    // If current movie has no parts, try to find parent with parts that include this
                     $lookup: {
-                        from: 'download_sources',
-                        localField: 'imdbId',
-                        foreignField: 'content_id',
-                        as: 'downloadLinks'
+                        from: 'movies',
+                        let: { currentId: "$imdbId", currentParts: "$partsOwnerIds" },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $cond: [
+                                            { $gt: [{ $size: "$$currentParts" }, 0] }, // if parts exist
+                                            { $in: ["$imdbId", "$$currentParts"] },
+                                            { $in: ["$$currentId", { $ifNull: ["$parts", []] }] } // else, search for parent movie
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                $project: {
+                                    _id: 0,  // Exclude _id
+                                    imdbId: 1,
+                                    title: 1,
+                                    displayTitle: 1,
+                                    thumbnail: 1,
+                                    releaseYear: 1,
+                                    type: 1,
+                                    category: 1,
+                                    language: 1,
+                                    videoType: 1
+                                }
+                            }
+                        ],
+                        as: "partsDetails"
                     }
                 }
             ]);
+
+
         } else {
             // Get movies data only for SEO Metadata
             dbQueryData = await Movies.findOne({
@@ -506,7 +340,7 @@ export async function getMovieFullDetailsV2(req, res) {
             let defaultLabel;
 
             if (multiAudio && typeof multiAudio === "boolean" || (watchLink.length > 1 && watchLink.includes('.m3u8') || watchLink.includes('.mkv') || watchLink.includes('.txt'))) {
-                defaultLabel = '(Multi language)';
+                defaultLabel = 'Multi languages';
 
             } else {
                 defaultLabel = null
@@ -631,7 +465,7 @@ export async function getMovieFullDetailsV2(req, res) {
                         { from: 'filesdl.site', to: 'fdl.st' },
                         { from: 'Movies4u', to: 'm4' },
                     ];
-                    
+
                     const updatedLinks = dl.links.map(linkObj => {
                         if (linkObj.url && typeof linkObj.url === 'string') {
                             let newUrl = linkObj.url;
@@ -658,6 +492,22 @@ export async function getMovieFullDetailsV2(req, res) {
             });
             delete movieData.downloadLinks;
             movieData.secondTypeSource = secondTypeSource
+        }
+
+        if (
+            movieData.partsDetails &&
+            Array.isArray(movieData.partsDetails) &&
+            movieData.partsDetails.length > 0 &&
+            suggestions[0] &&
+            Array.isArray(suggestions[0].genreList)
+        ) {
+            // ✅ Sort parts descending by releaseYear (latest first)
+            const sortedParts = movieData.partsDetails
+                .filter(part => part.imdbId !== imdbId) // remove self
+                .sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
+
+            // ✅ Prepend sorted parts to genreList
+            suggestions[0].genreList = [...sortedParts, ...suggestions[0].genreList];
         }
 
         // Then send the response
