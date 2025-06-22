@@ -71,17 +71,18 @@ router.post('/release_new_update', newAppUpdateRelease);
 
 router.get('/movies/one_by_one', async (req, res) => {
     try {
+        const { skip = 0 } = req.query;
 
         // Create a single regex pattern for the entire query
         const searchRegex = new RegExp(`res.cloudinary.com`, 'i'); // Match domain and .m3u8 in a single string
 
         const movie = await Movies.find({
-          thumbnail:  { $regex: searchRegex }, // Match elements with the domain and .m3u8
-        category: 'hollywood'
+        rpmshareSourceLable: { $exists: true, $ne: null }, // Ensure the field exists and is not null
         })
         .select("-_id")  // Exclude _id from the response
-        .limit(1)        // Limit to 1 result
-        .sort({ releaseYear: -1, fullReleaseDate: -1 }); // Sort by releaseYear and fullReleaseDate
+        .limit(1) 
+        .skip(skip)       // Limit to 1 result
+        .sort({ releaseYear: 1, fullReleaseDate: 1 }); // Sort by releaseYear and fullReleaseDate
         
         if (!movie.length) {
             return res.status(404).json({ message: "No movies found with more than 1 watch link" });

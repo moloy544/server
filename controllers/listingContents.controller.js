@@ -60,7 +60,7 @@ export async function TopTrendingContenListing(req, res) {
       },
     ]);
 
-  const endOfData = trendingData.length < limit;
+  const endOfData = (trendingData.length < limit - 1);
 
     const responses = {
       moviesData: trendingData,

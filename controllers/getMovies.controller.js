@@ -401,7 +401,7 @@ export async function getMovieFullDetails(req, res) {
                         {
                             $match: {
                                 genre: { $in: filterGenre },
-                                category,
+                                category: category === 'international' ? { $in: ['hollywood', 'international'] } : category,
                                 imdbId: { $ne: imdbId },
                                 status: 'released'
                             }
