@@ -526,7 +526,7 @@ export async function getMovieFullDetails(req, res) {
 };
 
 //************* Get Movies Download Source Controller (V2) **************//
-export async function getDownloadOptionsUrlsV2(req, res) {
+export async function getDownloadOptionsUrls(req, res) {
     try {
         const { imdbId } = req.params || {};
         const fullImdbId = "tt" + imdbId;
@@ -585,9 +585,12 @@ export async function getDownloadOptionsUrlsV2(req, res) {
         // Combine in priority order
         const reorderedLinks = [
             ...fdownloadLinks,
-            ...botddLinks,
-            ...pubLinks,
+            ...botddLinks
         ];
+
+        if (reorderedLinks.length < 2) {
+            reorderedLinks.push(...pubLinks);
+        };
 
         // If no links found in those categories, fallback to empty or null
         if (reorderedLinks.length === 0) {

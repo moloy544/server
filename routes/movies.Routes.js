@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Movies from '../models/Movies.Model.js';
-import { getDownloadOptionsUrlsV2, getLatestReleaseMovie, getMovieFullDetails, getRecentlyAddedContents } from "../controllers/getMovies.controller.js";
+import { getDownloadOptionsUrls, getLatestReleaseMovie, getMovieFullDetails, getRecentlyAddedContents } from "../controllers/getMovies.controller.js";
 import { transformToCapitalize } from "../utils/index.js";
 import { createQueryConditionFilter, createSortConditions, getDataBetweenDate } from "../utils/dbOperations.js";
 import { genarateFilters } from "../utils/genarateFilter.js";
@@ -270,7 +270,7 @@ router.post('/top-rated', async (req, res) => {
 router.get('/details_movie/v2/:imdbId', getMovieFullDetails);
 
 // GET Single Movie Download Options Urls (V2)
-router.get('/download_source/:imdbId', getDownloadOptionsUrlsV2);
+router.get('/download_source/:imdbId', getDownloadOptionsUrls);
 
 // GET Single Movie Hls Url Form External Service
 router.get('/hls/:imdbId', getHlsPlaylist);
