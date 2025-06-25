@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { DmcaAdmin } from "../../models/DmcaAdmin.Model.js";
 import jwt from "jsonwebtoken";
+import Movies from "../../models/Movies.Model.js";
 
 const router = Router();
 const COOKIE_NAME = "dmca_admin_token";
@@ -59,7 +60,7 @@ router.post("/login", async (req, res) => {
       secure: isProduction,  // Use 'true' only if running under HTTPS (e.g., in production)
       httpOnly: true, // Makes cookie inaccessible to JavaScript (for security)
       maxAge: cookieMaxAge  // Set cookie expiration time (3 months)
-    });    
+    });
 
     res.json({ message: "Login successful", companyName: admin.companyName });
   } catch (err) {
@@ -72,6 +73,68 @@ router.post("/login", async (req, res) => {
 router.post("/logout", (req, res) => {
   res.clearCookie(COOKIE_NAME);
   res.json({ message: "Logged out" });
+});
+
+// imdbId validatin using regex pattern
+const imdbIdPattern = /^tt\d{7,}$/;
+
+
+// ****** DMCA ADMIN ALL AcTIONS ROUTES ****** //
+
+// get preview
+router.get("/preview/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const imdbId = id.startsWith("tt") ? id : `tt${id}`;
+    if (!imdbId || !imdbIdPattern.test(imdbId.trim())) {
+      return res.status(400).json({ error: "Invalid content details" });
+    };
+
+    // Get content details from database
+    const contentData = await Movies.findOne({ imdbId }).select('-_id title thumbnail releaseYear').lean();
+    if (!contentData) {
+      return res.status(404).json({ message: "Content not found" });
+    }
+
+    res.json({ contentData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/action/takedown", async (req, res) => {
+  try {
+    const { content, disabled } = req.body;
+    const id = content?.startsWith("tt") ? content.trim() : `tt${content?.trim()}`;
+
+    // Validate ID format and required values
+    if (!id || !/^tt\d{6,9}$/.test(id) || typeof disabled !== "boolean") {
+      return res.status(400).json({
+        error: "Invalid content details. Please double-check the input or contact the support team.",
+      });
+    }
+
+    const updatedMovie = await Movies.findOneAndUpdate(
+      { imdbId: id },
+      { $set: { isContentRestricted: disabled } },
+      { new: true }
+    );
+
+    if (!updatedMovie) {
+      return res.status(404).json({
+        error: "No matching content found. Please verify the details or contact the management team.",
+      });
+    }
+
+    return res.status(200).json({ message: "Takedown action completed successfully." });
+
+  } catch (err) {
+    console.error("Takedown Error:", err);
+    return res.status(500).json({
+      message: "Internal server error while processing takedown. Please try again later.",
+    });
+  }
 });
 
 export default router;

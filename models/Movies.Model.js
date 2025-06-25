@@ -30,6 +30,16 @@ const moviesModel = new Schema(
       type: Date,
       require: false,
     },
+    isAdult: {
+      type: Boolean,
+      required: false,
+      default: undefined
+    },
+    isContentRestricted: {
+      type: Boolean,
+      required: false,
+      default: undefined
+    }
   }
 );
 

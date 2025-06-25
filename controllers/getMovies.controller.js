@@ -300,7 +300,8 @@ export async function getMovieFullDetails(req, res) {
                                     type: 1,
                                     category: 1,
                                     language: 1,
-                                    videoType: 1
+                                    videoType: 1,
+                                    isAdult: 1
                                 }
                             }
                         ],
