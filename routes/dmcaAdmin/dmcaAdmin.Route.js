@@ -286,9 +286,7 @@ router.post("/action/takedown", async (req, res) => {
     const { content, disabled } = req.body;
     const token = getToken(req);
 
-    if (!token) {
-      return res.status(401).json({ error: "Unauthorized. Token missing." });
-    }
+    if (!token) return res.status(401).json({ error: "Unauthorized. Token missing." });
 
     let decoded;
     try {
@@ -298,17 +296,14 @@ router.post("/action/takedown", async (req, res) => {
     }
 
     const username = decoded?.username;
-    if (!username) {
-      return res.status(403).json({ error: "Invalid token payload. Username missing." });
-    }
+    if (!username) return res.status(403).json({ error: "Invalid token payload. Username missing." });
 
     const id = content?.startsWith("tt") ? content.trim() : `tt${content?.trim()}`;
     if (!id || !/^tt\d{6,9}$/.test(id) || typeof disabled !== "boolean") {
-      return res.status(400).json({
-        error: "Invalid content details. Please double-check the input or contact the support team.",
-      });
+      return res.status(400).json({ error: "Invalid content details. Please double-check the input or contact support." });
     }
 
+    // ✅ Update Movie Status
     const updatedMovie = await Movies.findOneAndUpdate(
       { imdbId: id },
       { $set: { isContentRestricted: disabled } },
@@ -316,46 +311,23 @@ router.post("/action/takedown", async (req, res) => {
     );
 
     if (!updatedMovie) {
-      return res.status(404).json({
-        error: "No matching content found. Please verify the details or contact the management team.",
-      });
+      return res.status(404).json({ error: "No matching content found." });
     }
 
-    // ✅ Check if takedown already exists
-    const alreadyTakenDown = await TakedownHistory.findOne({
-      content: updatedMovie._id,
-      takedownCompany: username,
-    });
-
-    if (alreadyTakenDown) {
-      return res.status(200).json({
-        message: "Content already taken down by this company.",
-        alreadyExists: true,
-        takedownRecord: {
-          contentId: updatedMovie.imdbId.replace('tt', ''),
-          title: updatedMovie.title,
-          releaseYear: updatedMovie.releaseYear,
-          thumbnail: updatedMovie.thumbnail,
-          type: updatedMovie.type,
-          disabled: updatedMovie.isContentRestricted,
-          createdAt: alreadyTakenDown.createdAt,
-        }
-      });
-    }
-
-    // Check if already taken down by the same company
+    // ✅ Check for existing Takedown by same company
     const existingRecord = await TakedownHistory.findOne({
       content: updatedMovie._id,
       takedownCompany: username,
     });
 
     if (existingRecord) {
-      // ✅ Update updatedAt, don't create duplicate
+      // Update timestamp
       existingRecord.updatedAt = new Date();
       await existingRecord.save();
 
       return res.status(200).json({
         message: "Takedown already exists. Timestamp updated.",
+        alreadyExists: true,
         takedownRecord: {
           contentId: updatedMovie.imdbId.replace('tt', ''),
           title: updatedMovie.title,
@@ -369,14 +341,33 @@ router.post("/action/takedown", async (req, res) => {
       });
     }
 
+    // ✅ Create New Record (only if not already taken down by this company)
+    const newRecord = await TakedownHistory.create({
+      content: updatedMovie._id,
+      takedownCompany: username,
+    });
+
+    return res.status(200).json({
+      message: "Takedown action completed successfully.",
+      takedownRecord: {
+        contentId: updatedMovie.imdbId.replace('tt', ''),
+        title: updatedMovie.title,
+        releaseYear: updatedMovie.releaseYear,
+        thumbnail: updatedMovie.thumbnail,
+        type: updatedMovie.type,
+        disabled: updatedMovie.isContentRestricted,
+        createdAt: newRecord.createdAt,
+        updatedAt: newRecord.updatedAt,
+      }
+    });
+
   } catch (err) {
     console.error("Takedown Error:", err);
     return res.status(500).json({
-      message: "Internal server error while processing takedown. Please try again later.",
+      message: "Internal server error while processing takedown.",
     });
   }
 });
-
 
 router.get('/get/takedowns', async (req, res) => {
   try {
