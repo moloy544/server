@@ -5,8 +5,14 @@ const dmcaAdminSchema = new Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   avatar: { type: String, required: false, default: undefined },
+  email: { type: String, required: true },
+
+  // 🔐 OTP fields
+  otp: { type: Number, default: null },
+  otpExpiresAt: { type: Date, default: null },
+
 }, {
-  timestamps: true // optional: adds createdAt and updatedAt fields
+  timestamps: true // adds createdAt and updatedAt
 });
 
 const DmcaAdmin = model('DmcaAdmin', dmcaAdminSchema);
