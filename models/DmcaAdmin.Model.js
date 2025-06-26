@@ -6,7 +6,6 @@ const dmcaAdminSchema = new Schema({
   password: { type: String, required: true },
   avatar: { type: String, required: false, default: undefined },
   email: { type: String, required: true },
-
   // 🔐 OTP fields
   otp: { type: Number, default: null },
   otpExpiresAt: { type: Date, default: null },
