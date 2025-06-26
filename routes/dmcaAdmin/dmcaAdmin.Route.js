@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import { DmcaAdmin } from "../../models/DmcaAdmin.Model.js";
 import jwt from "jsonwebtoken";
 import Movies from "../../models/Movies.Model.js";
-import TakedownHistoryModel from "../../models/TakedownHistory.Model.js";
 import TakedownHistory from "../../models/TakedownHistory.Model.js";
 import { sendOtpEmail } from "../../service/service.js";
 
@@ -11,6 +10,20 @@ const router = Router();
 const COOKIE_NAME = "dmca_admin_token";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret"; // Replace in production
 const COOKIE_EXPIRE_DAYS = 90; // 3 months
+
+// GET /api/v1/dmca-admin/check-auth
+router.get('/check-auth', (req, res) => {
+  const token = req.cookies.dmca_admin_token;
+  if (!token) return res.status(401).json({ message: 'Not logged in' });
+
+  try {
+    jwt.verify(token, JWT_SECRET);
+    res.status(200).json({ message: 'Authenticated' });
+  } catch {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
 
 // SIGNUP ROUTE (once per company)
 router.post("/signup", async (req, res) => {
@@ -54,15 +67,14 @@ router.post("/login", async (req, res) => {
     });
 
     // Set cookie for 3 months
-    const isProduction = process.env.NODE_ENV === 'production'; // Check if we're in production
     const cookieMaxAge = 3 * 30 * 24 * 60 * 60 * 1000; // 3 months in milliseconds
 
     res.cookie(COOKIE_NAME, token, {
-      path: '/',  // Cookie is available only on the /dmca-admin path
-      sameSite: isProduction ? 'none' : 'lax', // For local development, use 'lax'
-      secure: isProduction,  // Use 'true' only if running under HTTPS (e.g., in production)
-      httpOnly: true, // Makes cookie inaccessible to JavaScript (for security)
-      maxAge: cookieMaxAge  // Set cookie expiration time (3 months)
+      path: '/',
+      httpOnly: true,
+      secure: true, // required for SameSite=None
+      sameSite: 'none', // VERY IMPORTANT
+      maxAge: cookieMaxAge, // 3 months
     });
 
     res.json({ message: "Login successful", companyName: admin.companyName });
@@ -143,15 +155,14 @@ router.post('/verify-otp', async (req, res) => {
     });
 
     // Set cookie for 3 months
-    const isProduction = process.env.NODE_ENV === 'production'; // Check if we're in production
     const cookieMaxAge = 3 * 30 * 24 * 60 * 60 * 1000; // 3 months in milliseconds
 
     res.cookie(COOKIE_NAME, token, {
-      path: '/',  // Cookie is available only on the /dmca-admin path
-      sameSite: isProduction ? 'none' : 'lax', // For local development, use 'lax'
-      secure: isProduction,  // Use 'true' only if running under HTTPS (e.g., in production)
-      httpOnly: true, // Makes cookie inaccessible to JavaScript (for security)
-      maxAge: cookieMaxAge  // Set cookie expiration time (3 months)
+      path: '/',
+      httpOnly: true,
+      secure: true, // required for SameSite=None
+      sameSite: 'none', // VERY IMPORTANT
+      maxAge: cookieMaxAge, // 3 months
     });
 
     return res.status(200).json({ message: "✅ OTP verified successfully." });
