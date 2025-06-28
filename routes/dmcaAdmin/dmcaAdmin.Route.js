@@ -369,10 +369,12 @@ router.post("/action/takedown", async (req, res) => {
   }
 });
 
+// Gte Takedowns history route
+
 router.get('/get/takedowns', async (req, res) => {
   try {
     const skip = parseInt(req.query.skip) || 0;
-    const limit = parseInt(req.query.limit) || 40;
+    const limit = 50; // You said backend always uses 50
 
     const token = getToken(req);
     if (!token) return res.status(401).json({ error: "Unauthorized. Token missing." });
@@ -387,7 +389,8 @@ router.get('/get/takedowns', async (req, res) => {
     const username = decoded?.username;
     if (!username) return res.status(403).json({ error: "Invalid token. Username missing." });
 
-    const takedownHistories = await TakedownHistory.find({ takedownCompany: username })
+    // Fetch one extra item to check if more data exists
+    const rawData = await TakedownHistory.find({ takedownCompany: username })
       .select('createdAt')
       .populate({
         path: 'content',
@@ -396,9 +399,14 @@ router.get('/get/takedowns', async (req, res) => {
       })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit + 1); // fetch one more than needed
 
-    const formatted = takedownHistories
+    const hasMore = rawData.length > limit;
+
+    // Trim to exact limit
+    const limitedData = hasMore ? rawData.slice(0, limit) : rawData;
+
+    const formatted = limitedData
       .map(item => {
         if (!item.content) return null;
         const data = item.content.toObject();
@@ -414,7 +422,10 @@ router.get('/get/takedowns', async (req, res) => {
       })
       .filter(Boolean);
 
-    return res.status(200).json({ takedownHistories: formatted });
+    return res.status(200).json({
+      takedownHistories: formatted,
+      endOfData: !hasMore
+    });
 
   } catch (err) {
     console.error("Takedown Error:", err);
