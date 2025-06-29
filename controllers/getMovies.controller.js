@@ -261,6 +261,31 @@ export async function getMovieFullDetails(req, res) {
                     }
                 },
                 {
+                    $lookup: {
+                        from: 'seriesepisodes',
+                        localField: 'imdbId',
+                        foreignField: 'imdbId',
+                        as: 'seriesEpisode'
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$seriesEpisode',
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $addFields: {
+                        seriesData: '$seriesEpisode.data'
+                    }
+                },
+                {
+                    $project: {
+                        seriesEpisode: 0 // remove full episode object if not needed
+                    }
+                },
+
+                {
                     // Add virtual field `partsOwnerIds`:
                     $set: {
                         partsOwnerIds: {

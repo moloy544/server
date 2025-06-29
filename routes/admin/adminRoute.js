@@ -7,6 +7,7 @@ import { newAppUpdateRelease } from "./controller/app.controller.js";
 import DownloadSource from "../../models/downloadSource.Model.js";
 import { updateMoviesIMDBRating } from "./operations/updateMovies.operation.js";
 import { AddAndUpdateTrendingMovies } from "./controller/listings.controller.js";
+import { AddSeries } from "./controller/series.controller.js";
 
 const router = Router();
 
@@ -17,7 +18,6 @@ router.post('/movie/add', multerUpload.single('file'), addNewMovie);
 
 //Delete movie route'
 router.delete('/movie/delete/:id', deleteMovie);
-
 
 //Get single movies or series details 
 router.get('/movie/get/:imdbId', async (req, res) => {
@@ -41,6 +41,8 @@ router.get('/movie/get/:imdbId', async (req, res) => {
 
 });
 
+// Add New Series Source
+router.post('/add/series_episods', AddSeries);
 
 /*************** Actor Related Routes Section ********************************/
 
