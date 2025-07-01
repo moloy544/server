@@ -485,10 +485,10 @@ export async function getMovieFullDetails(req, res) {
             const secondTypeSource = movieData.downloadLinks.map(dl => {
                 if (dl.links && Array.isArray(dl.links)) {
                     const replacements = [
-                        { from: 'pixeldrain.net', to: 'anony.nl' },
+                        { from: 'pixeldrain', to: 'anony' },
                         { from: 'Vegamovies', to: 'vgm' },
                         { from: '?download', to: '' },
-                        { from: 'filesdl.site', to: 'fdl.st' },
+                        { from: 'filesdl', to: 'fdl' },
                         { from: 'Movies4u', to: 'm4' },
                     ];
 
@@ -581,7 +581,7 @@ export async function getDownloadOptionsUrls(req, res) {
         }
 
         const sourceUrl = downloadSource.links?.[index].url;
-        const isPixeldrainUrl = sourceUrl?.includes('pixeldrain.net');
+        const isPixeldrainUrl = sourceUrl?.includes('pixeldrain');
 
         if (isPixeldrainUrl) {
             return res.status(200).json({ downloadUrl: [sourceUrl] });
