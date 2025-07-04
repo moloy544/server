@@ -65,7 +65,7 @@ export async function searchHandler(req, res) {
         exactMatches.forEach(m => uniqueMap.set(m.imdbId, m));
 
         // Phase 1.5: Check for release year
-         const releaseYear = parseInt(q, 10);
+        const releaseYear = parseInt(q, 10);
 
         // Phase 2: StartsWith, tags, and searchKeywords
         const phase2 = await Movies.find({
@@ -85,20 +85,21 @@ export async function searchHandler(req, res) {
 
         // Phase 3: Fuzzy/broad match if still insufficient
         if (uniqueMap.size === 0) {
-           
+            const baseTerm = splitQuery.slice(0, 2).join(' '); // e.g. "Squid Game"
+            const baseRegex = new RegExp(baseTerm, 'i');
+
             const phase3 = await Movies.find({
                 $or: [
-                    { title: { $regex: fuzzyRegex } },
+                    { title: { $regex: baseRegex } },
+                    { title: { $regex: startsWithRegex } },
                     { tags: { $in: splitQuery } },
                     { searchKeywords: { $regex: fuzzyRegex } },
                     { castDetails: { $regex: fuzzyRegex } },
-                    { genre: { $regex: fuzzyRegex } },
-                    { imdbId: cleanedQuery },
                     ...(isNaN(releaseYear) ? [] : [{ releaseYear }])
                 ]
             })
                 .select(selectFields + ' tags')
-                .lean();
+                .lean()
 
             phase3.forEach(m => uniqueMap.set(m.imdbId, m));
         }
