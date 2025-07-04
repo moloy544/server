@@ -2,48 +2,52 @@ import axios from "axios";
 import geoip from "geoip-lite";
 import nodemailer from 'nodemailer';
 
-// get the user location details
-export async function getUserLocationDetails() {
-    try {
-        const response = await axios.get('https://ipapi.co/json/');
-        const data = response.data;
-        if (response.status === 200) {
-            return data
-        } else {
-            console.error('Error fetching location data:', error.message);
-            return null;
-        }
-    } catch (error) {
-        console.error('Error fetching country data:', error.message);
-        return null;
+// Primary Geo API Lookup Function
+export async function getApiLocationDetails(ip) {
+  try {
+    const response = await axios.get(`http://ip-api.com/json/${ip}`, { timeout: 3000 });
+    const { country, countryCode } = response.data || {};
+
+    if (response.status === 200 && (country || countryCode)) {
+      return {
+        country: country?.toLowerCase(),
+        countryCode: countryCode?.toUpperCase()
+      };
+    } else {
+      //console.warn('Geo lookup returned empty result for:', ip);
+      return null;
     }
+  } catch (error) {
+    //console.error('Geo API error:', error.message);
+    return null;
+  }
 };
 
 export const getUserGeoDetails = (ip) => {
 
-    try {
-        if (!ip || ip === '0.0.0.0') {
-            return null
-        };
+  try {
+    if (!ip || ip === '0.0.0.0') {
+      return null
+    };
 
-        const geoData = geoip.lookup(ip);
+    const geoData = geoip.lookup(ip);
 
-        return geoData;
+    return geoData;
 
-    } catch (error) {
-        console.log('Error while getting user GEO details:', error)
+  } catch (error) {
+    console.log('Error while getting user GEO details:', error)
 
-    }
+  }
 };
 
 
 // Create nodemailer transporter
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // or use another email service
-    auth: {
-        user: process.env.EMAIL_USER, // Your email address
-        pass: process.env.EMAIL_PASS, // Your email password
-    }
+  service: 'gmail', // or use another email service
+  auth: {
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASS, // Your email password
+  }
 });
 
 // Function to send OTP to user's email

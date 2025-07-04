@@ -3,7 +3,7 @@ import { Reports, Requests } from "../models/Users.Model.js";
 import Movies from "../models/Movies.Model.js";
 import { handleUserIp, parseCookies } from "../utils/index.js";
 import geoIPLite from "geoip-lite";
-import { getUserLocationDetails } from "../service/service.js";
+import { getApiLocationDetails } from "../service/service.js";
 
 const router = Router();
 const selectValue = "-_id imdbId title displayTitle thumbnail releaseYear type videoType status";
@@ -196,19 +196,6 @@ router.post('/action/request', async (req, res) => {
             documentData.ip = ip;
         };
 
-        // get user location details 
-        const userLocationDetails = await getUserLocationDetails();
-        // add user location details to request document if available
-        if (userLocationDetails && typeof userLocationDetails === "object") {
-
-            const { country_name, region, city } = userLocationDetails;
-            // add user location details to mongo documet
-            documentData.userLocationDetails = {
-                country: country_name,
-                region,
-                city,
-            }
-        };
         // Create a new request document
         const newRequest = new Requests(documentData);
 
@@ -280,45 +267,56 @@ router.post('/requests_data', async (req, res) => {
 // User GEO Restrictions Check Route
 router.post('/restrictionsCheck', async (req, res) => {
     try {
+        // Extract client IP
         let ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || '0.0.0.0';
-
         if (ip.includes('::ffff:')) ip = ip.split('::ffff:')[1];
-        if (ip === '::1' || ip === '127.0.0.1') ip = '0.0.0.0'; // Localhost fallback
-
+        if (ip === '::1' || ip === '127.0.0.1') ip = '0.0.0.0';
+        ip = '152.56.157.252';
         const ipv4Regex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
         const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::1)$/;
 
         if (!ipv4Regex.test(ip) && !ipv6Regex.test(ip)) {
-            return res.status(400).json({ success: false, message: "Invalid IP address detected" });
+            return res.status(400).json({ success: false, message: "Invalid IP address" });
         }
 
-        const userGeoDetails = geoIPLite.lookup(ip);
+        const restrictedCountries = ['IN']; // ISO codes
+        const restrictedCountriesFull = ['india']; // Full names
 
-        if (!userGeoDetails) {
-            return res.status(200).json({
-                success: true,
-                message: "Geo lookup failed, defaulting to unrestricted",
-                isRestricted: false
-            });
-        }
+        let isRestricted = false;
 
-        const restrictedCountries = ['IN'];
-        const isRestricted = restrictedCountries.includes(userGeoDetails.country);
+        // Primary Geo Lookup
+        const apiResponse = await getApiLocationDetails(ip);
+        if (apiResponse) {
+            const { country, countryCode } = apiResponse;
+            // Check by full name first
+            isRestricted = restrictedCountriesFull.includes(country);
+
+            // If not found, check by country code
+            if (!isRestricted) {
+                isRestricted = restrictedCountries.includes(countryCode);
+            }
+        } else {
+            // Fallback to geoip-lite
+            const fallback = geoIPLite.lookup(ip);
+            if (fallback) {
+                isRestricted = restrictedCountries.includes(fallback.country);
+                //console.warn(`Fallback geoip-lite used for IP: ${ip}`);
+            }
+        };
 
         return res.status(200).json({
             success: true,
-            isRestricted: isRestricted,
+            isRestricted,
             geo: ip
         });
 
     } catch (error) {
-        console.error('Geo detection error:', error);
-
+        console.error('Geo restriction error:', error);
         return res.status(500).json({
             success: false,
-            message: "Internal Server Error while getting user IP and location",
+            message: "Internal Server Error during geo check",
             isRestricted: false,
-            geoDetails: null
+            geo: null
         });
     }
 });
