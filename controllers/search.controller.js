@@ -74,6 +74,7 @@ export async function searchHandler(req, res) {
                 { title: { $regex: fuzzyRegex } },
                 { tags: { $regex: fuzzyRegex } },
                 { searchKeywords: { $in: splitQuery } },
+                { imdbId: cleanedQuery },
                 ...(isNaN(releaseYear) ? [] : [{ releaseYear }])
             ]
         })
