@@ -356,6 +356,9 @@ export async function getMovieFullDetails(req, res) {
 
         const { genre, language, castDetails, category, watchLink, multiAudio, mainVideoSourceLabel = null, rpmshareSourceLable = null } = movieData;
 
+        // Movies hls source provide domain 
+        const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN;
+
         const reorderWatchLinks = (watchLinks) => {
             const m3u8Link = watchLinks.find(link => link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt'));
             if (m3u8Link) {
@@ -374,7 +377,7 @@ export async function getMovieFullDetails(req, res) {
 
             return watchLinks.map((link, index) => {
                 const isNoAds = link.includes('.m3u8') || link.includes('.mkv') || link.includes('.txt');
-                const isMainSource = link.includes(imdbId) && mainVideoSourceLabel;
+                const isMainSource = (link.includes(imdbId) || link.includes(hlsSourceDomain)) && mainVideoSourceLabel;
                 const isRpmSource = link.includes('rpmplay.online');
                 const isStreamP2pSource = link.includes('p2pplay.online');
 
@@ -404,9 +407,6 @@ export async function getMovieFullDetails(req, res) {
             });
 
         };
-
-        // Movies hls source provide domain 
-        const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN
 
         if (watchLink && Array.isArray(watchLink) && watchLink.length > 0) {
             movieData.watchLink = reorderWatchLinks(watchLink);
