@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { Reports, Requests } from "../models/Users.Model.js";
-import Movies from "../models/Movies.Model.js";
-import { handleUserIp, parseCookies } from "../utils/index.js";
 import geoIPLite from "geoip-lite";
-import { getApiLocationDetails } from "../service/service.js";
-
+import { Reports, Requests } from "../../models/Users.Model.js";
+import Movies from "../../models/Movies.Model.js";
+import { handleUserIp, parseCookies } from "../../utils/index.js";
+import { getApiLocationDetails } from "../../service/service.js";
+import webpushRoute from "./webPush.Route.js"
 const router = Router();
 const selectValue = "-_id imdbId title displayTitle thumbnail releaseYear type videoType status";
 
@@ -109,7 +109,8 @@ router.post('/action/report', async (req, res) => {
                     };
 
                     if (ip) {
-                        documentData.ip = ip;
+                        const { country } = geoIPLite.lookup(ip);
+                        documentData.ip = ip + ` (${country})`; // Add country info to IP
                     }
 
                     const newReport = new Reports(documentData);
@@ -193,6 +194,8 @@ router.post('/action/request', async (req, res) => {
         };
 
         if (ip) {
+            const { country } = geoIPLite.lookup(ip);
+            documentData.ip = ip + ` (${country})`; // Add country info to IP
             documentData.ip = ip;
         };
 
@@ -319,5 +322,9 @@ router.post('/restrictionsCheck', async (req, res) => {
         });
     }
 });
+
+/********* Web Push Route *********/
+// 🔗 Mount push routes
+router.use("/webpush", webpushRoute);
 
 export default router;

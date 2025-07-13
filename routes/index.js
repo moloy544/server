@@ -6,7 +6,7 @@ import moviesRoutes from './movies.Routes.js';
 import seriesRoutes from './series.Routes.js';
 import listingContentRoutes from './listingsContent.Route.js';
 import actressRoute from './actors.Route.js';
-import userRoute from './users.Route.js';
+import userRoute from './usersRoute/users.Route.js';
 import mobileAppRoute from './applicationRoutes/mobileApp.route.js';
 import { getEmbedVideo } from '../controllers/getMovies.controller.js';
 

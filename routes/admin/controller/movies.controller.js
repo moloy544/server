@@ -3,6 +3,7 @@ import Movies from "../../../models/Movies.Model.js";
 import { deleteImageFromCloudinary, uploadOnCloudinary } from "../../../utils/cloudinary.js";
 import { bufferToDataUri } from "../../../utils/index.js";
 import DownloadSource from "../../../models/downloadSource.Model.js";
+import SeriesEpisode from "../../../models/Series.Model.js";
 
 //add movie controller
 export async function addNewMovie(req, res) {
@@ -269,6 +270,62 @@ export async function addNewVideoSource(req, res) {
         return res.status(500).json({ message: 'Internal server error while updating Video Source' });
     }
 };
+
+// Update Serie Episodes Source 
+export async function updateSeriesSourceBasePath(req, res) {
+    try {
+        const { domainToFind, newDomain, batchLimit = 500 } = req.body;
+
+        if (!domainToFind || !newDomain) {
+            return res.status(400).json({ message: "Missing required fields: domainToFind, newDomain" });
+        }
+
+        const seriesDocs = await SeriesEpisode.find({
+            "data.seasons.basePath": { $regex: `^${domainToFind}` },
+        })
+            .limit(batchLimit)
+            .select("_id data imdbId title");
+
+        if (!seriesDocs || seriesDocs.length === 0) {
+            return res.status(404).json({ message: "No matching basePath found in series data." });
+        }
+
+        const updatePromises = seriesDocs.map(async (doc) => {
+            const updatedData = doc.data.map((langBlock) => {
+                const updatedSeasons = langBlock.seasons.map((season) => {
+                    let updatedBasePath = season.basePath;
+
+                    if (season.basePath.startsWith(domainToFind)) {
+                        updatedBasePath = season.basePath.replace(domainToFind, newDomain);
+                    }
+
+                    return {
+                        ...season,
+                        basePath: updatedBasePath,
+                    };
+                });
+
+                return {
+                    ...langBlock,
+                    seasons: updatedSeasons,
+                };
+            });
+
+            return SeriesEpisode.updateOne(
+                { _id: doc._id },
+                { $set: { data: updatedData } }
+            );
+        });
+
+        await Promise.all(updatePromises);
+
+        return res.status(200).json({ message: "Series basePaths updated successfully." });
+    } catch (error) {
+        console.error("Error updating basePaths:", error);
+        return res.status(500).json({ message: "Internal server error." });
+    }
+}
+
 
 // Controller to update dynamic part of video source URLs
 export async function updateDynamicVideoPath(req, res) {
