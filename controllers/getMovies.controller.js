@@ -601,23 +601,25 @@ export async function getDownloadOptionsUrls(req, res) {
         };
 
         // Filter links by type
-        const fdownloadLinks = links.filter(link => link.includes('fdownload.php'));
+        const bbdownloadLinks = links.filter(link => link.includes('bbdownload'));
         const pubLinks = links.filter(link =>
             !link.includes('fdownload.php') && link.startsWith('https://pub')
         );
+
         const botddLinks = links.filter(link =>
             !link.includes('fdownload.php') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
         );
 
         // Combine in priority order
         const reorderedLinks = [
-            ...fdownloadLinks,
-            ...botddLinks
+            ...bbdownloadLinks,
         ];
 
-        if (reorderedLinks.length < 2) {
+        if (bbdownloadLinks.length < 2 && botddLinks.length > 0) {
+            reorderedLinks.push(...botddLinks);
+        }else if (bbdownloadLinks.length < 2 && pubLinks.length > 0) {
             reorderedLinks.push(...pubLinks);
-        };
+        }
 
         // If no links found in those categories, fallback to empty or null
         if (reorderedLinks.length === 0) {
