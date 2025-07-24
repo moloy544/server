@@ -600,33 +600,40 @@ export async function getDownloadOptionsUrls(req, res) {
             return res.status(404).json({ message: "No download links found in the source" });
         };
 
-        // Filter links by type
-        const bbdownloadLinks = links.filter(link => link.includes('bbdownload'));
+        const awsCDNLinks = links.filter(link => link.includes('awscdn'));
+        let fownloadLinks = links.filter(link => link.includes('fdownload'));
+        if (fownloadLinks.length > 0) {
+            fownloadLinks = fownloadLinks.filter(link => link.includes('bbdownload'));
+        }
         const pubLinks = links.filter(link =>
-            !link.includes('fdownload.php') && link.startsWith('https://pub')
+            !link.includes('bbdownload') && link.startsWith('https://pub')
         );
-
+       
         const botddLinks = links.filter(link =>
-            !link.includes('fdownload.php') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
+            !link.includes('bbdownload') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
         );
 
-        // Combine in priority order
+        // Combine links in priority order
         const reorderedLinks = [
-            ...bbdownloadLinks,
+            ...awsCDNLinks,
+            ...fownloadLinks,
+            ...pubLinks,
         ];
 
-        if (bbdownloadLinks.length < 2 && botddLinks.length > 0) {
-            reorderedLinks.push(...botddLinks);
-        }else if (bbdownloadLinks.length < 2 && pubLinks.length > 0) {
-            reorderedLinks.push(...pubLinks);
-        }
+        if (reorderedLinks.length <4) {
+            if (botddLinks.length > 0) {
+                reorderedLinks.push(...botddLinks);
+            }else if (pubLinks.length > 0) {
+                // If botddLinks are not available, add pubLinks
+                reorderedLinks.push(...pubLinks);
+            }
+        };
 
-        // If no links found in those categories, fallback to empty or null
+        // If no suitable links at all
         if (reorderedLinks.length === 0) {
             return res.status(404).json({ message: "No suitable download links found in the source" });
         }
 
-        // Return the reordered array or just first URL if you want
         return res.status(200).json({ downloadUrl: reorderedLinks });
 
     } catch (error) {
