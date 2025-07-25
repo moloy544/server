@@ -450,33 +450,39 @@ export async function getMovieFullDetails(req, res) {
                             }
                         }
                     ],
-                    castList: [
-                        {
-                            $match: {
-                                castDetails: { $in: castDetails },
-                                imdbId: { $ne: imdbId },
-                                status: 'released'
-                            }
-                        },
-                        { $limit: 25 },
-                        {
-                            $project: {  // Select only the required fields
-                                _id: 0,  // Exclude _id
-                                imdbId: 1,
-                                title: 1,
-                                displayTitle: 1,
-                                thumbnail: 1,
-                                releaseYear: 1,
-                                type: 1,
-                                category: 1,
-                                language: 1,
-                                videoType: 1
-                            }
-                        }
-                    ]
+
                 }
             }
         ];
+        
+        // If castDetails is not empty, add castList facet
+        if (castDetails.length !== 0 && castDetails[0] !== '' && castDetails[0] !== 'N/A') {
+            suggestionsPipeline[0].$facet.castList = [
+                {
+                    $match: {
+                        castDetails: { $in: castDetails },
+                        imdbId: { $ne: imdbId },
+                        status: 'released'
+                    }
+                },
+                { $limit: 25 },
+                {
+                    $project: {  // Select only the required fields
+                        _id: 0,  // Exclude _id
+                        imdbId: 1,
+                        title: 1,
+                        displayTitle: 1,
+                        thumbnail: 1,
+                        releaseYear: 1,
+                        type: 1,
+                        category: 1,
+                        language: 1,
+                        videoType: 1
+                    }
+                }
+            ]
+
+        };
 
         // Suggestions (You might also like and Explore more from same actor)
         const suggestions = await Movies.aggregate(suggestionsPipeline);
@@ -608,7 +614,7 @@ export async function getDownloadOptionsUrls(req, res) {
         const pubLinks = links.filter(link =>
             !link.includes('bbdownload') && link.startsWith('https://pub')
         );
-       
+
         const botddLinks = links.filter(link =>
             !link.includes('bbdownload') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
         );
@@ -620,10 +626,10 @@ export async function getDownloadOptionsUrls(req, res) {
             ...pubLinks,
         ];
 
-        if (reorderedLinks.length <4) {
+        if (reorderedLinks.length < 4) {
             if (botddLinks.length > 0) {
                 reorderedLinks.push(...botddLinks);
-            }else if (pubLinks.length > 0) {
+            } else if (pubLinks.length > 0) {
                 // If botddLinks are not available, add pubLinks
                 reorderedLinks.push(...pubLinks);
             }
