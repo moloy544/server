@@ -57,6 +57,32 @@ router.post('/actor/get', getActorData);
 //update video source url link route
 router.put('/update/videosource', updateVideoSource);
 
+// add or update playlist source
+router.put('/update/playlist', async (req, res) => {
+   try {
+        const { imdbId, playList } = req.body;
+
+        if (!imdbId || !Array.isArray(playList) || playList.length === 0) {
+            return res.status(400).json({ message: "Invalid data provided." });
+        }
+
+        const movie = await Movies.findOneAndUpdate(
+            { imdbId },
+            { $set: { playList: playList } },
+            { new: true }
+        );
+
+        if (!movie) {
+            return res.status(404).json({ message: "Movie not found." });
+        }
+
+        return res.status(200).json({ message: "Playlist updated successfully." });
+    } catch (err) {
+        console.error("Error updating playlist:", err);
+        return res.status(500).json({ message: "Server error while updating playlist." });
+    }
+});
+
 //update series source bashpath
 router.put('/update/series/source/bashpath', updateSeriesSourceBasePath);
 

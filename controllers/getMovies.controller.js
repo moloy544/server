@@ -354,7 +354,7 @@ export async function getMovieFullDetails(req, res) {
             return res.status(200).json({ movieData });
         };
 
-        const { genre, language, castDetails, category, watchLink, multiAudio, mainVideoSourceLabel = null, rpmshareSourceLable = null } = movieData;
+        const { genre, language, castDetails, category, watchLink, playList, multiAudio, mainVideoSourceLabel = null, rpmshareSourceLable = null } = movieData;
 
         // Movies hls source provide domain 
         const hlsSourceDomain = process.env.HLS_VIDEO_SOURCE_DOMAIN;
@@ -407,8 +407,20 @@ export async function getMovieFullDetails(req, res) {
             });
 
         };
+        // If playList is available, use it to update watchLink
+        if (playList && Array.isArray(playList) && playList.length > 0) {
+            
+            const sourceOBJ = playList.map((data, index) => {
+                return {
+                    source: data.source,
+                    label: `Server ${index + 1}`,
+                    labelTag: data.label
+                };
+            });
 
-        if (watchLink && Array.isArray(watchLink) && watchLink.length > 0) {
+            movieData.watchLink = sourceOBJ;
+
+        } else if (watchLink && Array.isArray(watchLink) && watchLink.length > 0 && !playList) {
             movieData.watchLink = reorderWatchLinks(watchLink);
         };
 
@@ -454,7 +466,7 @@ export async function getMovieFullDetails(req, res) {
                 }
             }
         ];
-        
+
         // If castDetails is not empty, add castList facet
         if (castDetails.length !== 0 && castDetails[0] !== '' && castDetails[0] !== 'N/A') {
             suggestionsPipeline[0].$facet.castList = [

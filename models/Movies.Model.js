@@ -15,6 +15,7 @@ const moviesModel = new Schema(
     language: { type: String, required: true },
     genre: { type: [String], required: true },
     watchLink: { type: [String] },
+    playList: { type: [Object], required: false, default: undefined },
     videoTrim: { type: Number, required: false },
     watermark: { type: Boolean, required: false },
     multiAudio: { type: Boolean, required: false },
