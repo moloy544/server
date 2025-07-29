@@ -196,7 +196,6 @@ router.post('/action/request', async (req, res) => {
         if (ip) {
             const { country } = geoIPLite.lookup(ip);
             documentData.ip = ip + ` (${country})`; // Add country info to IP
-            documentData.ip = ip;
         };
 
         // Create a new request document
