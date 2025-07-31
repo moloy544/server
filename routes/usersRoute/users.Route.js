@@ -75,6 +75,17 @@ router.post('/action/report', async (req, res) => {
         const ip = handleUserIp(req);
         let userId = cookies['moviesbazar_user'];
 
+        let locationDetails = null;
+
+        if (ip) {
+            const { country } = geoIPLite.lookup(ip) || {};
+            if (country) {
+                locationDetails = ip + ` (${country})`; // Add country info to IP  
+            } else {
+                locationDetails = ip
+            };
+        };
+
         // Generate new userId if not found
         if (!userId) {
             userId = generateRandomID(20);
@@ -108,10 +119,11 @@ router.post('/action/report', async (req, res) => {
                         user: userId,
                     };
 
-                    if (ip) {
-                        const { country } = geoIPLite.lookup(ip);
-                        documentData.ip = ip + ` (${country})`; // Add country info to IP
-                    }
+                    if (locationDetails) {
+                        if (country) {
+                            documentData.ip = locationDetails
+                        }
+                    };
 
                     const newReport = new Reports(documentData);
                     await newReport.save();
@@ -133,8 +145,9 @@ router.post('/action/report', async (req, res) => {
                 }
 
                 if (ip && ip !== findReport.ip) {
-                    findReport.ip = ip;
-                }
+
+                    findReport.ip = locationDetails
+                };
 
                 // Update timestamp
                 findReport.reportedAt = Date.now();
@@ -148,8 +161,8 @@ router.post('/action/report', async (req, res) => {
                 user: userId,
             };
 
-            if (ip) {
-                documentData.ip = ip;
+            if (locationDetails) {
+                documentData.ip = locationDetails;
             }
 
             // Create a new report
