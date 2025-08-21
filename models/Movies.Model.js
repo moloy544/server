@@ -20,6 +20,7 @@ const moviesModel = new Schema(
     watermark: { type: Boolean, required: false },
     multiAudio: { type: Boolean, required: false },
     videoType: { type: String, required: false },
+    default_audio: { type: String, required: false },
     castDetails: { type: [String], required: true },
     parts: { type: [String], required: false, default: undefined },
     status: {
