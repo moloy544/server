@@ -409,7 +409,7 @@ export async function getMovieFullDetails(req, res) {
         };
         // If playList is available, use it to update watchLink
         if (playList && Array.isArray(playList) && playList.length > 0) {
-            
+
             const sourceOBJ = playList.map((data, index) => {
                 return {
                     source: data.source,
@@ -500,7 +500,6 @@ export async function getMovieFullDetails(req, res) {
         const suggestions = await Movies.aggregate(suggestionsPipeline);
 
         if (movieData.downloadLinks && Array.isArray(movieData.downloadLinks)) {
-
             const secondTypeSource = movieData.downloadLinks.map(dl => {
                 if (dl.links && Array.isArray(dl.links)) {
                     const replacements = [
@@ -512,20 +511,32 @@ export async function getMovieFullDetails(req, res) {
                     ];
 
                     const updatedLinks = dl.links.map(linkObj => {
+                        let updatedLink = { ...linkObj };
+
                         if (linkObj.url && typeof linkObj.url === 'string') {
                             let newUrl = linkObj.url;
-
                             for (const { from, to } of replacements) {
                                 newUrl = newUrl.replace(from, to);
                             }
+                            updatedLink.url = newUrl;
+                        }
 
-                            return {
-                                ...linkObj,
-                                url: newUrl
+                        if (
+                            linkObj.fallbackUrl &&
+                            typeof linkObj.fallbackUrl.url === 'string'
+                        ) {
+                            let newFallbackUrl = linkObj.fallbackUrl.url;
+                            for (const { from, to } of replacements) {
+                                newFallbackUrl = newFallbackUrl.replace(from, to);
+                            }
+
+                            updatedLink.fallbackUrl = {
+                                ...linkObj.fallbackUrl,
+                                url: newFallbackUrl
                             };
                         }
 
-                        return linkObj;
+                        return updatedLink;
                     });
 
                     return {
@@ -535,9 +546,11 @@ export async function getMovieFullDetails(req, res) {
                 }
                 return dl;
             });
+
             delete movieData.downloadLinks;
-            movieData.secondTypeSource = secondTypeSource
+            movieData.secondTypeSource = secondTypeSource;
         }
+
 
         if (
             movieData.partsDetails &&
@@ -619,10 +632,8 @@ export async function getDownloadOptionsUrls(req, res) {
         };
 
         const awsCDNLinks = links.filter(link => link.includes('awscdn'));
-        let fownloadLinks = links.filter(link => link.includes('fdownload'));
-        if (fownloadLinks.length > 0) {
-            fownloadLinks = fownloadLinks.filter(link => link.includes('bbdownload'));
-        }
+        const bbdownloadLinks = links.filter(link => link.includes('bbdownload'));
+
         const pubLinks = links.filter(link =>
             !link.includes('bbdownload') && link.startsWith('https://pub')
         );
@@ -630,20 +641,23 @@ export async function getDownloadOptionsUrls(req, res) {
         const botddLinks = links.filter(link =>
             !link.includes('bbdownload') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
         );
-
+  
         // Combine links in priority order
         const reorderedLinks = [
+            ...bbdownloadLinks,
             ...awsCDNLinks,
-            ...fownloadLinks,
             ...pubLinks,
         ];
 
-        if (reorderedLinks.length < 4) {
-            if (botddLinks.length > 0) {
+        if (reorderedLinks.length < 3) {
+            if (botddLinks.length > 0 && bbdownloadLinks.length < 1) {
                 reorderedLinks.push(...botddLinks);
             } else if (pubLinks.length > 0) {
                 // If botddLinks are not available, add pubLinks
                 reorderedLinks.push(...pubLinks);
+            } else if (botddLinks.length > 0 && bbdownloadLinks.length < 2) {
+                reorderedLinks.push(...botddLinks);
+
             }
         };
 
