@@ -566,12 +566,16 @@ export async function getMovieFullDetails(req, res) {
 
             // ✅ Prepend sorted parts to genreList
             suggestions[0].genreList = [...sortedParts, ...suggestions[0].genreList];
-        }
+        };
+
+        // generate expired timestamp 15 hours from now
+        const expirationTimestamp = Math.floor(Date.now() / 1000) + 15 * 60 * 60;
 
         // Then send the response
         return res.status(200).json({
             userIp: ip,
             movieData: {
+                ETS: expirationTimestamp,
                 ...movieData,
                 hlsSourceDomain
             },
@@ -641,7 +645,7 @@ export async function getDownloadOptionsUrls(req, res) {
         const botddLinks = links.filter(link =>
             !link.includes('bbdownload') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
         );
-  
+
         // Combine links in priority order
         const reorderedLinks = [
             ...bbdownloadLinks,

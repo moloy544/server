@@ -184,7 +184,7 @@ router.post('/', async (req, res) => {
         romanceMovies,
       ] = await Promise.all([
         //Coming soon movies
-        Movies.find({ status: 'coming soon' })
+        Movies.find({ status: 'coming soon', visibility: { $ne: false }  })
           .sort({ releaseYear: 1, fullReleaseDate: 1 })
           .limit(initialLimit).select(initialSelectValue).lean(),
 
