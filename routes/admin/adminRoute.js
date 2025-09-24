@@ -8,6 +8,7 @@ import DownloadSource from "../../models/downloadSource.Model.js";
 import { updateMoviesIMDBRating } from "./operations/updateMovies.operation.js";
 import { AddAndUpdateTrendingMovies } from "./controller/listings.controller.js";
 import { AddSeries } from "./controller/series.controller.js";
+import streamingManagerRoute from "./StreamingManagerRoute/StreamingManager.Route.js";
 
 const router = Router();
 
@@ -180,5 +181,9 @@ router.put('/update/movies/rating/:imdbId', updateMoviesIMDBRating);
 
 // Add or update trending movies route
 router.post('/add_update/trending_content', AddAndUpdateTrendingMovies);
+
+
+// ************************* (Admin Streaming Manager Section Routs) ************************* //
+router.use("/streaming_manager", streamingManagerRoute);
 
 export default router;

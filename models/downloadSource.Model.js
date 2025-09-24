@@ -9,7 +9,7 @@ const downloadSourceSchema = new Schema({
         type: String,
         required: true
     },
-    qualityType:{
+    qualityType: {
         type: String,
         required: true
     },
@@ -18,6 +18,17 @@ const downloadSourceSchema = new Schema({
             quality: String,
             size: String,
             url: String,
+            fallbackUrl: {
+                type: new Schema(
+                    {
+                        url: { type: String },
+                        size: { type: String }
+                    },
+                    { _id: false } // prevents auto-adding _id in nested object
+                ),
+                required: false,
+                default: undefined
+            },
             _id: false
         }
     ]
