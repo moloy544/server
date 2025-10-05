@@ -569,13 +569,12 @@ export async function getMovieFullDetails(req, res) {
         };
 
         // generate expired timestamp 15 hours from now
-        const expirationTimestamp = Math.floor(Date.now() / 1000) + 15 * 60 * 60;
+        //const expirationTimestamp = Math.floor(Date.now() / 1000) + 15 * 60 * 60;
 
         // Then send the response
         return res.status(200).json({
             userIp: ip,
             movieData: {
-                ETS: expirationTimestamp,
                 ...movieData,
                 hlsSourceDomain
             },
