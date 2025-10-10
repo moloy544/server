@@ -635,7 +635,7 @@ export async function getDownloadOptionsUrls(req, res) {
         };
 
         const awsCDNLinks = links.filter(link => link.includes('awscdn'));
-        const bbdownloadLinks = links.filter(link => link.includes('bbdownload'));
+        let bbdownloadLinks = links.filter(link => link.includes('bbdownload'))?.reverse() || [];
 
         const pubLinks = links.filter(link =>
             !link.includes('bbdownload') && link.startsWith('https://pub')
@@ -644,6 +644,10 @@ export async function getDownloadOptionsUrls(req, res) {
         const botddLinks = links.filter(link =>
             !link.includes('bbdownload') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
         );
+
+        if (bbdownloadLinks.length > 2) {
+            bbdownloadLinks = bbdownloadLinks.filter(link => !link.includes('fdownload'));
+        }
 
         // Combine links in priority order
         const reorderedLinks = [
@@ -655,6 +659,7 @@ export async function getDownloadOptionsUrls(req, res) {
         if (reorderedLinks.length < 3) {
             if (botddLinks.length > 0 && bbdownloadLinks.length < 1) {
                 reorderedLinks.push(...botddLinks);
+
             } else if (pubLinks.length > 0) {
                 // If botddLinks are not available, add pubLinks
                 reorderedLinks.push(...pubLinks);
