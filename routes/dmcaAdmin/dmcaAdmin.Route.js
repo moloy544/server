@@ -59,7 +59,13 @@ router.post("/signup", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const admin = new DmcaAdmin({ companyName, username, email, password: hashed });
+    const admin = new DmcaAdmin({
+      companyName,
+      username,
+      email: Array.isArray(email) ? email : [email],
+      password: hashed
+    });
+
     await admin.save();
 
     res.status(201).json({ message: "Signup successful" });
@@ -117,7 +123,7 @@ router.post('/send-otp', async (req, res) => {
   }
 
   try {
-    const admin = await DmcaAdmin.findOne({ email });
+    const admin = await DmcaAdmin.findOne({ email: { $in: [email] } });
 
     if (!admin) {
       return res.status(404).json({ message: "❌ Email is not registered" });
@@ -152,7 +158,7 @@ router.post('/verify-otp', async (req, res) => {
   }
 
   try {
-    const admin = await DmcaAdmin.findOne({ email });
+    const admin = await DmcaAdmin.findOne({ email: { $in: [email] } });
 
     if (!admin || !admin.otp) {
       return res.status(404).json({ message: "OTP not found or expired. Please resend." });
