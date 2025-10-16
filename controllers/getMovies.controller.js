@@ -645,9 +645,9 @@ export async function getDownloadOptionsUrls(req, res) {
             !link.includes('bbdownload') && !link.startsWith('https://pub') && link.startsWith('https://botdd')
         );
 
-        if (bbdownloadLinks.length > 2) {
+        /**if (bbdownloadLinks.length < 3) {
             bbdownloadLinks = bbdownloadLinks.filter(link => !link.includes('fdownload'));
-        }
+        }**/
 
         // Combine links in priority order
         const reorderedLinks = [
