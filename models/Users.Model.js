@@ -30,6 +30,10 @@ const reportsSchema = new Schema({
   writtenReport: {
     type: String,
   },
+  deviceDateTime:{
+    type: String,
+    required: false
+  },
   reportStatus: {
     type: String,
     default: "Pending",
